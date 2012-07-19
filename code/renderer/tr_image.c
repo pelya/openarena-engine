@@ -177,6 +177,7 @@ void R_ImageList_f( void ) {
 		case 4:
 			ri.Printf( PRINT_ALL, "RGBA " );
 			break;
+#ifndef __ANDROID__
 		case GL_RGBA8:
 			ri.Printf( PRINT_ALL, "RGBA8" );
 			break;
@@ -193,6 +194,7 @@ void R_ImageList_f( void ) {
 		case GL_RGB5:
 			ri.Printf( PRINT_ALL, "RGB5 " );
 			break;
+#endif
 		default:
 			ri.Printf( PRINT_ALL, "???? " );
 		}
@@ -617,15 +619,18 @@ static void Upload32( unsigned *data,
 		{
 			if(r_greyscale->integer)
 			{
+#ifndef __ANDROID__
 				if(r_texturebits->integer == 16)
 					internalFormat = GL_LUMINANCE8;
 				else if(r_texturebits->integer == 32)
 					internalFormat = GL_LUMINANCE16;
 				else
+#endif
 					internalFormat = GL_LUMINANCE;
 			}
 			else
 			{
+#ifndef __ANDROID__
 				if ( glConfig.textureCompression == TC_S3TC_ARB )
 				{
 					internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
@@ -643,6 +648,7 @@ static void Upload32( unsigned *data,
 					internalFormat = GL_RGB8;
 				}
 				else
+#endif
 				{
 					internalFormat = GL_RGB;
 				}
@@ -652,15 +658,18 @@ static void Upload32( unsigned *data,
 		{
 			if(r_greyscale->integer)
 			{
+#ifndef __ANDROID__
 				if(r_texturebits->integer == 16)
 					internalFormat = GL_LUMINANCE8_ALPHA8;
 				else if(r_texturebits->integer == 32)
 					internalFormat = GL_LUMINANCE16_ALPHA16;
 				else
+#endif
 					internalFormat = GL_LUMINANCE_ALPHA;
 			}
 			else
 			{
+#ifndef __ANDROID__
 				if ( r_texturebits->integer == 16 )
 				{
 					internalFormat = GL_RGBA4;
@@ -670,6 +679,7 @@ static void Upload32( unsigned *data,
 					internalFormat = GL_RGBA8;
 				}
 				else
+#endif
 				{
 					internalFormat = GL_RGBA;
 				}
@@ -682,7 +692,11 @@ static void Upload32( unsigned *data,
 		( scaled_height == height ) ) {
 		if (!mipmap)
 		{
+#ifndef __ANDROID__
 			qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+#else
+			qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, internalFormat, GL_UNSIGNED_BYTE, data);
+#endif
 			*pUploadWidth = scaled_width;
 			*pUploadHeight = scaled_height;
 			*format = internalFormat;
@@ -714,7 +728,11 @@ static void Upload32( unsigned *data,
 	*pUploadHeight = scaled_height;
 	*format = internalFormat;
 
+#ifndef __ANDROID__
 	qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
+#else
+	qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, internalFormat, GL_UNSIGNED_BYTE, scaledBuffer );
+#endif
 
 	if (mipmap)
 	{
@@ -736,7 +754,11 @@ static void Upload32( unsigned *data,
 				R_BlendOverTexture( (byte *)scaledBuffer, scaled_width * scaled_height, mipBlendColors[miplevel] );
 			}
 
+#ifndef __ANDROID__
 			qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
+#else
+			qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height, 0, internalFormat, GL_UNSIGNED_BYTE, scaledBuffer );
+#endif
 		}
 	}
 done:
@@ -1127,7 +1149,9 @@ static void R_CreateFogImage( void ) {
 	borderColor[2] = 1.0;
 	borderColor[3] = 1;
 
+#ifndef __ANDROID__
 	qglTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
+#endif
 }
 
 /*

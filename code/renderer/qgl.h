@@ -45,6 +45,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define qglMultiTexCoord2fARB(target, s, t) glMultiTexCoord4f(target, s, t, 0.0f 1.0f)
 #define GL_TEXTURE0_ARB GL_TEXTURE0
 #define GL_TEXTURE1_ARB GL_TEXTURE1
+#define glDepthRange glDepthRangef
+#define glOrtho glOrthof
+#define glColor3f(r, g, b) glColor4f(r, g, b, 1.0f)
 #else
 extern void (APIENTRYP qglActiveTextureARB) (GLenum texture);
 extern void (APIENTRYP qglClientActiveTextureARB) (GLenum texture);
@@ -73,6 +76,7 @@ extern void (APIENTRYP qglUnlockArraysEXT) (void);
 #define qglClearIndex glClearIndex
 #define qglClearStencil glClearStencil
 #define qglClipPlane glClipPlane
+#define qglClipPlanef glClipPlanef
 #define qglColor3b glColor3b
 #define qglColor3bv glColor3bv
 #define qglColor3d glColor3d

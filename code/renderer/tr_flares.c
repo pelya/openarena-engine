@@ -259,6 +259,8 @@ RB_TestFlare
 ==================
 */
 void RB_TestFlare( flare_t *f ) {
+// No flares on Android
+#ifndef __ANDROID__
 	float			depth;
 	qboolean		visible;
 	float			fade;
@@ -300,6 +302,9 @@ void RB_TestFlare( flare_t *f ) {
 	}
 
 	f->drawIntensity = fade;
+#else
+	f->drawIntensity = 0;
+#endif
 }
 
 

@@ -427,6 +427,8 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 			ri.Error(ERR_FATAL, "RE_BeginFrame() - glGetError() failed (0x%x)!", err);
 	}
 
+	// Stereo? Blasphemy! Well, there are some devices with stereo screen, but they are scarce, expensive, and require to use custom SDK from the manufacturer
+#ifndef __ANDROID__
 	if (glConfig.stereoEnabled) {
 		if( !(cmd = R_GetCommandBuffer(sizeof(*cmd))) )
 			return;
@@ -442,6 +444,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 		}
 	}
 	else
+#endif
 	{
 		if(r_anaglyphMode->integer)
 		{
@@ -451,9 +454,11 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 				qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				qglClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 				
+#ifndef __ANDROID__
 				qglDrawBuffer(GL_FRONT);
 				qglClear(GL_COLOR_BUFFER_BIT);
 				qglDrawBuffer(GL_BACK);
+#endif
 				qglClear(GL_COLOR_BUFFER_BIT);
 				
 				r_anaglyphMode->modified = qfalse;
