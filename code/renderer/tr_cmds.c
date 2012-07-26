@@ -428,7 +428,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 	}
 
 	// Stereo? Blasphemy! Well, there are some devices with stereo screen, but they are scarce, expensive, and require to use custom SDK from the manufacturer
-#ifndef __ANDROID__
+#ifndef GL_VERSION_ES_CM_1_0
 	if (glConfig.stereoEnabled) {
 		if( !(cmd = R_GetCommandBuffer(sizeof(*cmd))) )
 			return;
@@ -454,7 +454,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 				qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				qglClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 				
-#ifndef __ANDROID__
+#ifndef GL_VERSION_ES_CM_1_0
 				qglDrawBuffer(GL_FRONT);
 				qglClear(GL_COLOR_BUFFER_BIT);
 				qglDrawBuffer(GL_BACK);

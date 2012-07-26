@@ -260,7 +260,7 @@ RB_TestFlare
 */
 void RB_TestFlare( flare_t *f ) {
 // No flares on Android
-#ifndef __ANDROID__
+#ifndef GL_VERSION_ES_CM_1_0
 	float			depth;
 	qboolean		visible;
 	float			fade;

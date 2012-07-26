@@ -43,7 +43,8 @@ This is just for OpenGL conformance testing, it should never be the fastest
 ================
 */
 static void APIENTRY R_ArrayElementDiscrete( GLint index ) {
-	qglColor4ubv( tess.svars.colors[ index ] );
+	qglColor4ub( tess.svars.colors[ index ][0], tess.svars.colors[ index ][1],
+					tess.svars.colors[ index ][2], tess.svars.colors[ index ][3] );
 	if ( glState.currenttmu ) {
 		qglMultiTexCoord2fARB( 0, tess.svars.texcoords[ 0 ][ index ][0], tess.svars.texcoords[ 0 ][ index ][1] );
 		qglMultiTexCoord2fARB( 1, tess.svars.texcoords[ 1 ][ index ][0], tess.svars.texcoords[ 1 ][ index ][1] );

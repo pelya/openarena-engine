@@ -29,8 +29,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef __ANDROID__
 #	include <GLES/gl.h>
 #	include <GLES/glext.h>
-#	define APIENTRYP GL_APIENTRYP
-#	define APIENTRY GL_APIENTRY
 #else
 #ifdef USE_LOCAL_HEADERS
 #	include "SDL_opengl.h"
@@ -39,10 +37,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #endif
 
-#ifdef __ANDROID__
+#ifdef GL_VERSION_ES_CM_1_0
+#define APIENTRYP GL_APIENTRYP
+#define APIENTRY GL_APIENTRY
 #define qglActiveTextureARB glActiveTexture
 #define qglClientActiveTextureARB glClientActiveTexture
-#define qglMultiTexCoord2fARB(target, s, t) glMultiTexCoord4f(target, s, t, 0.0f 1.0f)
+#define qglMultiTexCoord2fARB(TGT, S, T) glMultiTexCoord4f(GL_TEXTURE ## TGT, S, T, 0.0f, 1.0f)
 #define GL_TEXTURE0_ARB GL_TEXTURE0
 #define GL_TEXTURE1_ARB GL_TEXTURE1
 #define glDepthRange glDepthRangef
