@@ -1834,7 +1834,7 @@ else
 $(B)/$(CLIENTBIN)$(FULLBINEXT): $(Q3OBJ) $(if $(filter android, $(PLATFORM)), $(Q3ROBJ), $(Q3ROAOBJ)) $(Q3POBJ) $(JPGOBJ) $(LIBSDLMAIN)
 	$(echo_cmd) "LD $@"
 	$(Q)$(CC) $(CLIENT_CFLAGS) $(CFLAGS) $(CLIENT_LDFLAGS) $(LDFLAGS) \
-		-o $@ $(Q3OBJ) $(Q3ROAOBJ) $(Q3POBJ) $(JPGOBJ) \
+		-o $@ $(Q3OBJ) $(if $(filter android, $(PLATFORM)), $(Q3ROBJ), $(Q3ROAOBJ)) $(Q3POBJ) $(JPGOBJ) \
 		$(LIBSDLMAIN) $(CLIENT_LIBS) $(RENDERER_LIBS) $(LIBS)
 
 $(B)/$(CLIENTBIN)-smp$(FULLBINEXT): $(Q3OBJ) $(Q3ROAOBJ) $(Q3POBJ_SMP) $(JPGOBJ) $(LIBSDLMAIN)

@@ -33,6 +33,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
+
 
 /*
 =============================================================
@@ -517,6 +521,9 @@ void CON_Print( const char *msg )
 	if (!msg[0])
 		return;
 
+#ifdef __ANDROID__
+	__android_log_print(ANDROID_LOG_INFO, "OpenArena", "%s", msg);
+#else
 	CON_Hide( );
 
 	if( com_ansiColor && com_ansiColor->integer )
@@ -545,4 +552,5 @@ void CON_Print( const char *msg )
 		// Defer calling CON_Show
 		ttycon_show_overdue++;
 	}
+#endif
 }

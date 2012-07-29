@@ -42,6 +42,7 @@ R_ArrayElementDiscrete
 This is just for OpenGL conformance testing, it should never be the fastest
 ================
 */
+#ifndef GL_VERSION_ES_CM_1_0
 static void APIENTRY R_ArrayElementDiscrete( GLint index ) {
 	qglColor4ub( tess.svars.colors[ index ][0], tess.svars.colors[ index ][1],
 					tess.svars.colors[ index ][2], tess.svars.colors[ index ][3] );
@@ -53,7 +54,6 @@ static void APIENTRY R_ArrayElementDiscrete( GLint index ) {
 	}
 	qglVertex3fv( tess.xyz[ index ] );
 }
-
 /*
 ===================
 R_DrawStripElements
@@ -154,8 +154,7 @@ static void R_DrawStripElements( int numIndexes, const glIndex_t *indexes, void 
 
 	qglEnd();
 }
-
-
+#endif
 
 /*
 ==================
@@ -169,6 +168,9 @@ without compiled vertex arrays.
 static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 	int		primitives;
 
+#ifdef GL_VERSION_ES_CM_1_0
+	Com_Printf("Error: R_DrawElements() not implemented on Android");
+#else
 	primitives = r_primitives->integer;
 
 	// default is to use triangles if compiled vertex arrays are present
@@ -198,7 +200,7 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 		R_DrawStripElements( numIndexes,  indexes, R_ArrayElementDiscrete );
 		return;
 	}
-
+#endif
 	// anything else will cause no drawing
 }
 
@@ -292,6 +294,9 @@ static void DrawNormals (shaderCommands_t *input) {
 	int		i;
 	vec3_t	temp;
 
+#ifdef GL_VERSION_ES_CM_1_0
+	Com_Printf("Error: DrawNormals() not implemented on Android");
+#else
 	GL_Bind( tr.whiteImage );
 	qglColor3f (1,1,1);
 	qglDepthRange( 0, 0 );	// never occluded
@@ -306,6 +311,7 @@ static void DrawNormals (shaderCommands_t *input) {
 	qglEnd ();
 
 	qglDepthRange( 0, 1 );
+#endif
 }
 
 /*
@@ -357,9 +363,11 @@ static void DrawMultitextured( shaderCommands_t *input, int stage ) {
 
 	// this is an ugly hack to work around a GeForce driver
 	// bug with multitexture and clip planes
+#ifndef GL_VERSION_ES_CM_1_0
 	if ( backEnd.viewParms.isPortal ) {
 		qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 	}
+#endif
 
 	//
 	// base

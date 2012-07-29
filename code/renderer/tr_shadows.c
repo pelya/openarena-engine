@@ -125,12 +125,23 @@ void R_RenderShadowEdges( void ) {
 			// if it doesn't share the edge with another front facing
 			// triangle, it is a sil edge
 			if ( hit[ 1 ] == 0 ) {
+#ifndef GL_VERSION_ES_CM_1_0
 				qglBegin( GL_TRIANGLE_STRIP );
 				qglVertex3fv( tess.xyz[ i ] );
 				qglVertex3fv( tess.xyz[ i + tess.numVertexes ] );
 				qglVertex3fv( tess.xyz[ i2 ] );
 				qglVertex3fv( tess.xyz[ i2 + tess.numVertexes ] );
 				qglEnd();
+#else
+				vec3_t points[4];
+				VectorCopy( tess.xyz[ i ], points[0] );
+				VectorCopy( tess.xyz[ i + tess.numVertexes ], points[1] );
+				VectorCopy( tess.xyz[ i2 ], points[2] );
+				VectorCopy( tess.xyz[ i2 + tess.numVertexes ], points[3] );
+				qglEnableClientState ( GL_VERTEX_ARRAY );
+				qglVertexPointer ( 3, GL_FLOAT, 0, points );
+				qglDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
+#endif
 				c_edges++;
 			} else {
 				c_rejected++;
@@ -285,12 +296,19 @@ void RB_ShadowFinish( void ) {
 //	qglColor3f( 1, 0, 0 );
 //	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );
 
+#ifndef GL_VERSION_ES_CM_1_0
 	qglBegin( GL_QUADS );
 	qglVertex3f( -100, 100, -10 );
 	qglVertex3f( 100, 100, -10 );
 	qglVertex3f( 100, -100, -10 );
 	qglVertex3f( -100, -100, -10 );
 	qglEnd ();
+#else
+	vec3_t points[4] = { {-100, 100, -10}, {100, 100, -10}, {100, -100, -10}, {-100, -100, -10} };
+	qglEnableClientState ( GL_VERTEX_ARRAY );
+	qglVertexPointer ( 3, GL_FLOAT, 0, points );
+	qglDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
+#endif
 
 	qglColor4f(1,1,1,1);
 	qglDisable( GL_STENCIL_TEST );

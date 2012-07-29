@@ -365,11 +365,15 @@ static float	s_skyTexCoords[SKY_SUBDIVISIONS+1][SKY_SUBDIVISIONS+1][2];
 static void DrawSkySide( struct image_s *image, const int mins[2], const int maxs[2] )
 {
 	int s, t;
+	unsigned i;
+	vec3_t points[(SKY_SUBDIVISIONS+1) * (SKY_SUBDIVISIONS+1)];
+	float texcoords[(SKY_SUBDIVISIONS+1) * (SKY_SUBDIVISIONS+1) * 2];
 
 	GL_Bind( image );
 
 	for ( t = mins[1]+HALF_SKY_SUBDIVISIONS; t < maxs[1]+HALF_SKY_SUBDIVISIONS; t++ )
 	{
+#ifndef GL_VERSION_ES_CM_1_0
 		qglBegin( GL_TRIANGLE_STRIP );
 
 		for ( s = mins[0]+HALF_SKY_SUBDIVISIONS; s <= maxs[0]+HALF_SKY_SUBDIVISIONS; s++ )
@@ -382,6 +386,22 @@ static void DrawSkySide( struct image_s *image, const int mins[2], const int max
 		}
 
 		qglEnd();
+#else
+		for ( s = mins[0]+HALF_SKY_SUBDIVISIONS, i = 0; s <= maxs[0]+HALF_SKY_SUBDIVISIONS; s++, i += 2 )
+		{
+			VectorCopy( s_skyPoints[t][s], points[i] );
+			VectorCopy( s_skyPoints[t+1][s], points[i+1] );
+			texcoords[i*2] = s_skyTexCoords[t][s][0];
+			texcoords[i*2+1] = s_skyTexCoords[t][s][1];
+			texcoords[i*2+2] = s_skyTexCoords[t+1][s][0];
+			texcoords[i*2+3] = s_skyTexCoords[t+1][s][1];
+		}
+		qglEnableClientState ( GL_VERTEX_ARRAY );
+		qglEnableClientState ( GL_TEXTURE_COORD_ARRAY );
+		qglTexCoordPointer ( 2, GL_FLOAT, 0, texcoords );
+		qglVertexPointer ( 3, GL_FLOAT, 0, points );
+		qglDrawArrays( GL_TRIANGLE_STRIP, 0, i );
+#endif
 	}
 }
 
