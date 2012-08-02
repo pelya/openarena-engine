@@ -169,7 +169,8 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 	int		primitives;
 
 #ifdef GL_VERSION_ES_CM_1_0
-	Com_Printf("Error: R_DrawElements() not implemented on Android");
+	//Com_Printf("Error: R_DrawElements() not implemented on Android");
+	qglDrawElements(GL_TRIANGLES, numIndexes, GL_INDEX_TYPE, indexes); // TODO: we're ignoring cases when r_primitives->integer != 2
 #else
 	primitives = r_primitives->integer;
 
