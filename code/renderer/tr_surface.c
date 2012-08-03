@@ -1186,6 +1186,7 @@ static void RB_SurfaceAxis( void ) {
 	qglLineWidth( 1 );
 #else
 	// TODO: I'm too lazy to implement debug stuff
+	Com_Printf("Error: RB_SurfaceAxis() not implemented on GLES\n");
 #endif
 }
 
@@ -1238,7 +1239,7 @@ static void RB_SurfaceDisplayList( srfDisplayList_t *surf ) {
 #ifndef GL_VERSION_ES_CM_1_0
 	qglCallList( surf->listNum );
 #else
-	ri.Printf( PRINT_ALL, "RB_SurfaceDisplayList not implemented\n" );
+	Com_Printf("Error: RB_SurfaceDisplayList() not implemented on GLES\n");
 #endif
 }
 

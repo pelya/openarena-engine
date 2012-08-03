@@ -169,8 +169,10 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 	int		primitives;
 
 #ifdef GL_VERSION_ES_CM_1_0
-	//Com_Printf("Error: R_DrawElements() not implemented on GLES");
-	qglDrawElements(GL_TRIANGLES, numIndexes, GL_INDEX_TYPE, indexes); // TODO: we're ignoring cases when r_primitives->integer != 2
+	if ( r_primitives->integer != 2 && r_primitives->integer != 0 )
+		Com_Printf("Error: R_DrawElements() not implemented on GLES for r_primitives != 2 (r_primitives %d)\n", r_primitives->integer);
+	else
+		qglDrawElements(GL_TRIANGLES, numIndexes, GL_INDEX_TYPE, indexes);
 #else
 	primitives = r_primitives->integer;
 
@@ -296,7 +298,7 @@ static void DrawNormals (shaderCommands_t *input) {
 	vec3_t	temp;
 
 #ifdef GL_VERSION_ES_CM_1_0
-	Com_Printf("Error: DrawNormals() not implemented on GLES");
+	Com_Printf("Error: DrawNormals() not implemented on GLES\n");
 #else
 	GL_Bind( tr.whiteImage );
 	qglColor3f (1,1,1);

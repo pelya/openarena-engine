@@ -619,7 +619,10 @@ static void Upload32( unsigned *data,
 		{
 			if(r_greyscale->integer)
 			{
-#ifndef GL_VERSION_ES_CM_1_0
+#ifdef GL_VERSION_ES_CM_1_0
+				if(r_texturebits->integer == 16 || r_texturebits->integer == 32)
+					Com_Printf("Error: Upload32(): %d-bit %d samples greyscale textures not implemented on GLES\n", r_texturebits->integer, samples);
+#else
 				if(r_texturebits->integer == 16)
 					internalFormat = GL_LUMINANCE8;
 				else if(r_texturebits->integer == 32)
@@ -630,7 +633,12 @@ static void Upload32( unsigned *data,
 			}
 			else
 			{
-#ifndef GL_VERSION_ES_CM_1_0
+#ifdef GL_VERSION_ES_CM_1_0
+				if(r_texturebits->integer == 16 || r_texturebits->integer == 32)
+					Com_Printf("Error: Upload32(): %d-bit %d samples color textures not implemented on GLES\n", r_texturebits->integer, samples);
+				if(glConfig.textureCompression == TC_S3TC_ARB || glConfig.textureCompression == TC_S3TC)
+					Com_Printf("Error: Upload32(): texture compression %d for textures not implemented on GLES\n", glConfig.textureCompression);
+#else
 				if ( glConfig.textureCompression == TC_S3TC_ARB )
 				{
 					internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
@@ -658,7 +666,10 @@ static void Upload32( unsigned *data,
 		{
 			if(r_greyscale->integer)
 			{
-#ifndef GL_VERSION_ES_CM_1_0
+#ifdef GL_VERSION_ES_CM_1_0
+				if(r_texturebits->integer == 16 || r_texturebits->integer == 32)
+					Com_Printf("Error: Upload32(): %d-bit %d samples greyscale textures not implemented on GLES\n", r_texturebits->integer, samples);
+#else
 				if(r_texturebits->integer == 16)
 					internalFormat = GL_LUMINANCE8_ALPHA8;
 				else if(r_texturebits->integer == 32)
@@ -669,7 +680,10 @@ static void Upload32( unsigned *data,
 			}
 			else
 			{
-#ifndef GL_VERSION_ES_CM_1_0
+#ifdef GL_VERSION_ES_CM_1_0
+				if(r_texturebits->integer == 16 || r_texturebits->integer == 32)
+					Com_Printf("Error: Upload32(): %d-bit %d samples color textures not implemented on GLES\n", r_texturebits->integer, samples);
+#else
 				if ( r_texturebits->integer == 16 )
 				{
 					internalFormat = GL_RGBA4;

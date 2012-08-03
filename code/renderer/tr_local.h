@@ -1748,5 +1748,6 @@ void R_InitFreeType( void );
 void R_DoneFreeType( void );
 void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font);
 
+void R_DumpOpenGlState( void );
 
 #endif //__TR_LOCAL_H__
