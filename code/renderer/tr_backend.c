@@ -1118,7 +1118,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 
 	// we measure overdraw by reading back the stencil buffer and
 	// counting up the number of increments that have happened
-	// there is an extension to read from stencil buffer on Android, but it's not available on every device, and I'm too lazy
+	// there is an extension to read from stencil buffer on GLES, but it's not available on every device, and I'm too lazy
 #ifndef GL_VERSION_ES_CM_1_0
 	if ( r_measureOverdraw->integer ) {
 		int i;

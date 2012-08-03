@@ -77,7 +77,7 @@ cvar_t *r_allowResize; // make window resizable
 cvar_t *r_centerWindow;
 cvar_t *r_sdlDriver;
 
-#ifndef __ANDROID__
+#ifndef GL_VERSION_ES_CM_1_0
 void (APIENTRYP qglActiveTextureARB) (GLenum texture);
 void (APIENTRYP qglClientActiveTextureARB) (GLenum texture);
 void (APIENTRYP qglMultiTexCoord2fARB) (GLenum target, GLfloat s, GLfloat t);
@@ -584,7 +584,7 @@ static void GLimp_InitExtensions( void )
 	}
 
 	// GL_ARB_multitexture
-#ifndef __ANDROID__
+#ifndef GL_VERSION_ES_CM_1_0
 	qglMultiTexCoord2fARB = NULL;
 	qglActiveTextureARB = NULL;
 	qglClientActiveTextureARB = NULL;

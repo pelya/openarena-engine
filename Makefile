@@ -209,6 +209,10 @@ ifndef USE_OLD_VM64
 USE_OLD_VM64=0
 endif
 
+ifndef USE_GLES
+USE_GLES=0
+endif
+
 #############################################################################
 
 BD=$(BUILD_DIR)/debug-$(PLATFORM)-$(ARCH)
@@ -360,7 +364,13 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
   LIBS=-ldl -lm
 
   CLIENT_LIBS=$(SDL_LIBS)
-  RENDERER_LIBS = $(SDL_LIBS) -lGL
+  RENDERER_LIBS = $(SDL_LIBS)
+ifeq ($(USE_GLES),1)
+  RENDERER_LIBS +=  -lGLESv1_CM
+else
+  RENDERER_LIBS +=  -lGL
+endif
+
 
   ifeq ($(USE_OPENAL),1)
     ifneq ($(USE_OPENAL_DLOPEN),1)
@@ -981,6 +991,10 @@ endif
 
 ifeq ($(USE_FREETYPE),1)
   RENDERER_LIBS += -lfreetype
+endif
+
+ifeq ($(USE_GLES),1)
+  BASE_CFLAGS += -DUSE_GLES
 endif
 
 ifeq ("$(CC)", $(findstring "$(CC)", "clang" "clang++"))
@@ -1831,10 +1845,10 @@ $(B)/renderer_openarena1_smp_$(SHLIBNAME): $(Q3ROAOBJ) $(Q3POBJ_SMP) $(JPGOBJ)
 		$(THREAD_LIBS) $(LIBSDLMAIN) $(RENDERER_LIBS) $(LIBS)
 
 else
-$(B)/$(CLIENTBIN)$(FULLBINEXT): $(Q3OBJ) $(if $(filter android, $(PLATFORM)), $(Q3ROBJ), $(Q3ROAOBJ)) $(Q3POBJ) $(JPGOBJ) $(LIBSDLMAIN)
+$(B)/$(CLIENTBIN)$(FULLBINEXT): $(Q3OBJ) $(if $(filter 1, $(USE_GLES)), $(Q3ROBJ), $(Q3ROAOBJ)) $(Q3POBJ) $(JPGOBJ) $(LIBSDLMAIN)
 	$(echo_cmd) "LD $@"
 	$(Q)$(CC) $(CLIENT_CFLAGS) $(CFLAGS) $(CLIENT_LDFLAGS) $(LDFLAGS) \
-		-o $@ $(Q3OBJ) $(if $(filter android, $(PLATFORM)), $(Q3ROBJ), $(Q3ROAOBJ)) $(Q3POBJ) $(JPGOBJ) \
+		-o $@ $(Q3OBJ) $(if $(filter 1, $(USE_GLES)), $(Q3ROBJ), $(Q3ROAOBJ)) $(Q3POBJ) $(JPGOBJ) \
 		$(LIBSDLMAIN) $(CLIENT_LIBS) $(RENDERER_LIBS) $(LIBS)
 
 $(B)/$(CLIENTBIN)-smp$(FULLBINEXT): $(Q3OBJ) $(Q3ROAOBJ) $(Q3POBJ_SMP) $(JPGOBJ) $(LIBSDLMAIN)

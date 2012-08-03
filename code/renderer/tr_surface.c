@@ -338,7 +338,7 @@ static void RB_SurfaceBeam( void )
 	}
 	qglEnd();
 #else
-	vec3_t points[NUM_BEAM_SEGS + 1];
+	vec3_t points[NUM_BEAM_SEGS * 2 + 2];
 	for ( i = 0; i <= NUM_BEAM_SEGS; i++ ) {
 		VectorCopy( start_points[i % NUM_BEAM_SEGS], points[i * 2] );
 		VectorCopy( end_points[i % NUM_BEAM_SEGS], points[i * 2 + 1] );
