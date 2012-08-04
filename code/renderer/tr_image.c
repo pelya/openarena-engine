@@ -503,6 +503,7 @@ static void Upload32( unsigned *data,
 	int			i, c;
 	byte		*scan;
 	GLenum		internalFormat = GL_RGB;
+	GLenum		pixelLayout = GL_UNSIGNED_BYTE;
 	float		rMax = 0, gMax = 0, bMax = 0;
 
 	//
@@ -620,46 +621,58 @@ static void Upload32( unsigned *data,
 			if(r_greyscale->integer)
 			{
 #ifdef GL_VERSION_ES_CM_1_0
-				if(r_texturebits->integer == 16 || r_texturebits->integer == 32)
-					Com_Printf("Error: Upload32(): %d-bit %d samples greyscale textures not implemented on GLES\n", r_texturebits->integer, samples);
+				//if(r_texturebits->integer == 16 || r_texturebits->integer == 32)
+				//	Com_Printf("Error: Upload32(): %d-bit %d samples greyscale textures not implemented on GLES\n", r_texturebits->integer, samples);
+				internalFormat = GL_LUMINANCE;
+				if (r_texturebits->integer == 16)
+					pixelLayout = GL_UNSIGNED_SHORT_5_6_5;
+				else if (r_texturebits->integer == 32)
+				{
+					// It's too messy to convert RGBA32 to the RGB24 here
+					//Com_Printf("Error: Upload32(): %d-bit %d samples greyscale textures not implemented on GLES\n", r_texturebits->integer, samples);
+					internalFormat = GL_LUMINANCE_ALPHA;
+					pixelLayout = GL_UNSIGNED_BYTE;
+				}
+				else
+					pixelLayout = GL_UNSIGNED_BYTE;
 #else
 				if(r_texturebits->integer == 16)
 					internalFormat = GL_LUMINANCE8;
 				else if(r_texturebits->integer == 32)
 					internalFormat = GL_LUMINANCE16;
 				else
-#endif
 					internalFormat = GL_LUMINANCE;
+#endif
 			}
 			else
 			{
 #ifdef GL_VERSION_ES_CM_1_0
-				if(r_texturebits->integer == 16 || r_texturebits->integer == 32)
-					Com_Printf("Error: Upload32(): %d-bit %d samples color textures not implemented on GLES\n", r_texturebits->integer, samples);
-				if(glConfig.textureCompression == TC_S3TC_ARB || glConfig.textureCompression == TC_S3TC)
+				internalFormat = GL_RGB;
+				if (glConfig.textureCompression == TC_S3TC_ARB || glConfig.textureCompression == TC_S3TC)
 					Com_Printf("Error: Upload32(): texture compression %d for textures not implemented on GLES\n", glConfig.textureCompression);
-#else
-				if ( glConfig.textureCompression == TC_S3TC_ARB )
-				{
-					internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-				}
-				else if ( glConfig.textureCompression == TC_S3TC )
-				{
-					internalFormat = GL_RGB4_S3TC;
-				}
 				else if ( r_texturebits->integer == 16 )
-				{
-					internalFormat = GL_RGB5;
-				}
+					pixelLayout = GL_UNSIGNED_SHORT_5_6_5;
 				else if ( r_texturebits->integer == 32 )
 				{
-					internalFormat = GL_RGB8;
+					// It's too messy to convert RGBA32 to the RGB24 here
+					//Com_Printf("Error: Upload32(): %d-bit %d samples color textures not implemented on GLES\n", r_texturebits->integer, samples);
+					internalFormat = GL_RGBA;
+					pixelLayout = GL_UNSIGNED_BYTE;
 				}
 				else
-#endif
-				{
+					pixelLayout = GL_UNSIGNED_BYTE;
+#else
+				if ( glConfig.textureCompression == TC_S3TC_ARB )
+					internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+				else if ( glConfig.textureCompression == TC_S3TC )
+					internalFormat = GL_RGB4_S3TC;
+				else if ( r_texturebits->integer == 16 )
+					internalFormat = GL_RGB5;
+				else if ( r_texturebits->integer == 32 )
+					internalFormat = GL_RGB8;
+				else
 					internalFormat = GL_RGB;
-				}
+#endif
 			}
 		}
 		else if ( samples == 4 )
@@ -667,36 +680,50 @@ static void Upload32( unsigned *data,
 			if(r_greyscale->integer)
 			{
 #ifdef GL_VERSION_ES_CM_1_0
-				if(r_texturebits->integer == 16 || r_texturebits->integer == 32)
-					Com_Printf("Error: Upload32(): %d-bit %d samples greyscale textures not implemented on GLES\n", r_texturebits->integer, samples);
+				internalFormat = GL_LUMINANCE_ALPHA;
+				if(r_texturebits->integer == 16)
+					pixelLayout = GL_UNSIGNED_SHORT_4_4_4_4;
+				else if(r_texturebits->integer == 32)
+					pixelLayout = GL_UNSIGNED_BYTE;
+				else
+				{
+					// This should never happen in theory, we're always receiving our textures in RGBA format
+					//Com_Printf("Error: Upload32(): %d-bit %d samples greyscale textures not implemented on GLES\n", r_texturebits->integer, samples);
+					internalFormat = GL_LUMINANCE;
+					pixelLayout = GL_UNSIGNED_BYTE;
+				}
 #else
 				if(r_texturebits->integer == 16)
 					internalFormat = GL_LUMINANCE8_ALPHA8;
 				else if(r_texturebits->integer == 32)
 					internalFormat = GL_LUMINANCE16_ALPHA16;
 				else
-#endif
 					internalFormat = GL_LUMINANCE_ALPHA;
+#endif
 			}
 			else
 			{
 #ifdef GL_VERSION_ES_CM_1_0
-				if(r_texturebits->integer == 16 || r_texturebits->integer == 32)
-					Com_Printf("Error: Upload32(): %d-bit %d samples color textures not implemented on GLES\n", r_texturebits->integer, samples);
+				internalFormat = GL_RGBA;
+				if(r_texturebits->integer == 16)
+					pixelLayout = GL_UNSIGNED_SHORT_4_4_4_4;
+				else if(r_texturebits->integer == 32)
+					pixelLayout = GL_UNSIGNED_BYTE;
+				else
+				{
+					// This should never happen in theory, we're always receiving our textures in RGBA format
+					//Com_Printf("Error: Upload32(): %d-bit %d samples color textures not implemented on GLES\n", r_texturebits->integer, samples);
+					internalFormat = GL_RGB;
+					pixelLayout = GL_UNSIGNED_BYTE;
+				}
 #else
 				if ( r_texturebits->integer == 16 )
-				{
 					internalFormat = GL_RGBA4;
-				}
 				else if ( r_texturebits->integer == 32 )
-				{
 					internalFormat = GL_RGBA8;
-				}
 				else
-#endif
-				{
 					internalFormat = GL_RGBA;
-				}
+#endif
 			}
 		}
 	}
@@ -709,7 +736,7 @@ static void Upload32( unsigned *data,
 #ifndef GL_VERSION_ES_CM_1_0
 			qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 #else
-			qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, internalFormat, GL_UNSIGNED_BYTE, data);
+			qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, internalFormat, pixelLayout, data);
 #endif
 			*pUploadWidth = scaled_width;
 			*pUploadHeight = scaled_height;
@@ -736,7 +763,7 @@ static void Upload32( unsigned *data,
 		Com_Memcpy( scaledBuffer, data, width * height * 4 );
 	}
 
-	R_LightScaleTexture (scaledBuffer, scaled_width, scaled_height, !mipmap );
+	R_LightScaleTexture (scaledBuffer, scaled_width, scaled_height, !mipmap);
 
 	*pUploadWidth = scaled_width;
 	*pUploadHeight = scaled_height;
@@ -745,12 +772,12 @@ static void Upload32( unsigned *data,
 #ifndef GL_VERSION_ES_CM_1_0
 	qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
 #else
-	qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, internalFormat, GL_UNSIGNED_BYTE, scaledBuffer );
+	qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, internalFormat, pixelLayout, scaledBuffer );
 #endif
 
 	if (mipmap)
 	{
-		int		miplevel;
+		int miplevel;
 
 		miplevel = 0;
 		while (scaled_width > 1 || scaled_height > 1)
@@ -771,7 +798,7 @@ static void Upload32( unsigned *data,
 #ifndef GL_VERSION_ES_CM_1_0
 			qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
 #else
-			qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height, 0, internalFormat, GL_UNSIGNED_BYTE, scaledBuffer );
+			qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height, 0, internalFormat, pixelLayout, scaledBuffer );
 #endif
 		}
 	}
