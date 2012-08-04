@@ -397,10 +397,6 @@ endif
     CLIENT_LIBS += -lrt
   endif
 
-  ifeq ($(USE_LOCAL_HEADERS),1)
-    CLIENT_CFLAGS += -I$(SDLHDIR)/include
-  endif
-
   ifeq ($(USE_FREETYPE),1)
     BASE_CFLAGS += $(FREETYPE_CFLAGS)
   endif
