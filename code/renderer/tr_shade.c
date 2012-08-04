@@ -166,14 +166,21 @@ without compiled vertex arrays.
 ==================
 */
 static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
-	int		primitives;
-
 #ifdef GL_VERSION_ES_CM_1_0
-	if ( r_primitives->integer != 2 && r_primitives->integer != 0 )
+	int i;
+	GLushort ii[SHADER_MAX_INDEXES];
+	//Com_Printf("R_DrawElements(): r_primitives %d numIndexes %d\n", r_primitives->integer, numIndexes);
+	if ( r_primitives->integer != 2 && r_primitives->integer != 0 ) {
 		Com_Printf("Error: R_DrawElements() not implemented on GLES for r_primitives != 2 (r_primitives %d)\n", r_primitives->integer);
-	else
-		qglDrawElements(GL_TRIANGLES, numIndexes, GL_INDEX_TYPE, indexes);
+		return;
+	}
+	
+	// GLES does not support GL_UNSIGNED_INT for glDrawElements, so we'll convert values on the fly - this is SLOW, as you may imagine.
+	for (i = 0; i < numIndexes; i++)
+		ii[i] = indexes[i];
+	qglDrawElements(GL_TRIANGLES, numIndexes, GL_UNSIGNED_SHORT, ii);
 #else
+	int		primitives;
 	primitives = r_primitives->integer;
 
 	// default is to use triangles if compiled vertex arrays are present

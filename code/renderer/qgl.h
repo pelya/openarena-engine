@@ -42,7 +42,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define APIENTRY GL_APIENTRY
 #define qglActiveTextureARB glActiveTexture
 #define qglClientActiveTextureARB glClientActiveTexture
-#define qglMultiTexCoord2fARB(TGT, S, T) glMultiTexCoord4f(GL_TEXTURE ## TGT, S, T, 0.0f, 1.0f)
+//#define qglMultiTexCoord2fARB(TGT, S, T) glMultiTexCoord4f(GL_TEXTURE ## TGT, S, T, 0.0f, 1.0f)
 #define GL_TEXTURE0_ARB GL_TEXTURE0
 #define GL_TEXTURE1_ARB GL_TEXTURE1
 #define glDepthRange glDepthRangef
