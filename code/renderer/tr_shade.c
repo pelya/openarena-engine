@@ -165,10 +165,10 @@ instead of using the single glDrawElements call that may be inefficient
 without compiled vertex arrays.
 ==================
 */
+static GLushort indexes_short[SHADER_MAX_INDEXES];
 static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 #ifdef GL_VERSION_ES_CM_1_0
 	int i;
-	GLushort ii[SHADER_MAX_INDEXES];
 	//Com_Printf("R_DrawElements(): r_primitives %d numIndexes %d\n", r_primitives->integer, numIndexes);
 	if ( r_primitives->integer != 2 && r_primitives->integer != 0 ) {
 		Com_Printf("Error: R_DrawElements() not implemented on GLES for r_primitives != 2 (r_primitives %d)\n", r_primitives->integer);
@@ -177,8 +177,8 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 	
 	// GLES does not support GL_UNSIGNED_INT for glDrawElements, so we'll convert values on the fly - this is SLOW, as you may imagine.
 	for (i = 0; i < numIndexes; i++)
-		ii[i] = indexes[i];
-	qglDrawElements(GL_TRIANGLES, numIndexes, GL_UNSIGNED_SHORT, ii);
+		indexes_short[i] = indexes[i];
+	qglDrawElements(GL_TRIANGLES, numIndexes, GL_UNSIGNED_SHORT, indexes_short);
 #else
 	int		primitives;
 	primitives = r_primitives->integer;

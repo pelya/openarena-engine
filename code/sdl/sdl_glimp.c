@@ -179,8 +179,10 @@ static void GLimp_DetectAvailableModes(void)
 
 	for( numModes = 0; modes[ numModes ]; numModes++ );
 
+#ifndef __ANDROID__
 	if( numModes > 1 )
 		qsort( modes, numModes, sizeof( SDL_Rect* ), GLimp_CompareModes );
+#endif
 
 	for( i = 0; i < numModes; i++ )
 	{
@@ -243,6 +245,10 @@ static int GLimp_SetMode(int mode, qboolean fullscreen, qboolean noborder)
 			displayAspect = (float)videoInfo->current_w / (float)videoInfo->current_h;
 
 			ri.Printf( PRINT_ALL, "Estimated display aspect: %.3f\n", displayAspect );
+
+#ifdef __ANDROID__
+			R_SetNativeModeInfo( videoInfo->current_w, videoInfo->current_h );
+#endif
 		}
 		else
 		{
@@ -676,7 +682,7 @@ static void GLimp_InitExtensions( void )
 	}
 }
 
-#define R_MODE_FALLBACK 3 // 640 * 480
+#define R_MODE_FALLBACK 3 // That was 640x480, now it's device native
 
 /*
 ===============

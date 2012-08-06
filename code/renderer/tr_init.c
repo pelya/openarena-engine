@@ -262,7 +262,7 @@ void GL_CheckErrors( void ) {
 	ri.Error( ERR_FATAL, "GL_CheckErrors: %s", s );
 }
 
-
+#define R_MODE_FALLBACK 3
 /*
 ** R_GetModeInfo
 */
@@ -278,7 +278,7 @@ vidmode_t r_vidModes[] =
 	{ "Mode  0: 320x240",		320,	240,	1 },
 	{ "Mode  1: 400x300",		400,	300,	1 },
 	{ "Mode  2: 512x384",		512,	384,	1 },
-	{ "Mode  3: 640x480",		640,	480,	1 },
+	{ "Mode  3: device native",	800,	480,	1 },
 	{ "Mode  4: 800x600",		800,	600,	1 },
 	{ "Mode  5: 960x720",		960,	720,	1 },
 	{ "Mode  6: 1024x768",		1024,	768,	1 },
@@ -316,6 +316,11 @@ qboolean R_GetModeInfo( int *width, int *height, float *windowAspect, int mode )
 	*windowAspect = (float)*width / ( *height * pixelAspect );
 
 	return qtrue;
+}
+
+void R_SetNativeModeInfo( int width, int height ) {
+	r_vidModes[R_MODE_FALLBACK].width = width;
+	r_vidModes[R_MODE_FALLBACK].height = height;
 }
 
 /*
