@@ -37,22 +37,36 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #endif
 
-#ifdef GL_VERSION_ES_CM_1_0
+#ifdef USE_GLES
 #define APIENTRYP GL_APIENTRYP
 #define APIENTRY GL_APIENTRY
 #define qglActiveTextureARB glActiveTexture
 #define qglClientActiveTextureARB glClientActiveTexture
-//#define qglMultiTexCoord2fARB(TGT, S, T) glMultiTexCoord4f(GL_TEXTURE ## TGT, S, T, 0.0f, 1.0f)
 #define GL_TEXTURE0_ARB GL_TEXTURE0
 #define GL_TEXTURE1_ARB GL_TEXTURE1
 #define glDepthRange glDepthRangef
-#define glOrtho glOrthof
 #define glColor3f(r, g, b) glColor4f(r, g, b, 1.0f)
+#define glOrtho glOrthof
 #define glClipPlane glClipPlanef
+//#define qglMultiTexCoord2fARB(TGT, S, T) glMultiTexCoord4f(GL_TEXTURE ## TGT, S, T, 0.0f, 1.0f)
+/*
+extern void glOrtho( double left, double right,
+                                 double bottom, double top,
+                                 double near_val, double far_val );
+
+extern void glClipPlane( int plane, const double *equation );
+*/
 #else
+/*
 extern void (APIENTRYP qglActiveTextureARB) (GLenum texture);
 extern void (APIENTRYP qglClientActiveTextureARB) (GLenum texture);
 extern void (APIENTRYP qglMultiTexCoord2fARB) (GLenum target, GLfloat s, GLfloat t);
+*/
+
+#define qglActiveTextureARB glActiveTexture
+#define qglClientActiveTextureARB glClientActiveTexture
+#define qglMultiTexCoord2fARB glMultiTexCoord2f
+
 #endif
 
 extern void (APIENTRYP qglLockArraysEXT) (GLint first, GLsizei count);
