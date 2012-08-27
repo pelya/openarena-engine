@@ -1,6 +1,6 @@
 #!/bin/sh
 
-rm -rf build/release-linux-x86_64/renderer  build/release-linux-x86_64/client build/release-linux-x86_64/openarena.*
+rm -rf build/debug-linux-x86_64/openarena.* build/debug-linux-x86_64/renderer build/debug-linux-x86_64/client
 
 make -j8 release V=1 \
 USE_LOCAL_HEADERS=0 \

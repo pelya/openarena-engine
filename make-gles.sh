@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#rm -rf build/debug-linux-x86_64/renderer build/debug-linux-x86_64/client build/debug-linux-x86_64/openarena.*
+rm -rf build/debug-linux-x86_64/openarena.* build/debug-linux-x86_64/renderer build/debug-linux-x86_64/client
 
 make -j8 debug V=1 \
 USE_GLES=1 USE_LOCAL_HEADERS=0 \

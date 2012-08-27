@@ -734,13 +734,13 @@ static void Upload32( unsigned *data,
 		Com_Memcpy( scaledBuffer, data, width * height * 4 );
 	}
 
-	R_LightScaleTexture (scaledBuffer, scaled_width, scaled_height, !mipmap);
+	R_LightScaleTexture (scaledBuffer, scaled_width, scaled_height, !mipmap );
 
 	*pUploadWidth = scaled_width;
 	*pUploadHeight = scaled_height;
 	*format = internalFormat;
 
-	R_qglTexImage2D (0, internalFormat, scaled_width, scaled_height, data);
+	R_qglTexImage2D (0, internalFormat, scaled_width, scaled_height, scaledBuffer);
 
 	if (mipmap)
 	{
@@ -762,7 +762,7 @@ static void Upload32( unsigned *data,
 				R_BlendOverTexture( (byte *)scaledBuffer, scaled_width * scaled_height, mipBlendColors[miplevel] );
 			}
 
-			R_qglTexImage2D (miplevel, internalFormat, scaled_width, scaled_height, data);
+			R_qglTexImage2D (miplevel, internalFormat, scaled_width, scaled_height, scaledBuffer);
 		}
 	}
 done:
