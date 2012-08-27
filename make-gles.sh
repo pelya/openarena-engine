@@ -7,4 +7,4 @@ USE_GLES=1 USE_LOCAL_HEADERS=0 \
 USE_OPENAL=0 USE_CURL=1 USE_CURL_DLOPEN=0 USE_CODEC_VORBIS=1 USE_MUMBLE=0 USE_FREETYPE=1 \
 USE_RENDERER_DLOPEN=0 USE_INTERNAL_ZLIB=0 USE_INTERNAL_JPEG=1 2>&1 | tee build.log
 
-cd build/debug-linux-x86_64 && ./openarena.x86_64 +devmap kaos 2>&1 | tee ../../run.log
+cd build/debug-linux-x86_64 && ./openarena.x86_64 +devmap kaos +set r_fullscreen 0 2>&1 | tee ../../run.log
