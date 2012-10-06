@@ -362,11 +362,8 @@ CL_MouseEvent
 void CL_MouseEvent( int dx, int dy, int time ) {
 	if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
 		VM_Call( uivm, UI_MOUSE_EVENT, dx, dy );
-	} else if (Key_GetCatcher( ) & KEYCATCH_CGAME) {
+	} else{
 		VM_Call (cgvm, CG_MOUSE_EVENT, dx, dy);
-	} else {
-		cl.mouseDx[0] = dx;
-		cl.mouseDy[0] = dy;
 	}
 }
 
@@ -376,12 +373,7 @@ CL_Mouse2Event
 =================
 */
 void CL_Mouse2Event( int dx, int dy, int time ) {
-	if (Key_GetCatcher( ) & KEYCATCH_CGAME) {
-		VM_Call (cgvm, CG_MOUSE2_EVENT, dx, dy);
-	} else {
-		cl.mouseDx[1] = dx;
-		cl.mouseDy[1] = dy;
-	}
+	VM_Call (cgvm, CG_MOUSE2_EVENT, dx, dy);
 }
 
 /*
@@ -444,10 +436,17 @@ CL_MouseMove
 void CL_MouseMove(usercmd_t *cmd)
 {
 	// add mouse X/Y movement to cmd
+	/*
 	cl.viewangles[YAW] = - cl.mouseDx[0] / 2;
 	cl.viewangles[PITCH] = cl.mouseDy[0];
+	*/
 }
 
+int CL_SetViewAngles(const vec3_t angles)
+{
+	VectorCopy( angles, cl.viewangles );
+	return 0;
+}
 
 /*
 ==============

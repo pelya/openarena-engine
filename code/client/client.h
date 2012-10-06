@@ -511,6 +511,8 @@ float CL_KeyState (kbutton_t *key);
 int Key_StringToKeynum( char *str );
 char *Key_KeynumToString (int keynum);
 
+int CL_SetViewAngles(const vec3_t angles);
+
 //
 // cl_parse.c
 //
