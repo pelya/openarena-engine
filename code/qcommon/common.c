@@ -2205,6 +2205,9 @@ int Com_EventLoop( void ) {
 				Cbuf_AddText( (char *)ev.evPtr );
 				Cbuf_AddText( "\n" );
 			break;
+			case SE_MOUSE2:
+				CL_Mouse2Event( ev.evValue, ev.evValue2, ev.evTime );
+			break;
 			default:
 				Com_Error( ERR_FATAL, "Com_EventLoop: bad event type %i", ev.evType );
 			break;

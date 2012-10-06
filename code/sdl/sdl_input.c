@@ -522,9 +522,13 @@ static void IN_DeactivateMouse( void )
 
 		SDL_WM_GrabInput( SDL_GRAB_OFF );
 
+#ifndef __ANDROID__
+/*
 		// Don't warp the mouse unless the cursor is within the window
 		if( SDL_GetAppState( ) & SDL_APPMOUSEFOCUS )
 			SDL_WarpMouse( cls.glconfig.vidWidth / 2, cls.glconfig.vidHeight / 2 );
+*/
+#endif
 
 		mouseActive = qfalse;
 	}
@@ -605,6 +609,7 @@ static void IN_InitJoystick( void )
 
 	Cvar_Get( "in_availableJoysticks", buf, CVAR_ROM );
 
+#ifndef __ANDROID__
 	if( !in_joystick->integer ) {
 		Com_DPrintf( "Joystick is not active.\n" );
 		SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
@@ -614,7 +619,10 @@ static void IN_InitJoystick( void )
 	in_joystickNo = Cvar_Get( "in_joystickNo", "0", CVAR_ARCHIVE );
 	if( in_joystickNo->integer < 0 || in_joystickNo->integer >= total )
 		Cvar_Set( "in_joystickNo", "0" );
-
+#else
+	in_joystick->integer = 1;
+	in_joystickNo->integer = 0;
+#endif
 	in_joystickUseAnalog = Cvar_Get( "in_joystickUseAnalog", "0", CVAR_ARCHIVE );
 
 	stick = SDL_JoystickOpen( in_joystickNo->integer );
@@ -658,6 +666,7 @@ IN_JoyMove
 */
 static void IN_JoyMove( void )
 {
+#ifndef __ANDROID__
 	qboolean joy_pressed[ARRAY_LEN(joy_keys)];
 	unsigned int axes = 0;
 	unsigned int hats = 0;
@@ -856,6 +865,7 @@ static void IN_JoyMove( void )
 
 	/* Save for future generations. */
 	stick_state.oldaxes = axes;
+#endif
 }
 
 /*
@@ -863,11 +873,18 @@ static void IN_JoyMove( void )
 IN_ProcessEvents
 ===============
 */
+enum { MAX_POINTERS = 6, MAX_FILTERED = 2 };
+struct TouchPointer_t { short x; short y; unsigned char pressed; } touchPointers[MAX_POINTERS];
+struct FilteredTouchPointer_t { unsigned char idx; unsigned char pressed; }
+	filteredTouch[MAX_FILTERED] = { {-1, 0}, {-1, 0} };
+short accel[2], screenJoy[2];
+
 static void IN_ProcessEvents( void )
 {
 	SDL_Event e;
 	const char *character = NULL;
 	keyNum_t key = 0;
+
 
 	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
 			return;
@@ -906,7 +923,7 @@ static void IN_ProcessEvents( void )
 
 			case SDL_MOUSEMOTION:
 				if( mouseActive )
-					Com_QueueEvent( 0, SE_MOUSE, e.motion.xrel, e.motion.yrel, 0, NULL );
+					Com_QueueEvent( 0, SE_MOUSE, e.motion.x, e.motion.y, 0, NULL );
 				break;
 
 			case SDL_MOUSEBUTTONDOWN:
@@ -928,7 +945,36 @@ static void IN_ProcessEvents( void )
 						( e.type == SDL_MOUSEBUTTONDOWN ? qtrue : qfalse ), 0, NULL );
 				}
 				break;
+			
+			case SDL_JOYAXISMOTION: // Android accelerometer and on-screen joystick
+				{
+					if(e.jaxis.axis < 4)
+					{
+						if(e.jaxis.axis < 2)
+							screenJoy[e.jaxis.axis] = e.jaxis.value;
+						else
+							accel[e.jaxis.axis - 2] = e.jaxis.value;
+					}
+				}
+				break;
 
+			case SDL_JOYBUTTONDOWN: // Android multitouch
+			case SDL_JOYBUTTONUP:
+				{
+					if( e.jbutton.button < MAX_POINTERS )
+						touchPointers[e.jbutton.button].pressed = (e.jbutton.state == SDL_PRESSED);
+				}
+				break;
+			case SDL_JOYBALLMOTION: // Android multitouch
+				{
+					if( e.jball.ball < MAX_POINTERS )
+					{
+						touchPointers[e.jball.ball].x = e.jball.xrel;
+						touchPointers[e.jball.ball].y = e.jball.yrel;
+					}
+				}
+				break;
+			
 			case SDL_QUIT:
 				Cbuf_ExecuteText(EXEC_NOW, "quit Closed window\n");
 				break;
@@ -960,6 +1006,87 @@ static void IN_ProcessEvents( void )
 				break;
 		}
 	}
+
+#ifdef __ANDROID__
+	// We need only two touch pointers - first one is mouse, second for weapon selection, so we'll ignore all extra touch events.
+	// SDL will provide us with on-screen joystick, accelerometer and text input button, that won't be in touch events.
+	// TODO: this code will skip events, if user touches and releases finger during a single frame.
+	int i, j, allEmpty = 1, nonEmpty[MAX_FILTERED] = { -1, -1 };
+
+	for( i = 0; i < MAX_POINTERS; i++ )
+	{
+		if( touchPointers[i].pressed )
+		{
+			allEmpty = 0;
+			if( nonEmpty[0] < 0 )
+				nonEmpty[0] = i;
+			else
+			if( nonEmpty[1] < 0 )
+				nonEmpty[1] = i;
+			if( filteredTouch[0].idx < 0 )
+				filteredTouch[0].idx = i;
+			else
+			if( filteredTouch[1].idx < 0 )
+				filteredTouch[1].idx = i;
+		}
+	}
+	if( allEmpty )
+	{
+		if( filteredTouch[0].idx >= 0 )
+			filteredTouch[0].idx = -1;
+		if( filteredTouch[1].idx >= 0 )
+			filteredTouch[1].idx = -1;
+	}
+	if( filteredTouch[0].idx >= 0 && !touchPointers[filteredTouch[0].idx].pressed )
+	{
+		filteredTouch[0].idx = nonEmpty[0];
+		if( filteredTouch[1].idx == filteredTouch[0].idx )
+			filteredTouch[1].idx = nonEmpty[1];
+	}
+	if( filteredTouch[1].idx >= 0 && !touchPointers[filteredTouch[1].idx].pressed )
+	{
+		if( nonEmpty[0] != filteredTouch[0].idx )
+			filteredTouch[1].idx = nonEmpty[0];
+		else
+			filteredTouch[1].idx = nonEmpty[1];
+	}
+	
+	// TODO: too lazy to put them in a loop
+	if( filteredTouch[0].idx >= 0 )
+	{
+		Com_QueueEvent( 0, SE_MOUSE, touchPointers[filteredTouch[0].idx].x, touchPointers[filteredTouch[0].idx].y, 0, NULL );
+		if( touchPointers[filteredTouch[0].idx].pressed || touchPointers[filteredTouch[0].idx].pressed != filteredTouch[0].pressed )
+		{
+			filteredTouch[0].pressed = touchPointers[filteredTouch[0].idx].pressed;
+			Com_QueueEvent( 0, SE_KEY, K_MOUSE1, qtrue, 0, NULL );
+		}
+	}
+	if( filteredTouch[0].idx < 0 && filteredTouch[0].pressed )
+	{
+		filteredTouch[0].pressed = 0;
+		Com_QueueEvent( 0, SE_KEY, K_MOUSE1, qfalse, 0, NULL );
+	}
+
+	if( filteredTouch[1].idx >= 0 )
+	{
+		Com_QueueEvent( 0, SE_MOUSE2, touchPointers[filteredTouch[1].idx].x, touchPointers[filteredTouch[1].idx].y, 0, NULL );
+		if( touchPointers[filteredTouch[1].idx].pressed || touchPointers[filteredTouch[1].idx].pressed != filteredTouch[1].pressed )
+		{
+			filteredTouch[1].pressed = touchPointers[filteredTouch[1].idx].pressed;
+			Com_QueueEvent( 0, SE_KEY, K_AUX1, qtrue, 0, NULL );
+		}
+	}
+	if( filteredTouch[1].idx < 0 && filteredTouch[1].pressed )
+	{
+		filteredTouch[1].pressed = 0;
+		Com_QueueEvent( 0, SE_KEY, K_AUX1, qfalse, 0, NULL );
+	}
+
+	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 0, screenJoy[0], 0, NULL );
+	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 1, screenJoy[1], 0, NULL );
+	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 2, accel[0], 0, NULL );
+	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 3, accel[1], 0, NULL );
+#endif
 }
 
 /*
