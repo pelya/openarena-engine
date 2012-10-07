@@ -1,5 +1,7 @@
 #!/bin/sh
 
+( cd ../vm ; ./make.sh ; )
+
 rm -rf build/debug-linux-x86_64/openarena.* build/debug-linux-x86_64/renderer build/debug-linux-x86_64/client
 
 make -j8 release V=1 \

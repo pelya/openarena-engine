@@ -442,10 +442,9 @@ void CL_MouseMove(usercmd_t *cmd)
 	*/
 }
 
-int CL_SetViewAngles(const vec3_t angles)
+void CL_SetViewAngles(const vec3_t angles)
 {
 	VectorCopy( angles, cl.viewangles );
-	return 0;
 }
 
 /*

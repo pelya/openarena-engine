@@ -702,7 +702,8 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_R_INPVS:
 		return re.inPVS( VMA(1), VMA(2) );
 	case CG_SET_VIEW_ANGLES:
-		return CL_SetViewAngles( VMA(1) );
+		CL_SetViewAngles( VMA(1) );
+		return 0;
 
 	default:
 	        assert(0);
