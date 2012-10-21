@@ -40,6 +40,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #	include <SDL_cpuinfo.h>
 #endif
 #endif
+#include <SDL_timer.h>
 
 #include "sys_local.h"
 #include "sys_loadlib.h"
@@ -611,7 +612,13 @@ int main( int argc, char **argv )
 	}
 #endif
 
+	//SDL_Delay(10000);
+
+	Com_Printf( "main: calling Sys_PlatformInit\n" );
+
 	Sys_PlatformInit( );
+
+	Com_Printf( "main: calling Sys_PlatformInit done\n" );
 
 	// Set the initial time base
 	Sys_Milliseconds( );
@@ -635,6 +642,8 @@ int main( int argc, char **argv )
 		Q_strcat( commandLine, sizeof( commandLine ), " " );
 	}
 
+	Com_Printf( "main: calling Com_Init\n" );
+
 	Com_Init( commandLine );
 	NET_Init( );
 
@@ -645,6 +654,8 @@ int main( int argc, char **argv )
 	signal( SIGSEGV, Sys_SigHandler );
 	signal( SIGTERM, Sys_SigHandler );
 	signal( SIGINT, Sys_SigHandler );
+
+	Com_Printf( "main: init done\n" );
 
 	while( 1 )
 	{

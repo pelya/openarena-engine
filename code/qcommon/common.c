@@ -2364,6 +2364,7 @@ Change to a new mod properly with cleaning up cvars before switching.
 
 void Com_GameRestart(int checksumFeed, qboolean disconnect)
 {
+	Com_Printf( "----- Com_GameRestart -----\n" );
 	// make sure no recursion can be triggered
 	if(!com_gameRestarting && com_fullyInitialized)
 	{

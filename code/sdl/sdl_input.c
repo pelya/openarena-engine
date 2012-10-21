@@ -621,7 +621,8 @@ static void IN_InitJoystick( void )
 		Cvar_Set( "in_joystickNo", "0" );
 #else
 	in_joystick->integer = 1;
-	in_joystickNo->integer = 0;
+	in_joystickNo = Cvar_Get( "in_joystickNo", "0", CVAR_ARCHIVE );
+	Cvar_Set( "in_joystickNo", "0" );
 #endif
 	in_joystickUseAnalog = Cvar_Get( "in_joystickUseAnalog", "0", CVAR_ARCHIVE );
 
