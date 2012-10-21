@@ -362,8 +362,8 @@ CL_MouseEvent
 void CL_MouseEvent( int dx, int dy, int time ) {
 	if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
 		VM_Call( uivm, UI_MOUSE_EVENT, dx, dy );
-	} else{
-		VM_Call (cgvm, CG_MOUSE_EVENT, dx, dy);
+	} else if( cgvm ) {
+		VM_Call( cgvm, CG_MOUSE_EVENT, dx, dy );
 	}
 }
 
@@ -373,7 +373,8 @@ CL_Mouse2Event
 =================
 */
 void CL_Mouse2Event( int dx, int dy, int time ) {
-	VM_Call (cgvm, CG_MOUSE2_EVENT, dx, dy);
+	if( cgvm )
+		VM_Call (cgvm, CG_MOUSE2_EVENT, dx, dy);
 }
 
 /*
