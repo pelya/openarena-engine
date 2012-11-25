@@ -818,7 +818,7 @@ void RE_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *
 	qglEnableClientState (GL_VERTEX_ARRAY);
 	qglEnableClientState (GL_TEXTURE_COORD_ARRAY);
 	qglVertexPointer ( 2, GL_FLOAT, 0, vertices );
-	qglTexCoordPointer ( 2, GL_FLOAT, 0, vertices );
+	qglTexCoordPointer ( 2, GL_FLOAT, 0, texcoords );
 	qglDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
 }
 

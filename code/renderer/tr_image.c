@@ -480,10 +480,10 @@ byte	mipBlendColors[16][4] = {
 	{0,0,255,128},
 };
 
-static void ConvertPixels_RGBA_RGB( unsigned *src, unsigned size )
+static unsigned * ConvertPixels_RGBA_RGB( unsigned *src, unsigned size )
 {
 	unsigned i;
-	unsigned char * dst = (unsigned char *) src;
+	unsigned char * dst = (unsigned char *) malloc( size * 3 );
 	for( i = 0; i < size; i++ )
 	{
 		unsigned c = src[i];
@@ -491,6 +491,7 @@ static void ConvertPixels_RGBA_RGB( unsigned *src, unsigned size )
 		dst[ i * 3 + 1 ] = (c & 0xff00) / 0x100;
 		dst[ i * 3 + 2 ] = (c & 0xff0000) / 0x10000;
 	}
+	return dst;
 }
 
 static void R_qglTexImage2D( GLint miplevel, GLint internalFormat,
@@ -504,8 +505,9 @@ static void R_qglTexImage2D( GLint miplevel, GLint internalFormat,
 	if( internalFormat == GL_RGBA )
 		qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	else if( internalFormat == GL_RGB ) {
-		ConvertPixels_RGBA_RGB( pixels, width * height );
-		qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+		unsigned *converted = ConvertPixels_RGBA_RGB( pixels, width * height );
+		qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, converted);
+		free(converted);
 	} else
 		Com_Printf("R_qglTexImage2D: texture format %d (0x%x) not supported in GLES\n", internalFormat, internalFormat);
 #endif
