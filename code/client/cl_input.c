@@ -361,7 +361,7 @@ CL_MouseEvent
 */
 void CL_MouseEvent( int dx, int dy, int time ) {
 	if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
-		VM_Call( uivm, UI_MOUSE_EVENT, dx, dy );
+		VM_Call( uivm, UI_MOUSE_EVENT, dx * SCREEN_WIDTH / cls.glconfig.vidWidth, dy * SCREEN_HEIGHT / cls.glconfig.vidHeight);
 	} else if( cgvm ) {
 		VM_Call( cgvm, CG_MOUSE_EVENT, dx, dy );
 	}

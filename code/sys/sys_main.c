@@ -39,8 +39,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #	include <SDL.h>
 #	include <SDL_cpuinfo.h>
 #endif
-#endif
 #include <SDL_timer.h>
+#endif
 
 #include "sys_local.h"
 #include "sys_loadlib.h"

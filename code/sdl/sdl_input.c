@@ -1083,6 +1083,13 @@ static void IN_ProcessEvents( void )
 		Com_QueueEvent( 0, SE_KEY, K_AUX1, qfalse, 0, NULL );
 	}
 
+	/*
+	Com_Printf("SDL touch ptrs: x%d y%d b%d x%d y%d b%d joy %d %d accel %d %d\n",
+		touchPointers[filteredTouch[0].idx].x, touchPointers[filteredTouch[0].idx].y, filteredTouch[0].pressed,
+		touchPointers[filteredTouch[1].idx].x, touchPointers[filteredTouch[1].idx].y, filteredTouch[1].pressed,
+		screenJoy[0], screenJoy[1], accel[0], accel[1]);
+	*/
+
 	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 0, screenJoy[0], 0, NULL );
 	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 1, screenJoy[1], 0, NULL );
 	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 2, accel[0], 0, NULL );
