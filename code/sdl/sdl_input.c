@@ -875,8 +875,8 @@ IN_ProcessEvents
 ===============
 */
 enum { MAX_POINTERS = 6, MAX_FILTERED = 2 };
-struct TouchPointer_t { short x; short y; unsigned char pressed; } touchPointers[MAX_POINTERS];
-struct FilteredTouchPointer_t { unsigned char idx; unsigned char pressed; }
+struct TouchPointer_t { short x; short y; short pressed; } touchPointers[MAX_POINTERS];
+struct FilteredTouchPointer_t { short idx; short pressed; short oldpressed; }
 	filteredTouch[MAX_FILTERED] = { {-1, 0}, {-1, 0} };
 short accel[2], screenJoy[2];
 
@@ -923,12 +923,14 @@ static void IN_ProcessEvents( void )
 				break;
 
 			case SDL_MOUSEMOTION:
+				Com_Printf("SDL_MOUSEMOTION received, it sohuld never appear on Android\n");
 				if( mouseActive )
 					Com_QueueEvent( 0, SE_MOUSE, e.motion.x, e.motion.y, 0, NULL );
 				break;
 
 			case SDL_MOUSEBUTTONDOWN:
 			case SDL_MOUSEBUTTONUP:
+				Com_Printf("SDL_MOUSEBUTTON received, it sohuld never appear on Android\n");
 				{
 					unsigned char b;
 					switch( e.button.button )
@@ -1027,7 +1029,7 @@ static void IN_ProcessEvents( void )
 			if( filteredTouch[0].idx < 0 )
 				filteredTouch[0].idx = i;
 			else
-			if( filteredTouch[1].idx < 0 )
+			if( filteredTouch[1].idx < 0 && filteredTouch[0].idx != i )
 				filteredTouch[1].idx = i;
 		}
 	}
@@ -1055,36 +1057,40 @@ static void IN_ProcessEvents( void )
 	// TODO: too lazy to put them in a loop
 	if( filteredTouch[0].idx >= 0 )
 	{
+		//Com_Printf("K_MOUSE1 coords %04d %04d\n", touchPointers[filteredTouch[0].idx].x, touchPointers[filteredTouch[0].idx].y);
 		Com_QueueEvent( 0, SE_MOUSE, touchPointers[filteredTouch[0].idx].x, touchPointers[filteredTouch[0].idx].y, 0, NULL );
-		if( touchPointers[filteredTouch[0].idx].pressed || touchPointers[filteredTouch[0].idx].pressed != filteredTouch[0].pressed )
-		{
-			filteredTouch[0].pressed = touchPointers[filteredTouch[0].idx].pressed;
-			Com_QueueEvent( 0, SE_KEY, K_MOUSE1, qtrue, 0, NULL );
-		}
+		filteredTouch[0].pressed = 1;
 	}
 	if( filteredTouch[0].idx < 0 && filteredTouch[0].pressed )
-	{
 		filteredTouch[0].pressed = 0;
-		Com_QueueEvent( 0, SE_KEY, K_MOUSE1, qfalse, 0, NULL );
+
+	if( filteredTouch[0].pressed != filteredTouch[0].oldpressed )
+	{
+		filteredTouch[0].oldpressed = filteredTouch[0].pressed;
+		Com_QueueEvent( 0, SE_KEY, K_MOUSE1, filteredTouch[0].pressed ? qtrue : qfalse, 0, NULL );
+		//Com_Printf("K_MOUSE1 %s\n", filteredTouch[0].pressed ? "pressed" : "released");
 	}
 
 	if( filteredTouch[1].idx >= 0 )
 	{
+		//Com_Printf("K_MOUSE2 coords %04d %04d\n", touchPointers[filteredTouch[1].idx].x, touchPointers[filteredTouch[1].idx].y);
 		Com_QueueEvent( 0, SE_MOUSE2, touchPointers[filteredTouch[1].idx].x, touchPointers[filteredTouch[1].idx].y, 0, NULL );
-		if( touchPointers[filteredTouch[1].idx].pressed || touchPointers[filteredTouch[1].idx].pressed != filteredTouch[1].pressed )
-		{
-			filteredTouch[1].pressed = touchPointers[filteredTouch[1].idx].pressed;
-			Com_QueueEvent( 0, SE_KEY, K_AUX1, qtrue, 0, NULL );
-		}
+		filteredTouch[1].pressed = 1;
 	}
 	if( filteredTouch[1].idx < 0 && filteredTouch[1].pressed )
 	{
 		filteredTouch[1].pressed = 0;
-		Com_QueueEvent( 0, SE_KEY, K_AUX1, qfalse, 0, NULL );
+	}
+	if( filteredTouch[1].pressed != filteredTouch[1].oldpressed )
+	{
+		filteredTouch[1].oldpressed = filteredTouch[1].pressed;
+		Com_QueueEvent( 0, SE_KEY, K_MOUSE5, filteredTouch[1].pressed, 0, NULL );
+		//Com_Printf("K_MOUSE2 %s\n", filteredTouch[1].pressed ? "pressed" : "released");
 	}
 
 	/*
-	Com_Printf("SDL touch ptrs: x%d y%d b%d x%d y%d b%d joy %d %d accel %d %d\n",
+	Com_Printf("SDL touch ptrs: allEmpty %d idx1 %02d idx2 %02d x%04d y%04d b%d x%04d y%04d b%d joy %06d %06d accel %06d %06d\n",
+		allEmpty, filteredTouch[0].idx, filteredTouch[1].idx,
 		touchPointers[filteredTouch[0].idx].x, touchPointers[filteredTouch[0].idx].y, filteredTouch[0].pressed,
 		touchPointers[filteredTouch[1].idx].x, touchPointers[filteredTouch[1].idx].y, filteredTouch[1].pressed,
 		screenJoy[0], screenJoy[1], accel[0], accel[1]);
