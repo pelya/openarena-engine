@@ -641,7 +641,9 @@ static void IN_InitJoystick( void )
 	Com_DPrintf( "Balls:      %d\n", SDL_JoystickNumBalls(stick) );
 	Com_DPrintf( "Use Analog: %s\n", in_joystickUseAnalog->integer ? "Yes" : "No" );
 
+#ifndef __ANDROID__
 	SDL_JoystickEventState(SDL_QUERY);
+#endif
 }
 
 /*
@@ -924,16 +926,20 @@ static void IN_ProcessEvents( void )
 				break;
 
 			case SDL_MOUSEMOTION:
+#ifdef __ANDROID__
 				Com_Printf("SDL_MOUSEMOTION received, it sohuld never appear on Android\n");
+#endif
 				if( mouseActive )
 					Com_QueueEvent( 0, SE_MOUSE, e.motion.x, e.motion.y, 0, NULL );
 				break;
 
 			case SDL_MOUSEBUTTONDOWN:
 			case SDL_MOUSEBUTTONUP:
-				Com_Printf("SDL_MOUSEBUTTON received, it sohuld never appear on Android\n");
 				{
 					unsigned char b;
+#ifdef __ANDROID__
+					Com_Printf("SDL_MOUSEBUTTON received, it sohuld never appear on Android\n");
+#endif
 					switch( e.button.button )
 					{
 						case 1:   b = K_MOUSE1;     break;
@@ -995,6 +1001,9 @@ static void IN_ProcessEvents( void )
 				   we aren't constantly recreating the GL context while
 				   he tries to drag...*/
 				vidRestartTime = Sys_Milliseconds() + 1000;
+#ifdef __ANDROID__
+				vidRestartTime = Sys_Milliseconds();
+#endif
 			}
 			break;
 			case SDL_ACTIVEEVENT:
@@ -1110,8 +1119,11 @@ static void IN_ProcessEvents( void )
 
 	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 0, screenJoy[0], 0, NULL );
 	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 1, screenJoy[1], 0, NULL );
+	// TODO: enable these events later
+	/*
 	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 2, accel[0], 0, NULL );
 	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 3, accel[1], 0, NULL );
+	*/
 #endif
 }
 

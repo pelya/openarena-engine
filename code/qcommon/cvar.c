@@ -901,6 +901,27 @@ void Cvar_Reset_f( void ) {
 	Cvar_Reset( Cmd_Argv( 1 ) );
 }
 
+void Cvar_Increase_f( void ) {
+	if ( Cmd_Argc() != 3 ) {
+		Com_Printf ("usage: increase <variable> <value>\n");
+		return;
+	}
+	cvar_t	*var;
+	var = Cvar_FindVar ( Cmd_Argv( 1 ) );
+	if (!var) {
+		Com_Printf ("No such var: %s\n", Cmd_Argv( 1 ));
+		return;
+	}
+
+	Com_Printf ("Old value: %f, inc %s\n", (double)var->value, Cmd_Argv( 2 ));
+	var->value += atof( Cmd_Argv( 2 ) );
+	char t[64];
+	Com_sprintf(t, sizeof(t), "%f", var->value);
+	Com_Printf ("New value: %s\n", t);
+	Cvar_Set(Cmd_Argv( 1 ), t);
+	Cvar_Print(var);
+}
+
 /*
 ============
 Cvar_WriteVariables
@@ -1317,6 +1338,8 @@ void Cvar_Init (void)
 	Cmd_SetCommandCompletionFunc( "reset", Cvar_CompleteCvarName );
 	Cmd_AddCommand ("unset", Cvar_Unset_f);
 	Cmd_SetCommandCompletionFunc("unset", Cvar_CompleteCvarName);
+	Cmd_AddCommand ("increase", Cvar_Increase_f);
+	Cmd_SetCommandCompletionFunc( "increase", Cvar_CompleteCvarName );
 
 	Cmd_AddCommand ("cvarlist", Cvar_List_f);
 	Cmd_AddCommand ("cvar_restart", Cvar_Restart_f);
