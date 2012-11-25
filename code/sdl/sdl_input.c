@@ -878,6 +878,7 @@ enum { MAX_POINTERS = 6, MAX_FILTERED = 2 };
 struct TouchPointer_t { short x; short y; short pressed; } touchPointers[MAX_POINTERS];
 struct FilteredTouchPointer_t { short idx; short pressed; short oldpressed; }
 	filteredTouch[MAX_FILTERED] = { {-1, 0}, {-1, 0} };
+short deferredTouch = 0;
 short accel[2], screenJoy[2];
 
 static void IN_ProcessEvents( void )
@@ -1067,8 +1068,19 @@ static void IN_ProcessEvents( void )
 	if( filteredTouch[0].pressed != filteredTouch[0].oldpressed )
 	{
 		filteredTouch[0].oldpressed = filteredTouch[0].pressed;
-		Com_QueueEvent( 0, SE_KEY, K_MOUSE1, filteredTouch[0].pressed ? qtrue : qfalse, 0, NULL );
-		//Com_Printf("K_MOUSE1 %s\n", filteredTouch[0].pressed ? "pressed" : "released");
+		deferredTouch = (filteredTouch[0].pressed ? 1 : 2) + 10;
+	}
+	if( deferredTouch )
+	{
+		// Defer the mouse event for two frames, because in game code, we shoot first, then send a packet to the server, and only then aim. This will hopefully be unnoticeable on fast devices.
+		//Com_Printf("K_MOUSE1 %s\n", deferredTouch == 1 ? "pressed" : "released");
+		if( deferredTouch >= 10 )
+			deferredTouch -= 10;
+		else
+		{
+			Com_QueueEvent( 0, SE_KEY, K_MOUSE1, deferredTouch == 1 ? qtrue : qfalse, 0, NULL );
+			deferredTouch = 0;
+		}
 	}
 
 	if( filteredTouch[1].idx >= 0 )
