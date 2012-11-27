@@ -881,7 +881,95 @@ struct TouchPointer_t { short x; short y; short pressed; } touchPointers[MAX_POI
 struct FilteredTouchPointer_t { short idx; short pressed; short oldpressed; }
 	filteredTouch[MAX_FILTERED] = { {-1, 0}, {-1, 0} };
 short deferredTouch = 0;
-short accel[2], screenJoy[2];
+
+static void IN_ProcessTouchPoints( void )
+{
+	// We need only two touch pointers - first one is mouse, second for weapon selection, so we'll ignore all extra touch events.
+	// SDL will provide us with on-screen joystick, accelerometer and text input button, that won't be in touch events.
+	// TODO: this code will skip events, if user touches and releases finger during a single frame.
+	int i, j, allEmpty = 1, nonEmpty[MAX_FILTERED] = { -1, -1 };
+
+	for( i = 0; i < MAX_POINTERS; i++ )
+	{
+		if( touchPointers[i].pressed )
+		{
+			allEmpty = 0;
+			if( nonEmpty[0] < 0 )
+				nonEmpty[0] = i;
+			else
+			if( nonEmpty[1] < 0 )
+				nonEmpty[1] = i;
+			if( filteredTouch[0].idx < 0 )
+				filteredTouch[0].idx = i;
+			else
+			if( filteredTouch[1].idx < 0 && filteredTouch[0].idx != i )
+				filteredTouch[1].idx = i;
+		}
+	}
+	if( allEmpty )
+	{
+		if( filteredTouch[0].idx >= 0 )
+			filteredTouch[0].idx = -1;
+		if( filteredTouch[1].idx >= 0 )
+			filteredTouch[1].idx = -1;
+	}
+	if( filteredTouch[0].idx >= 0 && !touchPointers[filteredTouch[0].idx].pressed )
+	{
+		filteredTouch[0].idx = nonEmpty[0];
+		if( filteredTouch[1].idx == filteredTouch[0].idx )
+			filteredTouch[1].idx = nonEmpty[1];
+	}
+	if( filteredTouch[1].idx >= 0 && !touchPointers[filteredTouch[1].idx].pressed )
+	{
+		if( nonEmpty[0] != filteredTouch[0].idx )
+			filteredTouch[1].idx = nonEmpty[0];
+		else
+			filteredTouch[1].idx = nonEmpty[1];
+	}
+	
+	// TODO: too lazy to put them in a loop
+	if( filteredTouch[0].idx >= 0 )
+	{
+		//Com_Printf("K_MOUSE1 coords %04d %04d\n", touchPointers[filteredTouch[0].idx].x, touchPointers[filteredTouch[0].idx].y);
+		Com_QueueEvent( 0, SE_MOUSE, touchPointers[filteredTouch[0].idx].x, touchPointers[filteredTouch[0].idx].y, 0, NULL );
+		filteredTouch[0].pressed = 1;
+	}
+	if( filteredTouch[0].idx < 0 && filteredTouch[0].pressed )
+		filteredTouch[0].pressed = 0;
+
+	if( filteredTouch[0].pressed != filteredTouch[0].oldpressed )
+	{
+		filteredTouch[0].oldpressed = filteredTouch[0].pressed;
+		// Defer the mouse event for two frames, because in game code, we shoot first, then send a packet to the server, and only then aim. This will hopefully be unnoticeable on fast devices.
+		if( filteredTouch[0].pressed )
+			deferredTouch = 2;
+		else
+		{
+			if( deferredTouch > 0 )
+				Com_QueueEvent( 0, SE_KEY, K_MOUSE1, qtrue, 0, NULL );
+			Com_QueueEvent( 0, SE_KEY, K_MOUSE1, qfalse, 0, NULL );
+			deferredTouch = 0;
+		}
+	}
+
+	if( filteredTouch[1].idx >= 0 )
+	{
+		//Com_Printf("K_MOUSE2 coords %04d %04d\n", touchPointers[filteredTouch[1].idx].x, touchPointers[filteredTouch[1].idx].y);
+		Com_QueueEvent( 0, SE_MOUSE2, touchPointers[filteredTouch[1].idx].x, touchPointers[filteredTouch[1].idx].y, 0, NULL );
+		filteredTouch[1].pressed = 1;
+	}
+	if( filteredTouch[1].idx < 0 && filteredTouch[1].pressed )
+	{
+		filteredTouch[1].pressed = 0;
+	}
+	if( filteredTouch[1].pressed != filteredTouch[1].oldpressed )
+	{
+		filteredTouch[1].oldpressed = filteredTouch[1].pressed;
+		Com_QueueEvent( 0, SE_KEY, K_MOUSE5, filteredTouch[1].pressed, 0, NULL );
+		//Com_Printf("K_MOUSE2 %s\n", filteredTouch[1].pressed ? "pressed" : "released");
+	}
+}
+
 
 static void IN_ProcessEvents( void )
 {
@@ -958,13 +1046,8 @@ static void IN_ProcessEvents( void )
 			
 			case SDL_JOYAXISMOTION: // Android accelerometer and on-screen joystick
 				{
-					if(e.jaxis.axis < 4)
-					{
-						if(e.jaxis.axis < 2)
-							screenJoy[e.jaxis.axis] = e.jaxis.value;
-						else
-							accel[e.jaxis.axis - 2] = e.jaxis.value;
-					}
+					if(e.jaxis.axis < 2) // 0-1 = screen joystick, 2-3 = accelerometer
+						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis, e.jaxis.value, 0, NULL );
 				}
 				break;
 
@@ -972,15 +1055,22 @@ static void IN_ProcessEvents( void )
 			case SDL_JOYBUTTONUP:
 				{
 					if( e.jbutton.button < MAX_POINTERS )
+					{
 						touchPointers[e.jbutton.button].pressed = (e.jbutton.state == SDL_PRESSED);
+						IN_ProcessTouchPoints();
+					}
 				}
 				break;
 			case SDL_JOYBALLMOTION: // Android multitouch
 				{
 					if( e.jball.ball < MAX_POINTERS )
 					{
+						int i;
 						touchPointers[e.jball.ball].x = e.jball.xrel;
 						touchPointers[e.jball.ball].y = e.jball.yrel;
+						for( i = 0; i < MAX_FILTERED; i++ )
+							if( e.jball.ball == filteredTouch[i].idx )
+								Com_QueueEvent( 0, SE_MOUSE, touchPointers[e.jball.ball].x, touchPointers[e.jball.ball].y, 0, NULL );
 					}
 				}
 				break;
@@ -1020,111 +1110,12 @@ static void IN_ProcessEvents( void )
 		}
 	}
 
-#ifdef __ANDROID__
-	// We need only two touch pointers - first one is mouse, second for weapon selection, so we'll ignore all extra touch events.
-	// SDL will provide us with on-screen joystick, accelerometer and text input button, that won't be in touch events.
-	// TODO: this code will skip events, if user touches and releases finger during a single frame.
-	int i, j, allEmpty = 1, nonEmpty[MAX_FILTERED] = { -1, -1 };
-
-	for( i = 0; i < MAX_POINTERS; i++ )
+	if( deferredTouch > 0 )
 	{
-		if( touchPointers[i].pressed )
-		{
-			allEmpty = 0;
-			if( nonEmpty[0] < 0 )
-				nonEmpty[0] = i;
-			else
-			if( nonEmpty[1] < 0 )
-				nonEmpty[1] = i;
-			if( filteredTouch[0].idx < 0 )
-				filteredTouch[0].idx = i;
-			else
-			if( filteredTouch[1].idx < 0 && filteredTouch[0].idx != i )
-				filteredTouch[1].idx = i;
-		}
+		deferredTouch --;
+		if( !deferredTouch )
+			Com_QueueEvent( 0, SE_KEY, K_MOUSE1, qtrue, 0, NULL );
 	}
-	if( allEmpty )
-	{
-		if( filteredTouch[0].idx >= 0 )
-			filteredTouch[0].idx = -1;
-		if( filteredTouch[1].idx >= 0 )
-			filteredTouch[1].idx = -1;
-	}
-	if( filteredTouch[0].idx >= 0 && !touchPointers[filteredTouch[0].idx].pressed )
-	{
-		filteredTouch[0].idx = nonEmpty[0];
-		if( filteredTouch[1].idx == filteredTouch[0].idx )
-			filteredTouch[1].idx = nonEmpty[1];
-	}
-	if( filteredTouch[1].idx >= 0 && !touchPointers[filteredTouch[1].idx].pressed )
-	{
-		if( nonEmpty[0] != filteredTouch[0].idx )
-			filteredTouch[1].idx = nonEmpty[0];
-		else
-			filteredTouch[1].idx = nonEmpty[1];
-	}
-	
-	// TODO: too lazy to put them in a loop
-	if( filteredTouch[0].idx >= 0 )
-	{
-		//Com_Printf("K_MOUSE1 coords %04d %04d\n", touchPointers[filteredTouch[0].idx].x, touchPointers[filteredTouch[0].idx].y);
-		Com_QueueEvent( 0, SE_MOUSE, touchPointers[filteredTouch[0].idx].x, touchPointers[filteredTouch[0].idx].y, 0, NULL );
-		filteredTouch[0].pressed = 1;
-	}
-	if( filteredTouch[0].idx < 0 && filteredTouch[0].pressed )
-		filteredTouch[0].pressed = 0;
-
-	if( filteredTouch[0].pressed != filteredTouch[0].oldpressed )
-	{
-		filteredTouch[0].oldpressed = filteredTouch[0].pressed;
-		deferredTouch = (filteredTouch[0].pressed ? 1 : 2) + 10;
-	}
-	if( deferredTouch )
-	{
-		// Defer the mouse event for two frames, because in game code, we shoot first, then send a packet to the server, and only then aim. This will hopefully be unnoticeable on fast devices.
-		//Com_Printf("K_MOUSE1 %s\n", deferredTouch == 1 ? "pressed" : "released");
-		if( deferredTouch >= 10 )
-			deferredTouch -= 10;
-		else
-		{
-			Com_QueueEvent( 0, SE_KEY, K_MOUSE1, deferredTouch == 1 ? qtrue : qfalse, 0, NULL );
-			deferredTouch = 0;
-		}
-	}
-
-	if( filteredTouch[1].idx >= 0 )
-	{
-		//Com_Printf("K_MOUSE2 coords %04d %04d\n", touchPointers[filteredTouch[1].idx].x, touchPointers[filteredTouch[1].idx].y);
-		Com_QueueEvent( 0, SE_MOUSE2, touchPointers[filteredTouch[1].idx].x, touchPointers[filteredTouch[1].idx].y, 0, NULL );
-		filteredTouch[1].pressed = 1;
-	}
-	if( filteredTouch[1].idx < 0 && filteredTouch[1].pressed )
-	{
-		filteredTouch[1].pressed = 0;
-	}
-	if( filteredTouch[1].pressed != filteredTouch[1].oldpressed )
-	{
-		filteredTouch[1].oldpressed = filteredTouch[1].pressed;
-		Com_QueueEvent( 0, SE_KEY, K_MOUSE5, filteredTouch[1].pressed, 0, NULL );
-		//Com_Printf("K_MOUSE2 %s\n", filteredTouch[1].pressed ? "pressed" : "released");
-	}
-
-	/*
-	Com_Printf("SDL touch ptrs: allEmpty %d idx1 %02d idx2 %02d x%04d y%04d b%d x%04d y%04d b%d joy %06d %06d accel %06d %06d\n",
-		allEmpty, filteredTouch[0].idx, filteredTouch[1].idx,
-		touchPointers[filteredTouch[0].idx].x, touchPointers[filteredTouch[0].idx].y, filteredTouch[0].pressed,
-		touchPointers[filteredTouch[1].idx].x, touchPointers[filteredTouch[1].idx].y, filteredTouch[1].pressed,
-		screenJoy[0], screenJoy[1], accel[0], accel[1]);
-	*/
-
-	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 0, screenJoy[0], 0, NULL );
-	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 1, screenJoy[1], 0, NULL );
-	// TODO: enable these events later
-	/*
-	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 2, accel[0], 0, NULL );
-	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, 3, accel[1], 0, NULL );
-	*/
-#endif
 }
 
 /*
