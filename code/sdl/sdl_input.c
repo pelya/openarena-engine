@@ -47,6 +47,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <IOKit/hidsystem/event_status_driver.h>
 #endif
 
+#ifdef __ANDROID__
+#include <SDL_screenkeyboard.h>
+#endif
+
+
+
 static cvar_t *in_keyboardDebug     = NULL;
 
 static SDL_Joystick *stick = NULL;
@@ -521,14 +527,6 @@ static void IN_DeactivateMouse( void )
 		IN_GobbleMotionEvents( );
 
 		SDL_WM_GrabInput( SDL_GRAB_OFF );
-
-#ifndef __ANDROID__
-/*
-		// Don't warp the mouse unless the cursor is within the window
-		if( SDL_GetAppState( ) & SDL_APPMOUSEFOCUS )
-			SDL_WarpMouse( cls.glconfig.vidWidth / 2, cls.glconfig.vidHeight / 2 );
-*/
-#endif
 
 		mouseActive = qfalse;
 	}
@@ -1118,6 +1116,40 @@ static void IN_ProcessEvents( void )
 	}
 }
 
+static void IN_ShowHideScreenButtons( void )
+{
+#ifdef __ANDROID__
+	SDL_Rect rect;
+	// Show/hide Android on-screen buttons, when we enter/leave menu
+	SDL_ANDROID_GetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
+	if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE )
+	{
+		if( rect.w > 0 )
+		{
+			rect.w = rect.h = 0;
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect);
+		}
+	}
+	else
+	{
+		if( rect.w <= 0 )
+		{
+			rect.w = cls.glconfig.vidHeight / 2.5f;
+			rect.h = rect.w;
+			rect.x = 0;
+			rect.y = cls.glconfig.vidHeight - rect.h;
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
+			rect.w = cls.glconfig.vidHeight / 5;
+			rect.h = rect.w;
+			rect.x = 0;
+			rect.y = cls.glconfig.vidHeight / 2 - rect.h;
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect);
+		}
+	}
+#endif
+}
+
 /*
 ===============
 IN_Frame
@@ -1129,6 +1161,7 @@ void IN_Frame( void )
 
 	IN_JoyMove( );
 	IN_ProcessEvents( );
+	IN_ShowHideScreenButtons( );
 
 	// If not DISCONNECTED (main menu) or ACTIVE (in game), we're loading
 	loading = ( clc.state != CA_DISCONNECTED && clc.state != CA_ACTIVE );
