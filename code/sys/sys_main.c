@@ -622,6 +622,10 @@ int main( int argc, char **argv )
 	Sys_ParseArgs( argc, argv );
 	Sys_SetBinaryPath( Sys_Dirname( argv[ 0 ] ) );
 	Sys_SetDefaultInstallPath( DEFAULT_BASEDIR );
+#ifdef __ANDROID__
+	if( getenv( "APPDIR" ) ) // Shared libraries on Android are inside /data/data/<java.app.name>/files, which is not on SD card.
+		Sys_SetBinaryPath( getenv( "APPDIR" ) );
+#else
 
 	// Concatenate the command line for passing to Com_Init
 	for( i = 1; i < argc; i++ )
