@@ -1129,22 +1129,29 @@ static void IN_ShowHideScreenButtons( void )
 			rect.w = rect.h = 0;
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect);
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect);
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect);
+			// TODO: implement automatic keyboard toggling from text fields - see MenuField_Key()
+			//SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
 		}
 	}
 	else
 	{
 		if( rect.w <= 0 )
 		{
-			rect.w = cls.glconfig.vidHeight / 2.5f;
-			rect.h = rect.w;
-			rect.x = 0;
-			rect.y = cls.glconfig.vidHeight - rect.h;
-			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
-			rect.w = cls.glconfig.vidHeight / 5;
-			rect.h = rect.w;
-			rect.x = 0;
-			rect.y = cls.glconfig.vidHeight / 2 - rect.h;
+			// Four buttons in a row, plus joystick, which is 2x bigger than buttons.
+			rect.w = rect.h = cls.glconfig.vidHeight / 6;
+			rect.x = rect.y = 0;
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
+			rect.y += rect.h;
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect);
+			rect.y += rect.h;
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect);
+			rect.y += rect.h;
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect);
+			rect.y += rect.h;
+			rect.w = rect.h = cls.glconfig.vidHeight - rect.y;
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
 		}
 	}
 #endif
