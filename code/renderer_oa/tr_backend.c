@@ -20,8 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include TR_CONFIG_H
-#include TR_LOCAL_H
+#include "tr_local.h"
 
 backEndData_t	*backEndData[SMP_FRAMES];
 backEndState_t	backEnd;
@@ -178,30 +177,16 @@ void GL_Cull( int cullType ) {
 	} 
 	else 
 	{
+		qboolean cullFront;
 		qglEnable( GL_CULL_FACE );
 
-		if ( cullType == CT_BACK_SIDED )
+		cullFront = (cullType == CT_FRONT_SIDED);
+		if ( backEnd.viewParms.isMirror )
 		{
-			if ( backEnd.viewParms.isMirror )
-			{
-				qglCullFace( GL_FRONT );
-			}
-			else
-			{
-				qglCullFace( GL_BACK );
-			}
+			cullFront = !cullFront;
 		}
-		else
-		{
-			if ( backEnd.viewParms.isMirror )
-			{
-				qglCullFace( GL_BACK );
-			}
-			else
-			{
-				qglCullFace( GL_FRONT );
-			}
-		}
+
+		qglCullFace( cullFront ? GL_FRONT : GL_BACK );
 	}
 }
 
@@ -624,7 +609,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		if ( entityNum != oldEntityNum ) {
 			depthRange = isCrosshair = qfalse;
 
-			if ( entityNum != ENTITYNUM_WORLD ) {
+			if ( entityNum != REFENTITYNUM_WORLD ) {
 				backEnd.currentEntity = &backEnd.refdef.entities[entityNum];
 				backEnd.refdef.floatTime = originalTime - backEnd.currentEntity->e.shaderTime;
 				// we have to reset the shaderTime as well otherwise image animations start

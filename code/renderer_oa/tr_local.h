@@ -24,14 +24,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef __TR_LOCAL_H__
 #define __TR_LOCAL_H__
 
-#include TR_CONFIG_H
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qfiles.h"
 #include "../qcommon/qcommon.h"
-#include TR_PUBLIC_H
-#include QGL_H
-#include "qgl_extra.h"
-#include IQM_H
+#include "../renderer/tr_public.h"
+#include "qgl.h"
+#include "../renderer/iqm.h"
 
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
 typedef unsigned int glIndex_t;
@@ -937,8 +935,8 @@ the bits are allocated as follows:
 17-30 : sorted shader index
 */
 #define	QSORT_FOGNUM_SHIFT	2
-#define	QSORT_ENTITYNUM_SHIFT	7
-#define	QSORT_SHADERNUM_SHIFT	(QSORT_ENTITYNUM_SHIFT+ENTITYNUM_BITS)
+#define	QSORT_REFENTITYNUM_SHIFT	7
+#define	QSORT_SHADERNUM_SHIFT	(QSORT_REFENTITYNUM_SHIFT+REFENTITYNUM_BITS)
 #if (QSORT_SHADERNUM_SHIFT+SHADERNUM_BITS) > 32
 	#error "Need to update sorting, too many bits."
 #endif
@@ -1073,7 +1071,7 @@ typedef struct {
 	trRefEntity_t			*currentEntity;
 	trRefEntity_t			worldEntity;		// point currentEntity at this when rendering world
 	int						currentEntityNum;
-	int						shiftedEntityNum;	// currentEntityNum << QSORT_ENTITYNUM_SHIFT
+	int						shiftedEntityNum;	// currentEntityNum << QSORT_REFENTITYNUM_SHIFT
 	model_t					*currentModel;
 
 	viewParms_t				viewParms;
@@ -2119,7 +2117,7 @@ typedef enum {
 typedef struct {
 	drawSurf_t	drawSurfs[MAX_DRAWSURFS];
 	dlight_t	dlights[MAX_DLIGHTS];
-	trRefEntity_t	entities[MAX_ENTITIES];
+	trRefEntity_t	entities[MAX_REFENTITIES];
 	srfPoly_t	*polys;//[MAX_POLYS];
 	polyVert_t	*polyVerts;//[MAX_POLYVERTS];
 	renderCommandList_t	commands;

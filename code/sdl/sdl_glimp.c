@@ -39,9 +39,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdlib.h>
 #include <math.h>
 
-#include TR_CONFIG_H
-#include TR_LOCAL_H
-#include "../client/client.h"
+#include "../renderer/tr_local.h"
 #include "../sys/sys_local.h"
 #include "sdl_icon.h"
 
@@ -261,7 +259,25 @@ static int GLimp_SetMode(int mode, qboolean fullscreen, qboolean noborder)
 
 	ri.Printf (PRINT_ALL, "...setting mode %d:", mode );
 
-	if ( !R_GetModeInfo( &glConfig.vidWidth, &glConfig.vidHeight, &glConfig.windowAspect, mode ) )
+	if (mode == -2)
+	{
+		// use desktop video resolution
+		if( videoInfo->current_h > 0 )
+		{
+			glConfig.vidWidth = videoInfo->current_w;
+			glConfig.vidHeight = videoInfo->current_h;
+		}
+		else
+		{
+			glConfig.vidWidth = 640;
+			glConfig.vidHeight = 480;
+			ri.Printf( PRINT_ALL,
+					"Cannot determine display resolution, assuming 640x480\n" );
+		}
+
+		glConfig.windowAspect = (float)glConfig.vidWidth / (float)glConfig.vidHeight;
+	}
+	else if ( !R_GetModeInfo( &glConfig.vidWidth, &glConfig.vidHeight, &glConfig.windowAspect, mode ) )
 	{
 		ri.Printf( PRINT_ALL, " invalid mode\n" );
 		return RSERR_INVALID_MODE;

@@ -130,6 +130,9 @@ clientConnection_t	clc;
 clientStatic_t		cls;
 vm_t				*cgvm;
 
+char				cl_oldGame[MAX_QPATH];
+qboolean			cl_oldGameSet;
+
 // Structure containing functions exported from refresh DLL
 refexport_t	re;
 #ifdef USE_RENDERER_DLOPEN
@@ -1369,11 +1372,11 @@ static void CL_UpdateGUID( const char *prefix, int prefix_len )
 
 static void CL_OldGame(void)
 {
-	if(cls.oldGameSet)
+	if(cl_oldGameSet)
 	{
 		// change back to previous fs_game
-		cls.oldGameSet = qfalse;
-		Cvar_Set2("fs_game", cls.oldGame, qtrue);
+		cl_oldGameSet = qfalse;
+		Cvar_Set2("fs_game", cl_oldGame, qtrue);
 		FS_ConditionalRestart(clc.checksumFeed, qfalse);
 	}
 }
@@ -3208,6 +3211,7 @@ void CL_InitRef( void ) {
 
 	if(!(rendererLib = Sys_LoadDll(dllName, qfalse)) && strcmp(cl_renderer->string, cl_renderer->resetString))
 	{
+		Com_Printf("failed:\n\"%s\"\n", Sys_LibraryError());
 		Cvar_ForceReset("cl_renderer");
 
 		Com_sprintf(dllName, sizeof(dllName), "renderer_opengl1_" ARCH_STRING DLL_EXT);
@@ -3443,7 +3447,7 @@ void CL_Init( void ) {
 	{
 		CL_ClearState();
 		clc.state = CA_DISCONNECTED;	// no longer CA_UNINITIALIZED
-		cls.oldGameSet = qfalse;
+		cl_oldGameSet = qfalse;
 	}
 
 	cls.realtime = 0;
@@ -3477,8 +3481,8 @@ void CL_Init( void ) {
 
 	rconAddress = Cvar_Get ("rconAddress", "", 0);
 
-	cl_yawspeed = Cvar_Get ("cl_yawspeed", "140", CVAR_ARCHIVE | CVAR_ROM);
-	cl_pitchspeed = Cvar_Get ("cl_pitchspeed", "140", CVAR_ARCHIVE | CVAR_ROM);
+	cl_yawspeed = Cvar_Get ("cl_yawspeed", "140", CVAR_CHEAT);
+	cl_pitchspeed = Cvar_Get ("cl_pitchspeed", "140", CVAR_CHEAT);
 	cl_anglespeedkey = Cvar_Get ("cl_anglespeedkey", "1.5", 0);
 
 	cl_maxpackets = Cvar_Get ("cl_maxpackets", "30", CVAR_ARCHIVE );

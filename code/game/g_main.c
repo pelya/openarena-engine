@@ -103,7 +103,6 @@ static cvarTable_t		gameCvarTable[] = {
 	{ NULL, "gamename", GAMEVERSION , CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
 	{ NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },
 	{ &g_restarted, "g_restarted", "0", CVAR_ROM, 0, qfalse  },
-	{ NULL, "sv_mapname", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
 
 	// latched vars
 	{ &g_gametype, "g_gametype", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH, 0, qfalse  },
@@ -1522,7 +1521,12 @@ void CheckTournament( void ) {
 		// if all players have arrived, start the countdown
 		if ( level.warmupTime < 0 ) {
 			// fudge by -1 to account for extra delays
-			level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
+			if ( g_warmup.integer > 1 ) {
+				level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
+			} else {
+				level.warmupTime = 0;
+			}
+
 			trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
 			return;
 		}
