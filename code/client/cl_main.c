@@ -103,6 +103,8 @@ cvar_t	*j_forward_axis;
 cvar_t	*j_side_axis;
 cvar_t	*j_up_axis;
 
+cvar_t	*j_androidJoystickJumpTime;
+
 cvar_t	*cl_activeAction;
 
 cvar_t	*cl_motdString;
@@ -3538,6 +3540,8 @@ void CL_Init( void ) {
 	j_forward =      Cvar_Get ("j_forward",      "-0.25", CVAR_ARCHIVE);
 	j_side =         Cvar_Get ("j_side",         "0.25", CVAR_ARCHIVE);
 	j_up =           Cvar_Get ("j_up",           "1", CVAR_ARCHIVE);
+
+	j_androidJoystickJumpTime = Cvar_Get ("j_androidJoystickJumpTime", "250", CVAR_ARCHIVE);
 
 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);
 	j_yaw_axis =     Cvar_Get ("j_yaw_axis",     "4", CVAR_ARCHIVE);

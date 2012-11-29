@@ -397,6 +397,38 @@ CL_JoystickMove
 =================
 */
 void CL_JoystickMove( usercmd_t *cmd ) {
+#ifdef __ANDROID__
+
+	static int jumpTriggerTime = 0, oldRightMove = 0, oldForwardMove = 0;
+
+	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
+		if ( jumpTriggerTime > 0 ) {
+			jumpTriggerTime -= cls.frametime;
+			if ( jumpTriggerTime * 2 > j_androidJoystickJumpTime->value ) {
+				cmd->rightmove = ClampChar( cmd->rightmove + oldRightMove );
+				cmd->forwardmove = ClampChar( cmd->forwardmove + oldForwardMove );
+			}
+		}
+	} else {
+		float angle;
+
+		if ( jumpTriggerTime > 0 && jumpTriggerTime < j_androidJoystickJumpTime->value ) {
+			cmd->upmove = ClampChar( cmd->upmove + 10 );
+		}
+		jumpTriggerTime = j_androidJoystickJumpTime->value;
+
+		angle = RAD2DEG( atan2( cl.joystickAxis[0], cl.joystickAxis[1] ) );
+		angle -= cl.viewangles[YAW] + SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) + 90.0f;
+		angle = DEG2RAD( angle );
+
+		cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
+		cmd->rightmove = ClampChar( cmd->rightmove + cos( angle ) * 127.0f );
+		oldForwardMove = cmd->forwardmove;
+		oldRightMove = cmd->rightmove;
+	}
+
+#else
+
 	float	anglespeed;
 
 	if ( !(in_speed.active ^ cl_run->integer) ) {
@@ -426,6 +458,8 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 	}
 
 	cmd->upmove = ClampChar( cmd->upmove + (int) (j_up->value * cl.joystickAxis[j_up_axis->integer]) );
+
+#endif
 }
 
 /*

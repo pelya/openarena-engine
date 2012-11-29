@@ -411,6 +411,8 @@ extern	cvar_t	*j_forward_axis;
 extern	cvar_t	*j_side_axis;
 extern	cvar_t	*j_up_axis;
 
+extern	cvar_t	*j_androidJoystickJumpTime;
+
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;
 extern	cvar_t	*cl_aviMotionJpeg;
