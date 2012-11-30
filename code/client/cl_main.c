@@ -104,6 +104,7 @@ cvar_t	*j_side_axis;
 cvar_t	*j_up_axis;
 
 cvar_t	*j_androidJoystickJumpTime;
+cvar_t	*j_androidAccelerometerSensitivity;
 
 cvar_t	*cl_activeAction;
 
@@ -3542,6 +3543,7 @@ void CL_Init( void ) {
 	j_up =           Cvar_Get ("j_up",           "1", CVAR_ARCHIVE);
 
 	j_androidJoystickJumpTime = Cvar_Get ("j_androidJoystickJumpTime", "250", CVAR_ARCHIVE);
+	j_androidAccelerometerSensitivity = Cvar_Get ("j_androidAccelerometerSensitivity", "3000", CVAR_ARCHIVE);
 
 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);
 	j_yaw_axis =     Cvar_Get ("j_yaw_axis",     "4", CVAR_ARCHIVE);

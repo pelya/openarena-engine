@@ -1044,7 +1044,7 @@ static void IN_ProcessEvents( void )
 			
 			case SDL_JOYAXISMOTION: // Android accelerometer and on-screen joystick
 				{
-					if(e.jaxis.axis < 2) // 0-1 = screen joystick, 2-3 = accelerometer
+					if(e.jaxis.axis < 4) // 0-1 = screen joystick, 2-3 = accelerometer
 						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis, e.jaxis.value, 0, NULL );
 				}
 				break;

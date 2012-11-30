@@ -296,9 +296,9 @@ void CL_AdjustAngles( void ) {
 	float	speed;
 	
 	if ( in_speed.active ) {
-		speed = 0.001 * cls.frametime * cl_anglespeedkey->value;
+		speed = 0.002f * cls.frametime * cl_anglespeedkey->value;
 	} else {
-		speed = 0.001 * cls.frametime;
+		speed = 0.002f * cls.frametime;
 	}
 
 	if ( !in_strafe.active ) {
@@ -451,6 +451,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 #ifdef __ANDROID__
 
 	static int jumpTriggerTime = 0, oldRightMove = 0, oldForwardMove = 0;
+	float angle;
 
 	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
 		if ( jumpTriggerTime > 0 ) {
@@ -461,8 +462,6 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 			}
 		}
 	} else {
-		float angle;
-
 		if ( jumpTriggerTime > 0 && jumpTriggerTime < j_androidJoystickJumpTime->value ) {
 			cmd->upmove = ClampChar( cmd->upmove + 10 );
 		}
@@ -538,6 +537,23 @@ void CL_MouseMove(usercmd_t *cmd)
 			in_cameraAngles[PITCH] = -90;
 
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+	} else {
+#ifdef __ANDROID__
+		//Com_Printf( "axis %+8d %+8d\n", , cl.joystickAxis[2], cl.joystickAxis[3] );
+		if ( cl.joystickAxis[2] > j_androidAccelerometerSensitivity->value ) {
+			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW],
+				cls.frametime * cl_yawspeed->value * 0.001f *
+				( ( cl.joystickAxis[2] - j_androidAccelerometerSensitivity->value * 0.5f ) / j_androidAccelerometerSensitivity->value ) );
+			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+		}
+
+		if ( cl.joystickAxis[2] < -j_androidAccelerometerSensitivity->value ) {
+			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW],
+				cls.frametime * cl_yawspeed->value * 0.001f *
+				( ( cl.joystickAxis[2] + j_androidAccelerometerSensitivity->value * 0.5f ) / j_androidAccelerometerSensitivity->value ) );
+			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+		}
+#endif
 	}
 }
 
