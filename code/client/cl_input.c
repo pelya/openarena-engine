@@ -51,8 +51,10 @@ kbutton_t	in_left, in_right, in_forward, in_back;
 kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
-static short in_androidCameraYaw, in_androidCameraPitch, in_androidCameraYawMultitouch;
+static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY;
+static float in_joystickAngle;
+static short in_joystickCenterOnAngle;
 
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
@@ -272,7 +274,12 @@ void IN_Button15Down(void) {IN_KeyDown(&in_buttons[15]);}
 void IN_Button15Up(void) {IN_KeyUp(&in_buttons[15]);}
 
 void IN_CenterView (void) {
-	in_cameraAngles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
+	//in_cameraAngles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
+
+	// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
+	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
+		in_joystickCenterOnAngle = 1;
+	}
 }
 
 
@@ -364,24 +371,24 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 	// TODO: hardcoded values, make them configurable
 	int border = cls.glconfig.vidHeight / 6;
 
-	in_androidCameraYaw = in_androidCameraPitch = 0;
+	in_androidCameraYawSpeed = in_androidCameraPitchSpeed = 0;
 	if ( x < border * 3 ) {
 		if ( x < border * 2 )
-			in_androidCameraYaw = 1;
+			in_androidCameraYawSpeed = 1;
 		SCALE( x, border * 3, border * 2, border / 2 );
 	} else if ( x > cls.glconfig.vidWidth - border * 2 ) {
 		if ( x > cls.glconfig.vidWidth - border )
-			in_androidCameraYaw = -1;
+			in_androidCameraYawSpeed = -1;
 		SCALE( x, cls.glconfig.vidWidth - border * 2, cls.glconfig.vidWidth - border, cls.glconfig.vidWidth + border / 2 );
 	}
 
 	if ( y < border * 2 ) {
 		if ( y < border )
-			in_androidCameraPitch = -1;
+			in_androidCameraPitchSpeed = -1;
 		SCALE( y, border * 2, border, border / 2 );
 	} else if ( y > cls.glconfig.vidHeight - border * 2 ) {
 		if ( y > cls.glconfig.vidHeight - border )
-			in_androidCameraPitch = 1;
+			in_androidCameraPitchSpeed = 1;
 		SCALE( y, cls.glconfig.vidHeight - border * 2, cls.glconfig.vidHeight - border, cls.glconfig.vidHeight + border / 2 );
 	}
 
@@ -437,14 +444,14 @@ void IN_MultitouchDown(void) {
 	int dy = in_multitouchY - in_mouseY;
 
 	if ( abs( dx ) > abs( dy ) ) {
-		in_androidCameraYawMultitouch = ( dx < 0 ) ? 1 : -1;
+		in_androidCameraMultitouchYawSpeed = ( dx < 0 ) ? 1 : -1;
 	} else {
 		Com_QueueEvent( 0, SE_KEY, ( dy < 0 ) ? '/' : K_BACKSPACE , qtrue, 0, NULL );
 	}
 }
 
 void IN_MultitouchUp(void) {
-	in_androidCameraYawMultitouch = 0;
+	in_androidCameraMultitouchYawSpeed = 0;
 	Com_QueueEvent( 0, SE_KEY, '/', qfalse, 0, NULL );
 	Com_QueueEvent( 0, SE_KEY, K_BACKSPACE, qfalse, 0, NULL );
 }
@@ -489,6 +496,11 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		jumpTriggerTime = j_androidJoystickJumpTime->value;
 
 		angle = RAD2DEG( atan2( cl.joystickAxis[0], cl.joystickAxis[1] ) );
+		if( !in_joystickCenterOnAngle ) {
+			in_joystickAngle = angle + 180.0f;
+			if ( in_joystickAngle > 180.0f )
+				in_joystickAngle -= 360.0f;
+		}
 		angle -= cl.viewangles[YAW] + SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) + 90.0f - in_cameraAngles[YAW];
 		angle = DEG2RAD( angle );
 
@@ -496,6 +508,18 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		cmd->rightmove = ClampChar( cmd->rightmove + cos( angle ) * 127.0f );
 		oldForwardMove = cmd->forwardmove;
 		oldRightMove = cmd->rightmove;
+	}
+
+	if ( in_joystickCenterOnAngle ) {
+		float diff = cls.frametime * cl_yawspeed->value * 0.005f * ( ( in_joystickAngle > 0 ) ? 1 : -1 );
+		if ( fabs( in_joystickAngle ) <= fabs( diff ) ) {
+			in_joystickCenterOnAngle = 0;
+			in_joystickAngle = 0;
+		} else {
+			in_joystickAngle -= diff;
+		}
+		in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], - diff ); // It will normalize the resulting angle
+		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	}
 
 #else
@@ -544,10 +568,10 @@ void CL_MouseMove(usercmd_t *cmd)
 	if ( !cgvm )
 		return;
 
-	if ( ( in_androidCameraYaw || in_androidCameraPitch || in_androidCameraYawMultitouch ) && in_buttons[0].active ) {
-		float yaw = ( in_androidCameraYaw + in_androidCameraYawMultitouch ) * cls.frametime * cl_yawspeed->value * 0.002f;
+	if ( ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ) && in_buttons[0].active ) {
+		float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.frametime * cl_yawspeed->value * 0.002f;
 		float pitchSpeed = ( in_cameraAngles[PITCH] < -20 ) ? 0.0015f : ( in_cameraAngles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
-		float pitch = in_androidCameraPitch * cls.frametime * cl_pitchspeed->value * pitchSpeed;
+		float pitch = in_androidCameraPitchSpeed * cls.frametime * cl_pitchspeed->value * pitchSpeed;
 
 		in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], -yaw ); // It will also normalize it between (-180:180)
 
@@ -600,7 +624,7 @@ void CL_MouseMove(usercmd_t *cmd)
 
 	if ( in_cameraAngles[PITCH] != 0 ) {
 		in_cameraAngles[PITCH] += j_androidAutoCenterViewSpeed->value * cls.frametime * ( ( in_cameraAngles[PITCH] > 0 ) ? -1 : 1 );
-		if ( abs( in_cameraAngles[PITCH] ) < j_androidAutoCenterViewSpeed->value )
+		if ( fabs( in_cameraAngles[PITCH] ) < j_androidAutoCenterViewSpeed->value )
 			in_cameraAngles[PITCH] = 0;
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	}
@@ -630,7 +654,7 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		}
 		in_buttons[i].wasPressed = qfalse;
 	}
-	if ( in_androidCameraYaw || in_androidCameraPitch || in_androidCameraYawMultitouch )
+	if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed )
 		cmd->buttons &= ~1; // Stop firing when we are rotating camera
 
 	if ( Key_GetCatcher( ) ) {
