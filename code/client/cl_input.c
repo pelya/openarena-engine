@@ -539,7 +539,11 @@ void CL_MouseMove(usercmd_t *cmd)
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	} else {
 #ifdef __ANDROID__
-		//Com_Printf( "axis %+8d %+8d\n", , cl.joystickAxis[2], cl.joystickAxis[3] );
+		static float instantRotate = 0;
+		static int instantRotateDir = 0;
+		static int prevAccelValue = 0;
+
+		Com_Printf( "axis %+8d diff %+8d normalized %d\n", cl.joystickAxis[2], cl.joystickAxis[2] - prevAccelValue, (int)((cl.joystickAxis[2] - prevAccelValue) / cls.frametime) );
 		if ( cl.joystickAxis[2] > j_androidAccelerometerSensitivity->value ) {
 			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW],
 				cls.frametime * cl_yawspeed->value * 0.001f *
@@ -553,6 +557,21 @@ void CL_MouseMove(usercmd_t *cmd)
 				( ( cl.joystickAxis[2] + j_androidAccelerometerSensitivity->value * 0.5f ) / j_androidAccelerometerSensitivity->value ) );
 			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 		}
+
+		if ( instantRotate > -90 ) {
+			float angle = cls.frametime * cl_yawspeed->value * 0.002f;
+			instantRotate -= angle;
+			if ( instantRotate > 0 ) {
+				in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], instantRotateDir * angle );
+				VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+			}
+		} else {
+			if ( abs( cl.joystickAxis[2] - prevAccelValue ) > j_androidAccelerometerTapSensitivity->value * cls.frametime ) {
+				instantRotate = 90;
+				instantRotateDir = ( cl.joystickAxis[2] - prevAccelValue > 0 ) ? 1 : -1;
+			}
+		}
+		prevAccelValue = cl.joystickAxis[2];
 #endif
 	}
 }
