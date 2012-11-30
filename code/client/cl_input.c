@@ -272,7 +272,7 @@ void IN_Button15Down(void) {IN_KeyDown(&in_buttons[15]);}
 void IN_Button15Up(void) {IN_KeyUp(&in_buttons[15]);}
 
 void IN_CenterView (void) {
-	cl.viewangles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
+	in_cameraAngles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
 }
 
 
@@ -294,21 +294,20 @@ Moves the local angle positions
 ================
 */
 void CL_AdjustAngles( void ) {
-	float	speed;
-	
-	if ( in_speed.active ) {
-		speed = 0.002f * cls.frametime * cl_anglespeedkey->value;
-	} else {
-		speed = 0.002f * cls.frametime;
-	}
+	float right = CL_KeyState (&in_right), left = CL_KeyState (&in_left);
+	float up = CL_KeyState (&in_lookup), down = CL_KeyState (&in_lookdown);
 
-	if ( !in_strafe.active ) {
-		cl.viewangles[YAW] -= speed*cl_yawspeed->value*CL_KeyState (&in_right);
-		cl.viewangles[YAW] += speed*cl_yawspeed->value*CL_KeyState (&in_left);
+	//Com_Printf("left %f right %f up %f down %f\n", (double) left, (double) right, (double) up, (double) down);
+	if ( left > 0 || right > 0 || up > 0 || down > 0 ) {
+		float speed = 0.002f * cls.frametime;
+		in_cameraAngles[YAW] -= speed * cl_yawspeed->value * right;
+		in_cameraAngles[YAW] += speed * cl_yawspeed->value * left;
+		in_cameraAngles[PITCH] -= speed * cl_pitchspeed->value * up;
+		in_cameraAngles[PITCH] += speed * cl_pitchspeed->value * down;
+		//Com_Printf("yaw %f pitch %f\n", (double) in_cameraAngles[YAW], (double) in_cameraAngles[PITCH]);
+		if ( cgvm )
+			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	}
-
-	cl.viewangles[PITCH] -= speed*cl_pitchspeed->value * CL_KeyState (&in_lookup);
-	cl.viewangles[PITCH] += speed*cl_pitchspeed->value * CL_KeyState (&in_lookdown);
 }
 
 /*
@@ -561,6 +560,7 @@ void CL_MouseMove(usercmd_t *cmd)
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	} else {
 #ifdef __ANDROID__
+#if 0 // Accelerometer disabled, because it's awkward
 		static float instantRotate = 0;
 		static int instantRotateDir = 0;
 		static int prevAccelValue = 0;
@@ -594,6 +594,7 @@ void CL_MouseMove(usercmd_t *cmd)
 			}
 		}
 		prevAccelValue = cl.joystickAxis[2];
+#endif
 #endif
 	}
 
