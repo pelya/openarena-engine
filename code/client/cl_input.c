@@ -414,7 +414,9 @@ void CL_MouseEvent( int dx, int dy, int time ) {
 	in_mouseX = dx;
 	in_mouseY = dy;
 	if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
-		VM_Call( uivm, UI_MOUSE_EVENT, dx * SCREEN_WIDTH / cls.glconfig.vidWidth, dy * SCREEN_HEIGHT / cls.glconfig.vidHeight);
+		// Hack to make UI downloaded from random server work - move to upper-left corner, then move to desired position
+		VM_Call( uivm, UI_MOUSE_EVENT, -10000, -10000);
+		VM_Call( uivm, UI_MOUSE_EVENT, dx * SCREEN_WIDTH / cls.glconfig.vidWidth, dy * SCREEN_HEIGHT / cls.glconfig.vidHeight); 
 	} else if( cgvm ) {
 		CL_AdjustCrosshairPosNearEdges( &dx, &dy );
 		VM_Call( cgvm, CG_MOUSE_EVENT, dx, dy );
