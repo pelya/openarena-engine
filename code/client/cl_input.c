@@ -439,7 +439,7 @@ void IN_MultitouchDown(void) {
 	if ( abs( dx ) > abs( dy ) ) {
 		in_androidCameraYawMultitouch = ( dx < 0 ) ? 1 : -1;
 	} else {
-		Com_QueueEvent( 0, SE_KEY, ( dy > 0 ) ? '/' : K_BACKSPACE , qtrue, 0, NULL );
+		Com_QueueEvent( 0, SE_KEY, ( dy < 0 ) ? '/' : K_BACKSPACE , qtrue, 0, NULL );
 	}
 }
 
