@@ -414,6 +414,7 @@ extern	cvar_t	*j_up_axis;
 extern	cvar_t	*j_androidJoystickJumpTime;
 extern	cvar_t	*j_androidAccelerometerSensitivity;
 extern	cvar_t	*j_androidAccelerometerTapSensitivity;
+extern	cvar_t	*j_androidAutoCenterViewSpeed;
 
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;

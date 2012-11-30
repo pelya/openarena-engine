@@ -594,6 +594,13 @@ void CL_MouseMove(usercmd_t *cmd)
 		prevAccelValue = cl.joystickAxis[2];
 #endif
 	}
+
+	if ( in_cameraAngles[PITCH] != 0 ) {
+		in_cameraAngles[PITCH] += j_androidAutoCenterViewSpeed->value * cls.frametime * ( ( in_cameraAngles[PITCH] > 0 ) ? -1 : 1 );
+		if ( abs( in_cameraAngles[PITCH] ) < j_androidAutoCenterViewSpeed->value )
+			in_cameraAngles[PITCH] = 0;
+		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+	}
 }
 
 void CL_SetViewAngles(const vec3_t angles)
