@@ -525,9 +525,8 @@ void CL_MouseMove(usercmd_t *cmd)
 		float pitchSpeed = ( in_cameraAngles[PITCH] < -20 ) ? 0.0015f : ( in_cameraAngles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
 		float pitch = in_androidCameraPitch * cls.frametime * cl_pitchspeed->value * pitchSpeed;
 
-		Com_Printf("pitch %f speed %f\n", (double)in_cameraAngles[PITCH], (double)pitchSpeed);
 		in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], -yaw ); // It will also normalize it between (-180:180)
-		
+
 		in_cameraAngles[PITCH] = in_cameraAngles[PITCH] + pitch;
 		if ( in_cameraAngles[PITCH] > 180 )
 			in_cameraAngles[PITCH] = 180;
