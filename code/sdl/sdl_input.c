@@ -1066,9 +1066,10 @@ static void IN_ProcessEvents( void )
 						int i;
 						touchPointers[e.jball.ball].x = e.jball.xrel;
 						touchPointers[e.jball.ball].y = e.jball.yrel;
-						for( i = 0; i < MAX_FILTERED; i++ )
-							if( e.jball.ball == filteredTouch[i].idx )
-								Com_QueueEvent( 0, SE_MOUSE, touchPointers[e.jball.ball].x, touchPointers[e.jball.ball].y, 0, NULL );
+						if( e.jball.ball == filteredTouch[0].idx )
+							Com_QueueEvent( 0, SE_MOUSE, touchPointers[e.jball.ball].x, touchPointers[e.jball.ball].y, 0, NULL );
+						if( e.jball.ball == filteredTouch[1].idx )
+							Com_QueueEvent( 0, SE_MOUSE2, touchPointers[e.jball.ball].x, touchPointers[e.jball.ball].y, 0, NULL );
 					}
 				}
 				break;
