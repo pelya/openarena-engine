@@ -513,6 +513,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 	if ( in_joystickCenterOnAngle ) {
 		float diff = cls.frametime * cl_yawspeed->value * 0.005f * ( ( in_joystickAngle > 0 ) ? 1 : -1 );
 		if ( fabs( in_joystickAngle ) <= fabs( diff ) ) {
+			diff = in_joystickAngle;
 			in_joystickCenterOnAngle = 0;
 			in_joystickAngle = 0;
 		} else {
