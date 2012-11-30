@@ -3544,8 +3544,8 @@ void CL_Init( void ) {
 	j_up =           Cvar_Get ("j_up",           "1", CVAR_ARCHIVE);
 
 	j_androidJoystickJumpTime = Cvar_Get ("j_androidJoystickJumpTime", "250", CVAR_ARCHIVE);
-	j_androidAccelerometerSensitivity = Cvar_Get ("j_androidAccelerometerSensitivity", "3500", CVAR_ARCHIVE);
-	j_androidAccelerometerTapSensitivity = Cvar_Get ("j_androidAccelerometerTapSensitivity", "50", CVAR_ARCHIVE);
+	j_androidAccelerometerSensitivity = Cvar_Get ("j_androidAccelerometerSensitivity", "4500", CVAR_ARCHIVE);
+	j_androidAccelerometerTapSensitivity = Cvar_Get ("j_androidAccelerometerTapSensitivity", "60", CVAR_ARCHIVE);
 
 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);
 	j_yaw_axis =     Cvar_Get ("j_yaw_axis",     "4", CVAR_ARCHIVE);

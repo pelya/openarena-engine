@@ -51,7 +51,8 @@ kbutton_t	in_left, in_right, in_forward, in_back;
 kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
-static short in_androidCameraYaw, in_androidCameraPitch;
+static short in_androidCameraYaw, in_androidCameraPitch, in_androidCameraYawMultitouch;
+static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY;
 
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
@@ -410,6 +411,8 @@ CL_MouseEvent
 =================
 */
 void CL_MouseEvent( int dx, int dy, int time ) {
+	in_mouseX = dx;
+	in_mouseY = dy;
 	if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
 		VM_Call( uivm, UI_MOUSE_EVENT, dx * SCREEN_WIDTH / cls.glconfig.vidWidth, dy * SCREEN_HEIGHT / cls.glconfig.vidHeight);
 	} else if( cgvm ) {
@@ -424,8 +427,25 @@ CL_Mouse2Event
 =================
 */
 void CL_Mouse2Event( int dx, int dy, int time ) {
-	if( cgvm )
-		VM_Call (cgvm, CG_MOUSE2_EVENT, dx, dy);
+	in_multitouchX = dx;
+	in_multitouchY = dy;
+}
+
+void IN_MultitouchDown(void) {
+	int dx = in_multitouchX - in_mouseX;
+	int dy = in_multitouchY - in_mouseY;
+
+	if ( abs( dx ) > abs( dy ) ) {
+		in_androidCameraYawMultitouch = ( dx < 0 ) ? 1 : -1;
+	} else {
+		Com_QueueEvent( 0, SE_KEY, ( dy > 0 ) ? '/' : K_BACKSPACE , qtrue, 0, NULL );
+	}
+}
+
+void IN_MultitouchUp(void) {
+	in_androidCameraYawMultitouch = 0;
+	Com_QueueEvent( 0, SE_KEY, '/', qfalse, 0, NULL );
+	Com_QueueEvent( 0, SE_KEY, K_BACKSPACE, qfalse, 0, NULL );
 }
 
 /*
@@ -523,8 +543,8 @@ void CL_MouseMove(usercmd_t *cmd)
 	if ( !cgvm )
 		return;
 
-	if ( (in_androidCameraYaw || in_androidCameraPitch) && in_buttons[0].active ) {
-		float yaw = in_androidCameraYaw * cls.frametime * cl_yawspeed->value * 0.002f;
+	if ( ( in_androidCameraYaw || in_androidCameraPitch || in_androidCameraYawMultitouch ) && in_buttons[0].active ) {
+		float yaw = ( in_androidCameraYaw + in_androidCameraYawMultitouch ) * cls.frametime * cl_yawspeed->value * 0.002f;
 		float pitchSpeed = ( in_cameraAngles[PITCH] < -20 ) ? 0.0015f : ( in_cameraAngles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
 		float pitch = in_androidCameraPitch * cls.frametime * cl_pitchspeed->value * pitchSpeed;
 
@@ -543,7 +563,7 @@ void CL_MouseMove(usercmd_t *cmd)
 		static int instantRotateDir = 0;
 		static int prevAccelValue = 0;
 
-		Com_Printf( "axis %+8d diff %+8d normalized %d\n", cl.joystickAxis[2], cl.joystickAxis[2] - prevAccelValue, (int)((cl.joystickAxis[2] - prevAccelValue) / cls.frametime) );
+		//Com_Printf( "axis %+8d diff %+8d normalized %d\n", cl.joystickAxis[2], cl.joystickAxis[2] - prevAccelValue, (int)((cl.joystickAxis[2] - prevAccelValue) / cls.frametime) );
 		if ( cl.joystickAxis[2] > j_androidAccelerometerSensitivity->value ) {
 			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW],
 				cls.frametime * cl_yawspeed->value * 0.001f *
@@ -600,7 +620,7 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		}
 		in_buttons[i].wasPressed = qfalse;
 	}
-	if ( in_androidCameraYaw || in_androidCameraPitch )
+	if ( in_androidCameraYaw || in_androidCameraPitch || in_androidCameraYawMultitouch )
 		cmd->buttons &= ~1; // Stop firing when we are rotating camera
 
 	if ( Key_GetCatcher( ) ) {
@@ -1051,6 +1071,8 @@ void CL_InitInput( void ) {
 	Cmd_AddCommand ("-button14", IN_Button14Up);
 	Cmd_AddCommand ("+mlook", IN_MLookDown);
 	Cmd_AddCommand ("-mlook", IN_MLookUp);
+	Cmd_AddCommand ("+multitouch", IN_MultitouchDown);
+	Cmd_AddCommand ("-multitouch", IN_MultitouchUp);
 
 #ifdef USE_VOIP
 	Cmd_AddCommand ("+voiprecord", IN_VoipRecordDown);
