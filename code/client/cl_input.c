@@ -359,32 +359,35 @@ void CL_KeyMove( usercmd_t *cmd ) {
 
 #define SCALE( src, border, from, to ) src = ( (border) + ( (src) - (border) ) * ( (to) - (border) ) / ( (from) - (border) ) )
 static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
-	int x = *dx; //+ cls.glconfig.vidWidth / 2;
-	int y = *dy; //+ cls.glconfig.vidHeight / 2;
+	int x = *dx;
+	int y = *dy;
+	// TODO: hardcoded values, make them configurable
 	int border = cls.glconfig.vidHeight / 6;
 
 	in_androidCameraYaw = in_androidCameraPitch = 0;
 	if ( x < border * 3 ) {
 		if ( x < border * 2 )
 			in_androidCameraYaw = 1;
-		SCALE( x, border * 3, border * 2, border );
+		SCALE( x, border * 3, border * 2, border / 2 );
 	} else if ( x > cls.glconfig.vidWidth - border * 2 ) {
 		if ( x > cls.glconfig.vidWidth - border )
 			in_androidCameraYaw = -1;
-		SCALE( x, cls.glconfig.vidWidth - border * 2, cls.glconfig.vidWidth - border, cls.glconfig.vidWidth + border );
+		SCALE( x, cls.glconfig.vidWidth - border * 2, cls.glconfig.vidWidth - border, cls.glconfig.vidWidth + border / 2 );
 	}
 
-	if ( y < border )
-		in_androidCameraPitch = -1;
-	else if ( y > cls.glconfig.vidHeight - border * 2 ) {
+	if ( y < border * 2 ) {
+		if ( y < border )
+			in_androidCameraPitch = -1;
+		SCALE( y, border * 2, border, border / 2 );
+	} else if ( y > cls.glconfig.vidHeight - border * 2 ) {
 		if ( y > cls.glconfig.vidHeight - border )
 			in_androidCameraPitch = 1;
-		SCALE( y, cls.glconfig.vidHeight - border * 2, cls.glconfig.vidHeight - border, cls.glconfig.vidHeight + border );
+		SCALE( y, cls.glconfig.vidHeight - border * 2, cls.glconfig.vidHeight - border, cls.glconfig.vidHeight + border / 2 );
 	}
 
 	// Offset crosshair, so it won't be right under finger
-	x = x - border;
-	y = y - border;
+	x = x - border / 2;
+	y = y - border / 2;
 
 	// Boundary checks
 	if ( x < 0 )
@@ -395,9 +398,10 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 		x = cls.glconfig.vidWidth - 1;
 	if ( y >= cls.glconfig.vidHeight )
 		y = cls.glconfig.vidHeight - 1;
+
 	// Return the values
-	*dx = x; //- cls.glconfig.vidWidth / 2;
-	*dy = y; // - cls.glconfig.vidHeight / 2;
+	*dx = x;
+	*dy = y;
 }
 
 /*
