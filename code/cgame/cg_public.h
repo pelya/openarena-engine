@@ -237,6 +237,9 @@ typedef enum {
 
 	CG_MOUSE2_EVENT,
 //	void	(*CG_Mouse2Event)( int dx, int dy );
+
+	CG_ADJUST_CAMERA_ANGLES,
+//	void	CG_AdjustCameraAngles(int yaw, int pitch);
 } cgameExport_t;
 
 //----------------------------------------------

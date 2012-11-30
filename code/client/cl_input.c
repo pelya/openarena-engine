@@ -51,6 +51,7 @@ kbutton_t	in_left, in_right, in_forward, in_back;
 kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
+static short in_androidCameraYaw, in_androidCameraPitch;
 
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
@@ -60,6 +61,8 @@ kbutton_t	in_buttons[16];
 
 
 qboolean	in_mlooking;
+
+vec3_t		in_cameraAngles;
 
 
 void IN_MLookDown( void ) {
@@ -354,6 +357,49 @@ void CL_KeyMove( usercmd_t *cmd ) {
 	cmd->upmove = ClampChar( up );
 }
 
+#define SCALE( src, border, from, to ) src = ( (border) + ( (src) - (border) ) * ( (to) - (border) ) / ( (from) - (border) ) )
+static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
+	int x = *dx; //+ cls.glconfig.vidWidth / 2;
+	int y = *dy; //+ cls.glconfig.vidHeight / 2;
+	int border = cls.glconfig.vidHeight / 6;
+
+	in_androidCameraYaw = in_androidCameraPitch = 0;
+	if ( x < border * 3 ) {
+		if ( x < border * 2 )
+			in_androidCameraYaw = 1;
+		SCALE( x, border * 3, border * 2, border );
+	} else if ( x > cls.glconfig.vidWidth - border * 2 ) {
+		if ( x > cls.glconfig.vidWidth - border )
+			in_androidCameraYaw = -1;
+		SCALE( x, cls.glconfig.vidWidth - border * 2, cls.glconfig.vidWidth - border, cls.glconfig.vidWidth + border );
+	}
+
+	if ( y < border )
+		in_androidCameraPitch = -1;
+	else if ( y > cls.glconfig.vidHeight - border * 2 ) {
+		if ( y > cls.glconfig.vidHeight - border )
+			in_androidCameraPitch = 1;
+		SCALE( y, cls.glconfig.vidHeight - border * 2, cls.glconfig.vidHeight - border, cls.glconfig.vidHeight + border );
+	}
+
+	// Offset crosshair, so it won't be right under finger
+	x = x - border;
+	y = y - border;
+
+	// Boundary checks
+	if ( x < 0 )
+		x = 0;
+	if ( y < 0 )
+		y = 0;
+	if ( x >= cls.glconfig.vidWidth )
+		x = cls.glconfig.vidWidth - 1;
+	if ( y >= cls.glconfig.vidHeight )
+		y = cls.glconfig.vidHeight - 1;
+	// Return the values
+	*dx = x; //- cls.glconfig.vidWidth / 2;
+	*dy = y; // - cls.glconfig.vidHeight / 2;
+}
+
 /*
 =================
 CL_MouseEvent
@@ -363,6 +409,7 @@ void CL_MouseEvent( int dx, int dy, int time ) {
 	if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
 		VM_Call( uivm, UI_MOUSE_EVENT, dx * SCREEN_WIDTH / cls.glconfig.vidWidth, dy * SCREEN_HEIGHT / cls.glconfig.vidHeight);
 	} else if( cgvm ) {
+		CL_AdjustCrosshairPosNearEdges( &dx, &dy );
 		VM_Call( cgvm, CG_MOUSE_EVENT, dx, dy );
 	}
 }
@@ -418,7 +465,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		jumpTriggerTime = j_androidJoystickJumpTime->value;
 
 		angle = RAD2DEG( atan2( cl.joystickAxis[0], cl.joystickAxis[1] ) );
-		angle -= cl.viewangles[YAW] + SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) + 90.0f;
+		angle -= cl.viewangles[YAW] + SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) + 90.0f - in_cameraAngles[YAW];
 		angle = DEG2RAD( angle );
 
 		cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
@@ -470,11 +517,25 @@ CL_MouseMove
 
 void CL_MouseMove(usercmd_t *cmd)
 {
-	// add mouse X/Y movement to cmd
-	/*
-	cl.viewangles[YAW] = - cl.mouseDx[0] / 2;
-	cl.viewangles[PITCH] = cl.mouseDy[0];
-	*/
+	if ( !cgvm )
+		return;
+
+	if ( (in_androidCameraYaw || in_androidCameraPitch) && in_buttons[0].active ) {
+		float yaw = in_androidCameraYaw * cls.frametime * cl_yawspeed->value * 0.002f;
+		float pitchSpeed = ( in_cameraAngles[PITCH] < -20 ) ? 0.0015f : ( in_cameraAngles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
+		float pitch = in_androidCameraPitch * cls.frametime * cl_pitchspeed->value * pitchSpeed;
+
+		Com_Printf("pitch %f speed %f\n", (double)in_cameraAngles[PITCH], (double)pitchSpeed);
+		in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], -yaw ); // It will also normalize it between (-180:180)
+		
+		in_cameraAngles[PITCH] = in_cameraAngles[PITCH] + pitch;
+		if ( in_cameraAngles[PITCH] > 180 )
+			in_cameraAngles[PITCH] = 180;
+		else if ( in_cameraAngles[PITCH] < -90 )
+			in_cameraAngles[PITCH] = -90;
+
+		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+	}
 }
 
 void CL_SetViewAngles(const vec3_t angles)
@@ -501,6 +562,8 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		}
 		in_buttons[i].wasPressed = qfalse;
 	}
+	if ( in_androidCameraYaw || in_androidCameraPitch )
+		cmd->buttons &= ~1; // Stop firing when we are rotating camera
 
 	if ( Key_GetCatcher( ) ) {
 		cmd->buttons |= BUTTON_TALK;

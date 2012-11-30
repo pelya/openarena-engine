@@ -95,7 +95,9 @@ void GLimp_Shutdown( void )
 {
 	ri.IN_Shutdown();
 
+#ifndef __ANDROID__
 	SDL_QuitSubSystem( SDL_INIT_VIDEO );
+#endif
 	screen = NULL;
 
 	Com_Memset( &glConfig, 0, sizeof( glConfig ) );
