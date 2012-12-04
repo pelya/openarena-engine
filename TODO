@@ -1,6 +1,5 @@
 To be fixed before releasing to Google Play:
 
-Camera rotates too fast in sniper mode
 Sniper mode should aim where you've pointed crosshair before, not at the center of the screen
 First-person view for sniper mode, it's not fun when player's butt obscures all the view
 Railgun should shoot shoot when you release your finger, so you can aim precisely

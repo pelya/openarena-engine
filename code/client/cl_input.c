@@ -286,6 +286,7 @@ void IN_CenterView (void) {
 
 cvar_t	*cl_yawspeed;
 cvar_t	*cl_pitchspeed;
+cvar_t	*cl_pitchAutoCenter;
 
 cvar_t	*cl_run;
 
@@ -622,7 +623,7 @@ void CL_MouseMove(usercmd_t *cmd)
 #endif
 	}
 
-	if ( in_cameraAngles[PITCH] != 0 ) {
+	if ( in_cameraAngles[PITCH] != 0 && cl_pitchAutoCenter->integer ) {
 		in_cameraAngles[PITCH] += j_androidAutoCenterViewSpeed->value * cls.frametime * ( ( in_cameraAngles[PITCH] > 0 ) ? -1 : 1 );
 		if ( fabs( in_cameraAngles[PITCH] ) < j_androidAutoCenterViewSpeed->value )
 			in_cameraAngles[PITCH] = 0;
