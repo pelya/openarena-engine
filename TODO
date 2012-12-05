@@ -1,16 +1,14 @@
 To be fixed before releasing to Google Play:
 
 Sniper mode should aim where you've pointed crosshair before, not at the center of the screen
-First-person view for sniper mode, it's not fun when player's butt obscures all the view
 Railgun should shoot shoot when you release your finger, so you can aim precisely
 Custom railgun crosshair, that will change color while reloading
 It does not draw any helping hint about multitouch controls
-Three aiming modes to configure - swipe-free, semi-swipe, and swipe + fire button
+Two aiming modes to configure - swipe-free and swipe + fire button
 Center view button will act like swim up when inside water
 In-game chat is not working
 You cannot change player name
 Set up at least one dedicated server
-Create instruction, how to set up your own dedicated server
 Create a video, with explanations about how the controls work
 
 Scheduled for the next major release, when it will reach at least 10k downloads:
@@ -18,6 +16,7 @@ Scheduled for the next major release, when it will reach at least 10k downloads:
 Increase size of all UI elements inside Setup
 Play-test and select best open maps without tunnels for dedicated server - could be done by users
 Screenshots featuring Angelyss and Neko boobs, for the Google Play page
+Create instruction, how to set up your own dedicated server
 
 Scheduled after 50k downloads:
 
