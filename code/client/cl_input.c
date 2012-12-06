@@ -625,7 +625,7 @@ void CL_MouseMove(usercmd_t *cmd)
 
 	if ( in_cameraAngles[PITCH] != 0 && cl_pitchAutoCenter->integer ) {
 		in_cameraAngles[PITCH] += j_androidAutoCenterViewSpeed->value * cls.frametime * ( ( in_cameraAngles[PITCH] > 0 ) ? -1 : 1 );
-		if ( fabs( in_cameraAngles[PITCH] ) < j_androidAutoCenterViewSpeed->value )
+		if ( fabs( in_cameraAngles[PITCH] ) < j_androidAutoCenterViewSpeed->value * cls.frametime * 2.0f )
 			in_cameraAngles[PITCH] = 0;
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	}
