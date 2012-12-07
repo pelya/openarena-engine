@@ -631,9 +631,16 @@ void CL_MouseMove(usercmd_t *cmd)
 	}
 }
 
-void CL_SetViewAngles(const vec3_t angles)
+void CL_SetViewAngles( const vec3_t angles )
 {
 	VectorCopy( angles, cl.viewangles );
+}
+
+void CL_ResetViewAngles( const vec3_t angles )
+{
+	VectorCopy( angles, in_cameraAngles );
+	VectorCopy( angles, cl.viewangles );
+	VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 }
 
 /*

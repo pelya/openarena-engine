@@ -701,8 +701,13 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return re.GetEntityToken( VMA(1), args[2] );
 	case CG_R_INPVS:
 		return re.inPVS( VMA(1), VMA(2) );
+
 	case CG_SET_VIEW_ANGLES:
 		CL_SetViewAngles( VMA(1) );
+		return 0;
+
+	case CG_RESET_VIEW_ANGLES:
+		CL_ResetViewAngles( VMA(1) );
 		return 0;
 
 	default:

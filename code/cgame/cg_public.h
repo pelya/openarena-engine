@@ -165,6 +165,7 @@ typedef enum {
 	// 1.32
 	CG_FS_SEEK,
 	CG_SET_VIEW_ANGLES,
+	CG_RESET_VIEW_ANGLES,
 
 /*
 	CG_LOADCAMERA,
