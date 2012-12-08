@@ -53,7 +53,8 @@ kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY;
-static short in_joystickCenterOnAngle;
+static short in_joystickCenterOnAngle, in_swimUp;
+static int cl_underWater = 0;
 
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
@@ -74,7 +75,8 @@ void IN_MLookDown( void ) {
 void IN_MLookUp( void ) {
 	in_mlooking = qfalse;
 	if ( !cl_freelook->integer ) {
-		IN_CenterView ();
+		IN_CenterViewDown ();
+		IN_CenterViewUp ();
 	}
 }
 
@@ -272,15 +274,20 @@ void IN_Button14Up(void) {IN_KeyUp(&in_buttons[14]);}
 void IN_Button15Down(void) {IN_KeyDown(&in_buttons[15]);}
 void IN_Button15Up(void) {IN_KeyUp(&in_buttons[15]);}
 
-void IN_CenterView (void) {
+void IN_CenterViewDown (void) {
 	//in_cameraAngles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
 
 	// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
 	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
 		in_joystickCenterOnAngle = 1;
+		if( cl_underWater )
+			in_swimUp = 255;
 	}
 }
 
+void IN_CenterViewUp (void) {
+	in_swimUp = 0;
+}
 
 //==========================================================================
 
@@ -523,6 +530,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	}
 
+	cmd->upmove = ClampChar( cmd->upmove + in_swimUp );
 #else
 
 	float	anglespeed;
@@ -631,9 +639,10 @@ void CL_MouseMove(usercmd_t *cmd)
 	}
 }
 
-void CL_SetAimingAngles( const vec3_t angles )
+void CL_SetAimingAngles( const vec3_t angles, int underWater )
 {
 	VectorCopy( angles, cl.viewangles );
+	cl_underWater = underWater;
 }
 
 void CL_SetCameraAngles( const vec3_t angles )
@@ -1051,8 +1060,8 @@ CL_InitInput
 ============
 */
 void CL_InitInput( void ) {
-	Cmd_AddCommand ("centerview",IN_CenterView);
-
+	Cmd_AddCommand ("+centerview",IN_CenterViewDown);
+	Cmd_AddCommand ("-centerview",IN_CenterViewUp);
 	Cmd_AddCommand ("+moveup",IN_UpDown);
 	Cmd_AddCommand ("-moveup",IN_UpUp);
 	Cmd_AddCommand ("+movedown",IN_DownDown);
@@ -1130,8 +1139,8 @@ CL_ShutdownInput
 */
 void CL_ShutdownInput(void)
 {
-	Cmd_RemoveCommand("centerview");
-
+	Cmd_RemoveCommand("+centerview");
+	Cmd_RemoveCommand("-centerview");
 	Cmd_RemoveCommand("+moveup");
 	Cmd_RemoveCommand("-moveup");
 	Cmd_RemoveCommand("+movedown");

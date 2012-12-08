@@ -703,7 +703,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return re.inPVS( VMA(1), VMA(2) );
 
 	case CG_SET_AIMING_ANGLES:
-		CL_SetAimingAngles( VMA(1) );
+		CL_SetAimingAngles( VMA(1), args[2] );
 		return 0;
 
 	case CG_SET_CAMERA_ANGLES:

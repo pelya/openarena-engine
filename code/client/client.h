@@ -512,7 +512,8 @@ void CL_ClearState (void);
 void CL_ReadPackets (void);
 
 void CL_WritePacket( void );
-void IN_CenterView (void);
+void IN_CenterViewDown (void);
+void IN_CenterViewUp (void);
 
 void CL_VerifyCode( void );
 
@@ -520,7 +521,7 @@ float CL_KeyState (kbutton_t *key);
 int Key_StringToKeynum( char *str );
 char *Key_KeynumToString (int keynum);
 
-void CL_SetAimingAngles( const vec3_t angles );
+void CL_SetAimingAngles( const vec3_t angles, int underWater );
 void CL_SetCameraAngles( const vec3_t angles );
 //
 // cl_parse.c
