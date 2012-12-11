@@ -7,10 +7,11 @@ You cannot change player name
 Select weapons by clicking on weapon list
 Create a video, with explanations about how the controls work
 
-Scheduled for the next major release, when it will reach at least 10k downloads:
+Scheduled for the next major release, after 10k downloads:
 
 Increase size of all UI elements inside Setup
 Create instruction, how to set up your own dedicated server
+Add "Vote yes/no" to the vote dialog.
 
 Scheduled after 50k downloads:
 
