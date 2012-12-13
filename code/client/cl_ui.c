@@ -23,6 +23,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "client.h"
 
 #include "../botlib/botlib.h"
+#ifdef __ANDROID__
+#include <SDL_screenkeyboard.h>
+#endif
 
 extern	botlib_export_t	*botlib_export;
 
@@ -889,6 +892,12 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 
 	case UI_GETCLIPBOARDDATA:
 		CL_GetClipboardData( VMA(1), args[2] );
+		return 0;
+
+	case UI_SCREENKEYBOARDTEXTINPUT:
+#ifdef __ANDROID__
+		SDL_ANDROID_ToggleScreenKeyboardTextInput( VMA(1) );
+#endif
 		return 0;
 
 	case UI_GETCLIENTSTATE:
