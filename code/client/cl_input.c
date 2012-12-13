@@ -54,7 +54,6 @@ kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY;
 static short in_joystickCenterOnAngle, in_swimUp;
-static int cl_underWater = 0;
 
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
@@ -241,7 +240,34 @@ void IN_VoipRecordUp(void)
 }
 #endif
 
-void IN_Button0Down(void) {IN_KeyDown(&in_buttons[0]);}
+void IN_Button0Down(void)
+{
+	int weaponX = in_mouseX * 640 / cls.glconfig.vidWidth;
+
+	if (	in_androidCameraPitchSpeed == -1 &&
+			weaponX > 320 - cg_weaponBarActiveWidth->integer &&
+			weaponX < 320 + cg_weaponBarActiveWidth->integer ) {
+		char cmd[64] = "weapon ";
+		int count = ( weaponX - 320 + cg_weaponBarActiveWidth->integer ) / 40;
+		char * c = cg_weaponBarActiveWeapons->string, * c2;
+		int i;
+
+		in_androidCameraPitchSpeed = 0;
+		for ( i = 0; i < count; i++ ) {
+			c = strchr ( c, '/' );
+			if ( c == NULL )
+				return;
+			c++;
+		}
+		c2 = strchr ( c, '/' );
+		if ( c2 == NULL )
+			return;
+		strncat ( cmd, c, c2 - c );
+		Cbuf_AddText( cmd );
+	} else {
+		IN_KeyDown(&in_buttons[0]);
+	}
+}
 void IN_Button0Up(void) {IN_KeyUp(&in_buttons[0]);}
 void IN_Button1Down(void) {IN_KeyDown(&in_buttons[1]);}
 void IN_Button1Up(void) {IN_KeyUp(&in_buttons[1]);}
@@ -280,7 +306,7 @@ void IN_CenterViewDown (void) {
 	// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
 	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
 		in_joystickCenterOnAngle = 1;
-		if( cl_underWater )
+		if( cg_underWater->integer )
 			in_swimUp = 255;
 	}
 }
@@ -639,10 +665,9 @@ void CL_MouseMove(usercmd_t *cmd)
 	}
 }
 
-void CL_SetAimingAngles( const vec3_t angles, int underWater )
+void CL_SetAimingAngles( const vec3_t angles )
 {
 	VectorCopy( angles, cl.viewangles );
-	cl_underWater = underWater;
 }
 
 void CL_SetCameraAngles( const vec3_t angles )

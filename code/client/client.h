@@ -414,10 +414,15 @@ extern	cvar_t	*j_forward_axis;
 extern	cvar_t	*j_side_axis;
 extern	cvar_t	*j_up_axis;
 
+// Android-specific
 extern	cvar_t	*j_androidJoystickJumpTime;
 extern	cvar_t	*j_androidAccelerometerSensitivity;
 extern	cvar_t	*j_androidAccelerometerTapSensitivity;
 extern	cvar_t	*j_androidAutoCenterViewSpeed;
+// Some part of game state needed for touchscreen input handling
+extern	cvar_t	*cg_underWater;
+extern	cvar_t	*cg_weaponBarActiveWidth;
+extern	cvar_t	*cg_weaponBarActiveWeapons;
 
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;
@@ -521,7 +526,7 @@ float CL_KeyState (kbutton_t *key);
 int Key_StringToKeynum( char *str );
 char *Key_KeynumToString (int keynum);
 
-void CL_SetAimingAngles( const vec3_t angles, int underWater );
+void CL_SetAimingAngles( const vec3_t angles );
 void CL_SetCameraAngles( const vec3_t angles );
 //
 // cl_parse.c
