@@ -613,6 +613,7 @@ int main( int argc, char **argv )
 #endif
 
 	//SDL_Delay(7000); // Wait for debugger
+	remove(".openarena/baseoa/pak7-android.pk3"); // If some server pushed old VM scripts to us - remove them
 
 	Sys_PlatformInit( );
 
