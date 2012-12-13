@@ -53,7 +53,7 @@ kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY;
-static short in_joystickCenterOnAngle, in_swimUp;
+static short in_joystickCenterOnAngle, in_swimUp, in_attackButtonReleased;
 
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
@@ -268,7 +268,11 @@ void IN_Button0Down(void)
 		IN_KeyDown(&in_buttons[0]);
 	}
 }
-void IN_Button0Up(void) {IN_KeyUp(&in_buttons[0]);}
+void IN_Button0Up(void)
+{
+	IN_KeyUp(&in_buttons[0]);
+	in_attackButtonReleased = 1;
+}
 void IN_Button1Down(void) {IN_KeyDown(&in_buttons[1]);}
 void IN_Button1Up(void) {IN_KeyUp(&in_buttons[1]);}
 void IN_Button2Down(void) {IN_KeyDown(&in_buttons[2]);}
@@ -694,8 +698,12 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		}
 		in_buttons[i].wasPressed = qfalse;
 	}
-	if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed )
+	if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed || cl.cgameUserCmdValue == WP_RAILGUN )
 		cmd->buttons &= ~1; // Stop firing when we are rotating camera
+	if ( cl.cgameUserCmdValue == WP_RAILGUN && in_attackButtonReleased &&
+		! ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed ) )
+		cmd->buttons |= 1;
+	in_attackButtonReleased = 0;
 
 	if ( Key_GetCatcher( ) ) {
 		cmd->buttons |= BUTTON_TALK;
