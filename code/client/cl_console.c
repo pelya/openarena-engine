@@ -22,6 +22,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // console.c
 
 #include "client.h"
+#ifdef __ANDROID__
+#include <SDL_screenkeyboard.h>
+#endif
 
 
 int g_console_field_width = 78;
@@ -777,6 +780,23 @@ void Con_RunConsole (void) {
 			con.displayFrac = con.finalFrac;
 	}
 
+#ifdef __ANDROID__
+	// Process Android text input
+	//Com_Printf("clc.state %d CA_ACTIVE %d Key_GetCatcher %d &~ %d\n", clc.state, clc.state == CA_ACTIVE, Key_GetCatcher(), (Key_GetCatcher( ) & ~(KEYCATCH_CGAME | KEYCATCH_MESSAGE)) == 0);
+	if( clc.state == CA_ACTIVE && ( Key_GetCatcher( ) & ~(KEYCATCH_CGAME | KEYCATCH_MESSAGE) ) == 0 ) // Check if we're playing and not in UI
+	{
+		// If screen keyboard shown, but we're not in message mode and not showing console - toggle message mode
+		if ( SDL_IsScreenKeyboardShown ( NULL ) && ! ( Key_GetCatcher( ) & KEYCATCH_MESSAGE ) && ! ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
+			Con_MessageMode_f( );
+		// If screen keyboard hidden, but we're still in message mode - send Enter to message field
+		if ( ! SDL_IsScreenKeyboardShown ( NULL ) && ( Key_GetCatcher( ) & KEYCATCH_MESSAGE ) )
+		{
+			//Message_Key( K_ENTER );
+			CL_KeyEvent( K_ENTER, qtrue, 0 );
+			CL_KeyEvent( K_ENTER, qfalse, 0 );
+		}
+	}
+#endif
 }
 
 /*
