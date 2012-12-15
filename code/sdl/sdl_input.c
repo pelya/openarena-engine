@@ -73,6 +73,7 @@ static cvar_t *in_joystickDebug     = NULL;
 static cvar_t *in_joystickThreshold = NULL;
 static cvar_t *in_joystickNo        = NULL;
 static cvar_t *in_joystickUseAnalog = NULL;
+//static cvar_t *cg_swipeFreeAiming = NULL;
 
 static int vidRestartTime = 0;
 
@@ -1133,6 +1134,7 @@ static void IN_ShowHideScreenButtons( void )
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
 			// TODO: implement automatic keyboard toggling from text fields - see MenuField_Key()
 			rect.w = rect.h = cls.glconfig.vidHeight / 10;
 			rect.x = rect.y = 0;
@@ -1161,6 +1163,15 @@ static void IN_ShowHideScreenButtons( void )
 			rect.x = 0;
 			rect.w = rect.h = cls.glconfig.vidHeight - rect.y;
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
+			if( !cg_swipeFreeAiming->integer )
+			{
+				// Set up Fire button
+				rect.h /= 1.5f;
+				rect.w *= rect.h;
+				rect.x = cls.glconfig.vidWidth - rect.w;
+				rect.y = cls.glconfig.vidHeight - rect.h;
+				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
+			}
 		}
 	}
 #endif
@@ -1248,6 +1259,7 @@ void IN_Init( void )
 	in_joystick = Cvar_Get( "in_joystick", "0", CVAR_ARCHIVE|CVAR_LATCH );
 	in_joystickDebug = Cvar_Get( "in_joystickDebug", "0", CVAR_TEMP );
 	in_joystickThreshold = Cvar_Get( "joy_threshold", "0.15", CVAR_ARCHIVE );
+	cg_swipeFreeAiming = Cvar_Get ("cg_swipeFreeAiming", "1", CVAR_ARCHIVE);
 
 #ifdef MACOS_X_ACCELERATION_HACK
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );

@@ -423,6 +423,7 @@ extern	cvar_t	*j_androidAutoCenterViewSpeed;
 extern	cvar_t	*cg_underWater;
 extern	cvar_t	*cg_weaponBarActiveWidth;
 extern	cvar_t	*cg_weaponBarActiveWeapons;
+extern	cvar_t	*cg_swipeFreeAiming;
 
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;

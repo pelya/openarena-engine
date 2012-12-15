@@ -51,9 +51,9 @@ kbutton_t	in_left, in_right, in_forward, in_back;
 kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
-static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed;
+static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed, in_androidWeaponSelectionBarActive;
+static short in_joystickCenterOnAngle, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY;
-static short in_joystickCenterOnAngle, in_swimUp, in_attackButtonReleased;
 
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
@@ -244,7 +244,7 @@ void IN_Button0Down(void)
 {
 	int weaponX = in_mouseX * 640 / cls.glconfig.vidWidth;
 
-	if (	in_androidCameraPitchSpeed == -1 &&
+	if (	in_androidWeaponSelectionBarActive &&
 			weaponX > 320 - cg_weaponBarActiveWidth->integer &&
 			weaponX < 320 + cg_weaponBarActiveWidth->integer ) {
 		char cmd[64] = "weapon ";
@@ -252,7 +252,7 @@ void IN_Button0Down(void)
 		char * c = cg_weaponBarActiveWeapons->string, * c2;
 		int i;
 
-		in_androidCameraPitchSpeed = 0;
+		in_androidWeaponSelectionBarActive = 0;
 		for ( i = 0; i < count; i++ ) {
 			c = strchr ( c, '/' );
 			if ( c == NULL )
@@ -265,13 +265,35 @@ void IN_Button0Down(void)
 		strncat ( cmd, c, c2 - c );
 		Cbuf_AddText( cmd );
 	} else {
-		IN_KeyDown(&in_buttons[0]);
+		if ( cg_swipeFreeAiming->integer ) {
+			IN_KeyDown(&in_buttons[0]);
+		} else {
+			// Ignore mouse keypresses, process only keyboard
+			int k = -1;
+			if ( Cmd_Argv(1)[0] )
+				k = atoi(Cmd_Argv(1));
+			if ( k != K_MOUSE1 )
+				IN_KeyDown(&in_buttons[0]);
+			else
+				in_mouseSwipingActive = 1;
+		}
 	}
 }
 void IN_Button0Up(void)
 {
-	IN_KeyUp(&in_buttons[0]);
-	in_attackButtonReleased = 1;
+	if ( cg_swipeFreeAiming->integer ) {
+		IN_KeyUp(&in_buttons[0]);
+		in_attackButtonReleased = 1;
+	} else {
+		// Ignore mouse keypresses, process only keyboard
+		int k = -1;
+		if ( Cmd_Argv(1)[0] )
+			k = atoi(Cmd_Argv(1));
+		if ( k != K_MOUSE1 )
+			IN_KeyUp(&in_buttons[0]);
+		else
+			in_mouseSwipingActive = 0;
+	}
 }
 void IN_Button1Down(void) {IN_KeyDown(&in_buttons[1]);}
 void IN_Button1Up(void) {IN_KeyUp(&in_buttons[1]);}
@@ -408,7 +430,14 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 	// TODO: hardcoded values, make them configurable
 	int border = cls.glconfig.vidHeight / 6;
 
-	in_androidCameraYawSpeed = in_androidCameraPitchSpeed = 0;
+	in_androidCameraYawSpeed = in_androidCameraPitchSpeed = in_androidWeaponSelectionBarActive = 0;
+
+	if ( !cg_swipeFreeAiming->integer ) {
+		if ( y < border )
+			in_androidWeaponSelectionBarActive = 1;
+		return;
+	}
+
 	if ( x < border * 3 ) {
 		if ( x < border * 2 )
 			in_androidCameraYawSpeed = 1;
@@ -420,8 +449,10 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 	}
 
 	if ( y < border * 2 ) {
-		if ( y < border )
+		if ( y < border ) {
 			in_androidCameraPitchSpeed = -1;
+			in_androidWeaponSelectionBarActive = 1;
+		}
 		SCALE( y, border * 2, border, border / 2 );
 	} else if ( y > cls.glconfig.vidHeight - border * 2 ) {
 		if ( y > cls.glconfig.vidHeight - border )
@@ -607,6 +638,21 @@ void CL_MouseMove(usercmd_t *cmd)
 	if ( !cgvm )
 		return;
 
+	if ( cg_swipeFreeAiming->integer ) {
+		static int oldMouseX, oldMouseY;
+		int dx = in_mouseX - oldMouseX;
+		int dy = in_mouseY - oldMouseY;
+		
+		if ( in_mouseSwipingActive ) {
+			cl.viewangles[YAW] += dx;
+			cl.viewangles[PITCH] += dy;
+		}
+
+		oldMouseX = in_mouseX;
+		oldMouseY = in_mouseY;
+		return;
+	}
+
 	if ( ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ) && in_buttons[0].active ) {
 		float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.frametime * cl_yawspeed->value * 0.002f;
 		float pitchSpeed = ( in_cameraAngles[PITCH] < -20 ) ? 0.0015f : ( in_cameraAngles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
@@ -698,12 +744,14 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		}
 		in_buttons[i].wasPressed = qfalse;
 	}
-	if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed || cl.cgameUserCmdValue == WP_RAILGUN )
-		cmd->buttons &= ~1; // Stop firing when we are rotating camera
-	if ( cl.cgameUserCmdValue == WP_RAILGUN && in_attackButtonReleased &&
-		! ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed ) )
-		cmd->buttons |= 1;
-	in_attackButtonReleased = 0;
+	if ( cg_swipeFreeAiming->integer ) {
+		if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed || in_androidWeaponSelectionBarActive || cl.cgameUserCmdValue == WP_RAILGUN )
+			cmd->buttons &= ~1; // Stop firing when we are rotating camera
+		if ( cl.cgameUserCmdValue == WP_RAILGUN && in_attackButtonReleased &&
+			! ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidWeaponSelectionBarActive ) )
+			cmd->buttons |= 1;
+		in_attackButtonReleased = 0;
+	}
 
 	if ( Key_GetCatcher( ) ) {
 		cmd->buttons |= BUTTON_TALK;
