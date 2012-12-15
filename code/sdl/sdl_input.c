@@ -1166,8 +1166,8 @@ static void IN_ShowHideScreenButtons( void )
 			if( !cg_swipeFreeAiming->integer )
 			{
 				// Set up Fire button
-				rect.h /= 1.5f;
-				rect.w *= rect.h;
+				rect.w /= 1.5f;
+				rect.h = rect.w;
 				rect.x = cls.glconfig.vidWidth - rect.w;
 				rect.y = cls.glconfig.vidHeight - rect.h;
 				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);

@@ -569,7 +569,9 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 			if ( cl.androidJoystickAngle > 180.0f )
 				cl.androidJoystickAngle -= 360.0f;
 		}
-		angle -= cl.viewangles[YAW] + SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) + 90.0f - in_cameraAngles[YAW];
+		angle -= 90.0f;
+		if ( cg_swipeFreeAiming->integer )
+			angle += in_cameraAngles[YAW] - SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) - cl.viewangles[YAW];
 		angle = DEG2RAD( angle );
 
 		cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
@@ -587,8 +589,12 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		} else {
 			cl.androidJoystickAngle -= diff;
 		}
-		in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], - diff ); // It will normalize the resulting angle
-		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+		if ( cg_swipeFreeAiming->integer ) {
+			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], - diff ); // It will normalize the resulting angle
+			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+		} else {
+			cl.viewangles[YAW] = AngleSubtract( cl.viewangles[YAW], - diff ); // It will normalize the resulting angle
+		}
 	}
 
 	cmd->upmove = ClampChar( cmd->upmove + in_swimUp );
@@ -638,14 +644,14 @@ void CL_MouseMove(usercmd_t *cmd)
 	if ( !cgvm )
 		return;
 
-	if ( cg_swipeFreeAiming->integer ) {
+	if ( !cg_swipeFreeAiming->integer ) {
 		static int oldMouseX, oldMouseY;
 		int dx = in_mouseX - oldMouseX;
 		int dy = in_mouseY - oldMouseY;
 		
 		if ( in_mouseSwipingActive ) {
-			cl.viewangles[YAW] += dx;
-			cl.viewangles[PITCH] += dy;
+			cl.viewangles[YAW] -= (float)dx * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
+			cl.viewangles[PITCH] += (float)dy * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
 		}
 
 		oldMouseX = in_mouseX;
