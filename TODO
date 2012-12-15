@@ -1,14 +1,3 @@
-To be fixed before releasing to Google Play:
-
-Two aiming modes to configure - swipe-free and swipe + fire button
-
-Scheduled for the next major release, after 10k downloads:
-
-Create instruction, how to set up your own dedicated server
-Add "Vote yes/no" to the vote dialog.
-
-Scheduled after 50k downloads:
-
 VOIP chat support, that will require support from SDL
 
 Minor enhancements:
