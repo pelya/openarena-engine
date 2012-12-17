@@ -927,6 +927,8 @@ fileHandle_t FS_FOpenFileAppend( const char *filename ) {
 	fsh[f].handleSync = qfalse;
 	if (!fsh[f].handleFiles.file.o) {
 		f = 0;
+	} else {
+		setvbuf(fsh[f].handleFiles.file.o, NULL, _IOFBF, 8192); // Set big buffer for writing log files to SD card, on my home server
 	}
 	return f;
 }
