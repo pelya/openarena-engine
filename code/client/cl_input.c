@@ -323,8 +323,7 @@ void IN_Button13Down(void) {IN_KeyDown(&in_buttons[13]);}
 void IN_Button13Up(void) {IN_KeyUp(&in_buttons[13]);}
 void IN_Button14Down(void) {IN_KeyDown(&in_buttons[14]);}
 void IN_Button14Up(void) {IN_KeyUp(&in_buttons[14]);}
-void IN_Button15Down(void) {IN_KeyDown(&in_buttons[15]);}
-void IN_Button15Up(void) {IN_KeyUp(&in_buttons[15]);}
+void IN_Gesture(void) {in_buttons[3].wasPressed = qtrue;}
 
 void IN_CenterViewDown (void) {
 	//in_cameraAngles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
@@ -1209,6 +1208,7 @@ void CL_InitInput( void ) {
 	Cmd_AddCommand ("-mlook", IN_MLookUp);
 	Cmd_AddCommand ("+multitouch", IN_MultitouchDown);
 	Cmd_AddCommand ("-multitouch", IN_MultitouchUp);
+	Cmd_AddCommand ("gesture", IN_Gesture);
 
 #ifdef USE_VOIP
 	Cmd_AddCommand ("+voiprecord", IN_VoipRecordDown);
@@ -1286,6 +1286,11 @@ void CL_ShutdownInput(void)
 	Cmd_RemoveCommand("-button14");
 	Cmd_RemoveCommand("+mlook");
 	Cmd_RemoveCommand("-mlook");
+	Cmd_RemoveCommand ("+multitouch");
+	Cmd_RemoveCommand ("-multitouch");
+	Cmd_RemoveCommand ("gesture");
+
+	Cmd_AddCommand ("gesture", IN_Gesture);
 
 #ifdef USE_VOIP
 	Cmd_RemoveCommand("+voiprecord");

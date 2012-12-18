@@ -746,6 +746,9 @@ void Message_Key( int key ) {
 
 			CL_AddReliableCommand(buffer, qfalse);
 		}
+		if ( !chatField.buffer[0] && clc.state == CA_ACTIVE ) {
+			Cbuf_AddText("gesture\n");
+		}
 		Key_SetCatcher( Key_GetCatcher( ) & ~KEYCATCH_MESSAGE );
 		Field_Clear( &chatField );
 		return;
