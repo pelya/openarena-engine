@@ -2737,7 +2737,7 @@ void Com_Init( char *commandLine ) {
 
 	com_logfile = Cvar_Get ("logfile", "0", CVAR_TEMP );
 
-	com_timescale = Cvar_Get ("timescale", "0.75", CVAR_CHEAT | CVAR_SYSTEMINFO );
+	com_timescale = Cvar_Get ("timescale", "0.75", CVAR_SYSTEMINFO);
 	com_fixedtime = Cvar_Get ("fixedtime", "0", CVAR_CHEAT);
 	com_showtrace = Cvar_Get ("com_showtrace", "0", CVAR_CHEAT);
 	com_speeds = Cvar_Get ("com_speeds", "0", 0);
