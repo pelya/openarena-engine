@@ -363,16 +363,21 @@ void CL_AdjustAngles( void ) {
 	float right = CL_KeyState (&in_right), left = CL_KeyState (&in_left);
 	float up = CL_KeyState (&in_lookup), down = CL_KeyState (&in_lookdown);
 
-	//Com_Printf("left %f right %f up %f down %f\n", (double) left, (double) right, (double) up, (double) down);
 	if ( left > 0 || right > 0 || up > 0 || down > 0 ) {
 		float speed = 0.002f * cls.frametime;
-		in_cameraAngles[YAW] -= speed * cl_yawspeed->value * right;
-		in_cameraAngles[YAW] += speed * cl_yawspeed->value * left;
-		in_cameraAngles[PITCH] -= speed * cl_pitchspeed->value * up;
-		in_cameraAngles[PITCH] += speed * cl_pitchspeed->value * down;
-		//Com_Printf("yaw %f pitch %f\n", (double) in_cameraAngles[YAW], (double) in_cameraAngles[PITCH]);
-		if ( cgvm )
-			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+		if ( cg_swipeFreeAiming->integer ) {
+			in_cameraAngles[YAW] -= speed * cl_yawspeed->value * right;
+			in_cameraAngles[YAW] += speed * cl_yawspeed->value * left;
+			in_cameraAngles[PITCH] -= speed * cl_pitchspeed->value * up;
+			in_cameraAngles[PITCH] += speed * cl_pitchspeed->value * down;
+			if ( cgvm )
+				VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+		} else {
+			cl.viewangles[YAW] -= speed * cl_yawspeed->value * right;
+			cl.viewangles[YAW] += speed * cl_yawspeed->value * left;
+			cl.viewangles[PITCH] -= speed * cl_pitchspeed->value * up;
+			cl.viewangles[PITCH] += speed * cl_pitchspeed->value * down;
+		}
 	}
 }
 
