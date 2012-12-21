@@ -52,7 +52,7 @@ kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed, in_androidWeaponSelectionBarActive;
-static short in_joystickCenterOnAngle, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive;
+static short in_joystickCenterOnAngle, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY;
 
 #ifdef USE_VOIP
@@ -331,6 +331,7 @@ void IN_CenterViewDown (void) {
 	// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
 	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
 		in_joystickCenterOnAngle = 1;
+		in_joystickJumpTriggerTime = 0; // Do not jump if user rotated view and immediately put finger back on joystick
 		if( cg_underWater->integer )
 			in_swimUp = 255;
 	}
@@ -545,22 +546,22 @@ CL_JoystickMove
 void CL_JoystickMove( usercmd_t *cmd ) {
 #ifdef __ANDROID__
 
-	static int jumpTriggerTime = 0, oldRightMove = 0, oldForwardMove = 0;
+	static int oldRightMove = 0, oldForwardMove = 0;
 	float angle;
 
 	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
-		if ( jumpTriggerTime > 0 ) {
-			jumpTriggerTime -= cls.frametime;
-			if ( jumpTriggerTime * 2 > j_androidJoystickJumpTime->value ) {
+		if ( in_joystickJumpTriggerTime > 0 ) {
+			in_joystickJumpTriggerTime -= cls.frametime;
+			if ( in_joystickJumpTriggerTime * 2 > j_androidJoystickJumpTime->integer ) {
 				cmd->rightmove = ClampChar( cmd->rightmove + oldRightMove );
 				cmd->forwardmove = ClampChar( cmd->forwardmove + oldForwardMove );
 			}
 		}
 	} else {
-		if ( jumpTriggerTime > 0 && jumpTriggerTime < j_androidJoystickJumpTime->value ) {
+		if ( in_joystickJumpTriggerTime > 0 && in_joystickJumpTriggerTime < j_androidJoystickJumpTime->integer ) {
 			cmd->upmove = ClampChar( cmd->upmove + 10 );
 		}
-		jumpTriggerTime = j_androidJoystickJumpTime->value;
+		in_joystickJumpTriggerTime = j_androidJoystickJumpTime->integer;
 
 		angle = RAD2DEG( atan2( cl.joystickAxis[0], cl.joystickAxis[1] ) );
 		if( !in_joystickCenterOnAngle ) {
