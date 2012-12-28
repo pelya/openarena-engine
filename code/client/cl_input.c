@@ -52,7 +52,7 @@ kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed, in_androidWeaponSelectionBarActive;
-static short in_joystickCenterOnAngle, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive;
+static short in_joystickCenterOnAngle, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY;
 
 #ifdef USE_VOIP
@@ -507,26 +507,39 @@ void CL_MouseEvent( int dx, int dy, int time ) {
 CL_Mouse2Event
 =================
 */
-void CL_Mouse2Event( int dx, int dy, int time ) {
-	in_multitouchX = dx;
-	in_multitouchY = dy;
+void CL_Mouse2Event( int x, int y, int time ) {
+	if ( !cg_swipeFreeAiming->integer && in_multitouchActive ) {
+		int dx = x - in_multitouchX;
+		int dy = y - in_multitouchY;
+		cl.viewangles[YAW] -= (float)dx * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
+		cl.viewangles[PITCH] += (float)dy * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
+	}
+	in_multitouchX = x;
+	in_multitouchY = y;
 }
 
 void IN_MultitouchDown(void) {
-	int dx = in_multitouchX - in_mouseX;
-	int dy = in_multitouchY - in_mouseY;
-
-	if ( abs( dx ) > abs( dy ) ) {
-		in_androidCameraMultitouchYawSpeed = ( dx < 0 ) ? 1 : -1;
+	if ( cg_swipeFreeAiming->integer ) {
+		int dx = in_multitouchX - in_mouseX;
+		int dy = in_multitouchY - in_mouseY;
+		if ( abs( dx ) > abs( dy ) ) {
+			in_androidCameraMultitouchYawSpeed = ( dx < 0 ) ? 1 : -1;
+		} else {
+			Com_QueueEvent( 0, SE_KEY, ( dy < 0 ) ? '/' : K_BACKSPACE , qtrue, 0, NULL );
+		}
 	} else {
-		Com_QueueEvent( 0, SE_KEY, ( dy < 0 ) ? '/' : K_BACKSPACE , qtrue, 0, NULL );
+		in_multitouchActive = 1;
 	}
 }
 
 void IN_MultitouchUp(void) {
-	in_androidCameraMultitouchYawSpeed = 0;
-	Com_QueueEvent( 0, SE_KEY, '/', qfalse, 0, NULL );
-	Com_QueueEvent( 0, SE_KEY, K_BACKSPACE, qfalse, 0, NULL );
+	if ( cg_swipeFreeAiming->integer ) {
+		in_androidCameraMultitouchYawSpeed = 0;
+		Com_QueueEvent( 0, SE_KEY, '/', qfalse, 0, NULL );
+		Com_QueueEvent( 0, SE_KEY, K_BACKSPACE, qfalse, 0, NULL );
+	} else {
+		in_multitouchActive = 0;
+	}
 }
 
 /*

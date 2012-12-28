@@ -3558,7 +3558,7 @@ void CL_Init( void ) {
 	cg_underWater = Cvar_Get ("cg_underWater", "0", 0);
 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);
 	cg_weaponBarActiveWeapons = Cvar_Get ("cg_weaponBarActiveWeapons", "", 0);
-	cg_swipeFreeAiming = Cvar_Get ("cg_swipeFreeAiming", "1", CVAR_ARCHIVE);
+	cg_swipeFreeAiming = Cvar_Get ("cg_swipeFreeAiming", "0", CVAR_ARCHIVE);
 
 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);
 	j_yaw_axis =     Cvar_Get ("j_yaw_axis",     "4", CVAR_ARCHIVE);
