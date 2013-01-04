@@ -1,9 +1,3 @@
-Next release:
-Show both local and internet games in the single server list
-Fix GUI mis-clicking
-"Rate me" dialog
-Options to enable FPS meter and lagometer.
-
 Distant future:
 VOIP chat support, that will require support from SDL
 
