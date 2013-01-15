@@ -565,7 +565,7 @@ void Con_DrawNotify (void)
 			}
 			buf[0] = text[x] & 0xff;
 			buf[1] = 0;
-			SCR_DrawBigString( cl_conXOffset->integer + con.xadjust + (x+1)*BIGCHAR_WIDTH, v, buf, 1.0f, qfalse );
+			SCR_DrawBigStringColor( cl_conXOffset->integer + con.xadjust + (x+1)*BIGCHAR_WIDTH, v, buf, g_color_table[currentColor], qtrue );
 		}
 
 		v += BIGCHAR_HEIGHT;
