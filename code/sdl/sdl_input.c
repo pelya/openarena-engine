@@ -1122,12 +1122,16 @@ static void IN_ShowHideScreenButtons( void )
 {
 #ifdef __ANDROID__
 	SDL_Rect rect;
+	int i;
+	static SDL_Rect userRedefinedPos[SDL_ANDROID_SCREENKEYBOARD_BUTTON_NUM];
 	// Show/hide Android on-screen buttons, when we enter/leave menu
 	SDL_ANDROID_GetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
 	if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE )
 	{
 		if( rect.w > 0 )
 		{
+			for( i = 0; i < SDL_ANDROID_SCREENKEYBOARD_BUTTON_NUM; i++ )
+				SDL_ANDROID_GetScreenKeyboardButtonPos(i, &userRedefinedPos[i]);
 			rect.w = rect.h = 0;
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect);
@@ -1172,6 +1176,11 @@ static void IN_ShowHideScreenButtons( void )
 				rect.y = cls.glconfig.vidHeight - rect.h * 2;
 				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
 				SDL_ANDROID_SetScreenKeyboardButtonGenerateTouchEvents(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, 1);
+			}
+			if( SDL_ANDROID_GetScreenKeyboardRedefinedByUser() )
+			{
+				for( i = 0; i < SDL_ANDROID_SCREENKEYBOARD_BUTTON_NUM; i++ )
+					SDL_ANDROID_SetScreenKeyboardButtonPos(i, &userRedefinedPos[i]);
 			}
 		}
 	}
