@@ -1,7 +1,5 @@
 Next release:
 Fix sky disappearing at random on wrackdm17 and other big maps
-Option for first-person mode
-Option for wide FOV
 
 Distant future:
 VOIP chat support, that will require support from SDL
