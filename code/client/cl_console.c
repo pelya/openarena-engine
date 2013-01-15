@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 
-int g_console_field_width = 78;
+int g_console_field_width = 39; //78;
 
 
 #define	NUM_CON_TIMES 4
@@ -63,7 +63,7 @@ console_t	con;
 cvar_t		*con_conspeed;
 cvar_t		*con_notifytime;
 
-#define	DEFAULT_CONSOLE_WIDTH	78
+#define	DEFAULT_CONSOLE_WIDTH	39 //78
 
 
 /*
@@ -250,7 +250,7 @@ void Con_CheckResize (void)
 	int		i, j, width, oldwidth, oldtotallines, numlines, numchars;
 	short	tbuf[CON_TEXTSIZE];
 
-	width = (SCREEN_WIDTH / SMALLCHAR_WIDTH) - 2;
+	width = (SCREEN_WIDTH / BIGCHAR_WIDTH) - 2;
 
 	if (width == con.linewidth)
 		return;
@@ -323,7 +323,7 @@ Con_Init
 void Con_Init (void) {
 	int		i;
 
-	con_notifytime = Cvar_Get ("con_notifytime", "3", 0);
+	con_notifytime = Cvar_Get ("con_notifytime", "6", 0);
 	con_conspeed = Cvar_Get ("scr_conspeed", "3", 0);
 
 	Field_Clear( &g_consoleField );
@@ -555,6 +555,7 @@ void Con_DrawNotify (void)
 		}
 
 		for (x = 0 ; x < con.linewidth ; x++) {
+			char buf[2];
 			if ( ( text[x] & 0xff ) == ' ' ) {
 				continue;
 			}
@@ -562,10 +563,12 @@ void Con_DrawNotify (void)
 				currentColor = (text[x]>>8) % NUMBER_OF_COLORS;
 				re.SetColor( g_color_table[currentColor] );
 			}
-			SCR_DrawSmallChar( cl_conXOffset->integer + con.xadjust + (x+1)*SMALLCHAR_WIDTH, v, text[x] & 0xff );
+			buf[0] = text[x] & 0xff;
+			buf[1] = 0;
+			SCR_DrawBigString( cl_conXOffset->integer + con.xadjust + (x+1)*BIGCHAR_WIDTH, v, buf, 1.0f, qfalse );
 		}
 
-		v += SMALLCHAR_HEIGHT;
+		v += BIGCHAR_HEIGHT;
 	}
 
 	re.SetColor( NULL );
