@@ -3,6 +3,7 @@ Fix sky disappearing at random on wrackdm17 and other big maps
 Q_vsnprintf inside bg_lib.c is buggy with %f output
 Add tap-to-fire and multitouch firing modes
 Add support for analog joysticks/gamepad
+Disable dot inside the joystick, and disable swim-up arrow
 
 Distant future:
 VOIP chat support, that will require support from SDL
