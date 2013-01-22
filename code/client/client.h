@@ -111,8 +111,7 @@ typedef struct {
 
 	int			parseEntitiesNum;	// index (not anded off) into cl_parse_entities[]
 
-	float 		androidJoystickAngle;
-
+	int			mouseDx[2], mouseDy[2];	// added to by mouse events
 	int			mouseIndex;
 	int			joystickAxis[MAX_JOYSTICK_AXIS];	// set by joystick events
 
@@ -353,7 +352,6 @@ typedef struct {
 	qhandle_t	charSetShader;
 	qhandle_t	whiteShader;
 	qhandle_t	consoleShader;
-	qhandle_t	androidJoystickShader;
 } clientStatic_t;
 
 extern	clientStatic_t		cls;

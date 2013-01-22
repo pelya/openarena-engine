@@ -54,16 +54,12 @@ kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed, in_androidWeaponSelectionBarActive;
 static short in_joystickCenterOnAngle, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY;
-
+static float in_joystickAngle;
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
 #endif
-
 kbutton_t	in_buttons[16];
-
-
 qboolean	in_mlooking;
-
 vec3_t		in_cameraAngles;
 
 
@@ -583,9 +579,9 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 
 		angle = RAD2DEG( atan2( cl.joystickAxis[0], cl.joystickAxis[1] ) );
 		if( !in_joystickCenterOnAngle ) {
-			cl.androidJoystickAngle = angle + 180.0f;
-			if ( cl.androidJoystickAngle > 180.0f )
-				cl.androidJoystickAngle -= 360.0f;
+			in_joystickAngle = angle + 180.0f;
+			if ( in_joystickAngle > 180.0f )
+				in_joystickAngle -= 360.0f;
 		}
 		angle -= 90.0f;
 		if ( cg_swipeFreeAiming->integer )
@@ -599,13 +595,13 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 	}
 
 	if ( in_joystickCenterOnAngle ) {
-		float diff = cls.frametime * cl_yawspeed->value * 0.005f * ( ( cl.androidJoystickAngle > 0 ) ? 1 : -1 );
-		if ( fabs( cl.androidJoystickAngle ) <= fabs( diff ) ) {
-			diff = cl.androidJoystickAngle;
+		float diff = cls.frametime * cl_yawspeed->value * 0.005f * ( ( in_joystickAngle > 0 ) ? 1 : -1 );
+		if ( fabs( in_joystickAngle ) <= fabs( diff ) ) {
+			diff = in_joystickAngle;
 			in_joystickCenterOnAngle = 0;
-			cl.androidJoystickAngle = 0;
+			in_joystickAngle = 0;
 		} else {
-			cl.androidJoystickAngle -= diff;
+			in_joystickAngle -= diff;
 		}
 		if ( cg_swipeFreeAiming->integer ) {
 			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], - diff ); // It will normalize the resulting angle

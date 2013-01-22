@@ -445,21 +445,6 @@ void SCR_DrawDebugGraph (void)
 	}
 }
 
-static void SCR_DrawAndroidJoystickPointer(void)
-{
-	// Draw pointer inside joystick
-	float cx = cls.glconfig.vidHeight / 6;
-	float cy = cls.glconfig.vidHeight - cx;
-	float size = cls.glconfig.vidHeight / 12;
-
-	if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE )
-		return;
-
-	cx -= size * 0.6f * sin( DEG2RAD( cl.androidJoystickAngle ) );
-	cy -= size * 0.6f * cos( DEG2RAD( cl.androidJoystickAngle ) );
-	re.DrawStretchPic( cx - size * 0.5f, cy - size * 0.5f, size, size, 0, 0, 1, 1, cls.androidJoystickShader );
-}
-
 //=============================================================================
 
 /*
@@ -561,7 +546,6 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 	if ( cl_debuggraph->integer || cl_timegraph->integer || cl_debugMove->integer ) {
 		SCR_DrawDebugGraph ();
 	}
-	SCR_DrawAndroidJoystickPointer();
 }
 
 /*
