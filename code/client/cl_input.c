@@ -360,19 +360,19 @@ void CL_AdjustAngles( void ) {
 	float up = CL_KeyState (&in_lookup), down = CL_KeyState (&in_lookdown);
 
 	if ( left > 0 || right > 0 || up > 0 || down > 0 ) {
-		float speed = 0.002f * cls.frametime;
+		float speed = cls.frametime * cl_sensitivity->value * cl.cgameSensitivity * 0.06f;
 		if ( cg_swipeFreeAiming->integer ) {
-			in_cameraAngles[YAW] -= speed * cl_yawspeed->value * right;
-			in_cameraAngles[YAW] += speed * cl_yawspeed->value * left;
-			in_cameraAngles[PITCH] -= speed * cl_pitchspeed->value * up;
-			in_cameraAngles[PITCH] += speed * cl_pitchspeed->value * down;
+			in_cameraAngles[YAW] -= speed * right;
+			in_cameraAngles[YAW] += speed * left;
+			in_cameraAngles[PITCH] -= speed * up;
+			in_cameraAngles[PITCH] += speed * down;
 			if ( cgvm )
 				VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 		} else {
-			cl.viewangles[YAW] -= speed * cl_yawspeed->value * right;
-			cl.viewangles[YAW] += speed * cl_yawspeed->value * left;
-			cl.viewangles[PITCH] -= speed * cl_pitchspeed->value * up;
-			cl.viewangles[PITCH] += speed * cl_pitchspeed->value * down;
+			cl.viewangles[YAW] -= speed * right;
+			cl.viewangles[YAW] += speed * left;
+			cl.viewangles[PITCH] -= speed * up;
+			cl.viewangles[PITCH] += speed * down;
 		}
 	}
 }
@@ -563,7 +563,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 	static int oldRightMove = 0, oldForwardMove = 0;
 	float angle;
 
-	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
+	if ( cl.joystickAxis[JOY_AXIS_SCREENJOY_X] == 0 && cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] == 0 ) {
 		if ( in_joystickJumpTriggerTime > 0 ) {
 			in_joystickJumpTriggerTime -= cls.frametime;
 			if ( in_joystickJumpTriggerTime * 2 > j_androidJoystickJumpTime->integer ) {
@@ -571,13 +571,21 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 				cmd->forwardmove = ClampChar( cmd->forwardmove + oldForwardMove );
 			}
 		}
+		if ( abs(cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_X]) > 8192 || abs(cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_Y]) > 8192 ) {
+			angle = RAD2DEG( atan2( cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_X], cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_Y] ) );
+			angle -= 90.0f;
+			angle = DEG2RAD( angle );
+
+			cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
+			cmd->rightmove = ClampChar( cmd->rightmove + cos( angle ) * 127.0f );
+		}
 	} else {
 		if ( in_joystickJumpTriggerTime > 0 && in_joystickJumpTriggerTime < j_androidJoystickJumpTime->integer ) {
 			cmd->upmove = ClampChar( cmd->upmove + 10 );
 		}
 		in_joystickJumpTriggerTime = j_androidJoystickJumpTime->integer;
 
-		angle = RAD2DEG( atan2( cl.joystickAxis[0], cl.joystickAxis[1] ) );
+		angle = RAD2DEG( atan2( cl.joystickAxis[JOY_AXIS_SCREENJOY_X], cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] ) );
 		if( !in_joystickCenterOnAngle ) {
 			in_joystickAngle = angle + 180.0f;
 			if ( in_joystickAngle > 180.0f )
@@ -612,6 +620,16 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 	}
 
 	cmd->upmove = ClampChar( cmd->upmove + in_swimUp );
+	if ( cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_TRIGGER] > 20000 )
+		cmd->upmove = ClampChar( cmd->upmove + 10 );
+
+	if ( abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X]) > 8192 || abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y]) > 8192 ) {
+		float speed = cls.frametime * cl_sensitivity->value * cl.cgameSensitivity * (0.08f / 32767.0f);
+		cl.viewangles[YAW] -= speed * cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X];
+		cl.viewangles[PITCH] += speed * cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y] * (m_pitch->value < 0 ? -1 : 1);
+	}
+	if ( cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_TRIGGER] > 20000 ) // Fire button pressed
+		cmd->buttons |= 1;
 #else
 
 	float	anglespeed;

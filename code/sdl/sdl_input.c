@@ -55,11 +55,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 static cvar_t *in_keyboardDebug     = NULL;
 
-static SDL_Joystick *stick = NULL;
+enum { NUM_JOYSTICKS = 3 };
+static SDL_Joystick *sticks[NUM_JOYSTICKS];
 
 static qboolean mouseAvailable = qfalse;
 static qboolean mouseActive = qfalse;
 static qboolean keyRepeatEnabled = qfalse;
+static qboolean hideScreenKeys = qfalse;
 
 static cvar_t *in_mouse             = NULL;
 #ifdef MACOS_X_ACCELERATION_HACK
@@ -71,9 +73,6 @@ static cvar_t *in_nograb;
 static cvar_t *in_joystick          = NULL;
 static cvar_t *in_joystickDebug     = NULL;
 static cvar_t *in_joystickThreshold = NULL;
-static cvar_t *in_joystickNo        = NULL;
-static cvar_t *in_joystickUseAnalog = NULL;
-//static cvar_t *cg_swipeFreeAiming = NULL;
 
 static int vidRestartTime = 0;
 
@@ -565,7 +564,7 @@ struct
 	unsigned int oldaxes;
 	int oldaaxes[MAX_JOYSTICK_AXIS];
 	unsigned int oldhats;
-} stick_state;
+} stick_state[NUM_JOYSTICKS];
 
 
 /*
@@ -579,11 +578,17 @@ static void IN_InitJoystick( void )
 	int total = 0;
 	char buf[16384] = "";
 
-	if (stick != NULL)
-		SDL_JoystickClose(stick);
+	for( i = 0; i < NUM_JOYSTICKS; i++ )
+	{
+		if (sticks[i] != NULL)
+			SDL_JoystickClose(sticks[i]);
+	}
 
-	stick = NULL;
-	memset(&stick_state, '\0', sizeof (stick_state));
+	for( i = 0; i < NUM_JOYSTICKS; i++ )
+	{
+		sticks[i] = NULL;
+		memset(&stick_state[i], 0, sizeof (stick_state[i]));
+	}
 
 	if (!SDL_WasInit(SDL_INIT_JOYSTICK))
 	{
@@ -600,7 +605,7 @@ static void IN_InitJoystick( void )
 	Com_DPrintf("%d possible joysticks\n", total);
 
 	// Print list and build cvar to allow ui to select joystick.
-	for (i = 0; i < total; i++)
+	for ( i = 0; i < total; i++ )
 	{
 		Q_strcat(buf, sizeof(buf), SDL_JoystickName(i));
 		Q_strcat(buf, sizeof(buf), "\n");
@@ -608,41 +613,22 @@ static void IN_InitJoystick( void )
 
 	Cvar_Get( "in_availableJoysticks", buf, CVAR_ROM );
 
-#ifndef __ANDROID__
-	if( !in_joystick->integer ) {
-		Com_DPrintf( "Joystick is not active.\n" );
-		SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
-		return;
+	for( i = 0; i < NUM_JOYSTICKS; i++ )
+	{
+		sticks[i] = SDL_JoystickOpen( i );
+
+		if (sticks[i] == NULL) {
+			Com_DPrintf( "No joystick opened.\n" );
+			return;
+		}
+
+		Com_DPrintf( "Joystick %d opened\n", i );
+		Com_DPrintf( "Name:       %s\n", SDL_JoystickName(i) );
+		Com_DPrintf( "Axes:       %d\n", SDL_JoystickNumAxes(sticks[i]) );
+		Com_DPrintf( "Hats:       %d\n", SDL_JoystickNumHats(sticks[i]) );
+		Com_DPrintf( "Buttons:    %d\n", SDL_JoystickNumButtons(sticks[i]) );
+		Com_DPrintf( "Balls:      %d\n", SDL_JoystickNumBalls(sticks[i]) );
 	}
-
-	in_joystickNo = Cvar_Get( "in_joystickNo", "0", CVAR_ARCHIVE );
-	if( in_joystickNo->integer < 0 || in_joystickNo->integer >= total )
-		Cvar_Set( "in_joystickNo", "0" );
-#else
-	in_joystick->integer = 1;
-	in_joystickNo = Cvar_Get( "in_joystickNo", "0", CVAR_ARCHIVE );
-	Cvar_Set( "in_joystickNo", "0" );
-#endif
-	in_joystickUseAnalog = Cvar_Get( "in_joystickUseAnalog", "0", CVAR_ARCHIVE );
-
-	stick = SDL_JoystickOpen( in_joystickNo->integer );
-
-	if (stick == NULL) {
-		Com_DPrintf( "No joystick opened.\n" );
-		return;
-	}
-
-	Com_DPrintf( "Joystick %d opened\n", in_joystickNo->integer );
-	Com_DPrintf( "Name:       %s\n", SDL_JoystickName(in_joystickNo->integer) );
-	Com_DPrintf( "Axes:       %d\n", SDL_JoystickNumAxes(stick) );
-	Com_DPrintf( "Hats:       %d\n", SDL_JoystickNumHats(stick) );
-	Com_DPrintf( "Buttons:    %d\n", SDL_JoystickNumButtons(stick) );
-	Com_DPrintf( "Balls:      %d\n", SDL_JoystickNumBalls(stick) );
-	Com_DPrintf( "Use Analog: %s\n", in_joystickUseAnalog->integer ? "Yes" : "No" );
-
-#ifndef __ANDROID__
-	SDL_JoystickEventState(SDL_QUERY);
-#endif
 }
 
 /*
@@ -652,10 +638,12 @@ IN_ShutdownJoystick
 */
 static void IN_ShutdownJoystick( void )
 {
-	if (stick)
+	int i;
+	for( i = 0; i < NUM_JOYSTICKS; i++ )
 	{
-		SDL_JoystickClose(stick);
-		stick = NULL;
+		if (sticks[i] != NULL)
+			SDL_JoystickClose(sticks[i]);
+		sticks[i] = NULL;
 	}
 
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
@@ -1045,15 +1033,23 @@ static void IN_ProcessEvents( void )
 			
 			case SDL_JOYAXISMOTION: // Android accelerometer and on-screen joystick
 				{
-					if(e.jaxis.axis < 4) // 0-1 = screen joystick, 2-3 = accelerometer
-						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis, e.jaxis.value, 0, NULL );
+					if( e.jaxis.which == 0 && e.jaxis.axis < 2 ) // 0-1 = screen joystick
+						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis + JOY_AXIS_SCREENJOY_X, e.jaxis.value, 0, NULL );
+					if( e.jaxis.which == 1 && e.jaxis.axis < 2 ) // 2-3 = gyroscope
+						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis + JOY_AXIS_GYRO_X, e.jaxis.value, 0, NULL );
+					if( e.jaxis.which == 2 && e.jaxis.axis < 6 ) // 4-9 = gamepad
+					{
+						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis + JOY_AXIS_GAMEPADLEFT_X, e.jaxis.value, 0, NULL );
+						if ( !hideScreenKeys && e.jaxis.axis == JOY_AXIS_GAMEPADRIGHT_X && abs(e.jaxis.value) > 20000 )
+							hideScreenKeys = qtrue;
+					}
 				}
 				break;
 
 			case SDL_JOYBUTTONDOWN: // Android multitouch
 			case SDL_JOYBUTTONUP:
 				{
-					if( e.jbutton.button < MAX_POINTERS )
+					if( e.jaxis.which == 0 && e.jbutton.button < MAX_POINTERS )
 					{
 						touchPointers[e.jbutton.button].pressed = (e.jbutton.state == SDL_PRESSED);
 						IN_ProcessTouchPoints();
@@ -1062,7 +1058,7 @@ static void IN_ProcessEvents( void )
 				break;
 			case SDL_JOYBALLMOTION: // Android multitouch
 				{
-					if( e.jball.ball < MAX_POINTERS )
+					if( e.jaxis.which == 0 && e.jball.ball < MAX_POINTERS )
 					{
 						int i;
 						touchPointers[e.jball.ball].x = e.jball.xrel;
@@ -1126,7 +1122,7 @@ static void IN_ShowHideScreenButtons( void )
 	static SDL_Rect userRedefinedPos[SDL_ANDROID_SCREENKEYBOARD_BUTTON_NUM];
 	// Show/hide Android on-screen buttons, when we enter/leave menu
 	SDL_ANDROID_GetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
-	if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE )
+	if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE || hideScreenKeys )
 	{
 		if( rect.w > 0 )
 		{
