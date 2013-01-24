@@ -1041,7 +1041,20 @@ static void IN_ProcessEvents( void )
 					{
 						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis + JOY_AXIS_GAMEPADLEFT_X, e.jaxis.value, 0, NULL );
 						if ( !hideScreenKeys && e.jaxis.axis == JOY_AXIS_GAMEPADRIGHT_X && abs(e.jaxis.value) > 20000 )
+						{
 							hideScreenKeys = qtrue;
+							#ifdef __ANDROID__
+							SDL_Rect rect;
+							rect.x = rect.y = rect.w = rect.h = 0;
+							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
+							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect);
+							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect);
+							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect);
+							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
+							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
+							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
+							#endif
+						}
 					}
 				}
 				break;
@@ -1122,7 +1135,7 @@ static void IN_ShowHideScreenButtons( void )
 	static SDL_Rect userRedefinedPos[SDL_ANDROID_SCREENKEYBOARD_BUTTON_NUM];
 	// Show/hide Android on-screen buttons, when we enter/leave menu
 	SDL_ANDROID_GetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
-	if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE || hideScreenKeys )
+	if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE )
 	{
 		if( rect.w > 0 )
 		{
@@ -1143,7 +1156,7 @@ static void IN_ShowHideScreenButtons( void )
 	}
 	else
 	{
-		if( rect.w <= 0 )
+		if( rect.w <= 0 && ! hideScreenKeys )
 		{
 			// Four buttons in a row, plus joystick, which is 2x bigger than buttons.
 			rect.w = rect.h = cls.glconfig.vidHeight / 6;

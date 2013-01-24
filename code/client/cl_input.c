@@ -358,9 +358,9 @@ Moves the local angle positions
 void CL_AdjustAngles( void ) {
 	float right = CL_KeyState (&in_right), left = CL_KeyState (&in_left);
 	float up = CL_KeyState (&in_lookup), down = CL_KeyState (&in_lookdown);
+	float speed = cls.frametime * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
 
 	if ( left > 0 || right > 0 || up > 0 || down > 0 ) {
-		float speed = cls.frametime * cl_sensitivity->value * cl.cgameSensitivity * 0.06f;
 		if ( cg_swipeFreeAiming->integer ) {
 			in_cameraAngles[YAW] -= speed * right;
 			in_cameraAngles[YAW] += speed * left;
@@ -374,6 +374,21 @@ void CL_AdjustAngles( void ) {
 			cl.viewangles[PITCH] -= speed * up;
 			cl.viewangles[PITCH] += speed * down;
 		}
+	}
+
+	speed /= 32767.0f;
+
+	if ( abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X]) > 4096 ) {
+		int rescaled = (abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X]) - 4096) *
+						(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X] > 0 ? 1 : -1);
+		cl.viewangles[YAW] -= speed * rescaled;
+	}
+	// Slower vertical movement
+	if ( abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y]) > 12288 ) {
+		int rescaled = (abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y]) - 12288) *
+						(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y] > 0 ? 1 : -1) *
+						(m_pitch->value < 0 ? -1 : 1);
+		cl.viewangles[PITCH] += speed * rescaled;
 	}
 }
 
@@ -623,11 +638,6 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 	if ( cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_TRIGGER] > 20000 )
 		cmd->upmove = ClampChar( cmd->upmove + 10 );
 
-	if ( abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X]) > 8192 || abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y]) > 8192 ) {
-		float speed = cls.frametime * cl_sensitivity->value * cl.cgameSensitivity * (0.08f / 32767.0f);
-		cl.viewangles[YAW] -= speed * cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X];
-		cl.viewangles[PITCH] += speed * cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y] * (m_pitch->value < 0 ? -1 : 1);
-	}
 	if ( cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_TRIGGER] > 20000 ) // Fire button pressed
 		cmd->buttons |= 1;
 #else
