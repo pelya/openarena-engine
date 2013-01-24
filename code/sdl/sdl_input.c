@@ -1040,7 +1040,7 @@ static void IN_ProcessEvents( void )
 					if( e.jaxis.which == 2 && e.jaxis.axis < 6 ) // 4-9 = gamepad
 					{
 						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis + JOY_AXIS_GAMEPADLEFT_X, e.jaxis.value, 0, NULL );
-						if ( !hideScreenKeys && e.jaxis.axis == JOY_AXIS_GAMEPADRIGHT_X && abs(e.jaxis.value) > 20000 )
+						if ( !hideScreenKeys && e.jaxis.axis == JOY_AXIS_GAMEPADRIGHT_X - JOY_AXIS_GAMEPADLEFT_X && abs(e.jaxis.value) > 20000 )
 						{
 							hideScreenKeys = qtrue;
 							#ifdef __ANDROID__
@@ -1133,6 +1133,8 @@ static void IN_ShowHideScreenButtons( void )
 	SDL_Rect rect;
 	int i;
 	static SDL_Rect userRedefinedPos[SDL_ANDROID_SCREENKEYBOARD_BUTTON_NUM];
+	if( hideScreenKeys )
+		return;
 	// Show/hide Android on-screen buttons, when we enter/leave menu
 	SDL_ANDROID_GetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
 	if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE )
@@ -1156,7 +1158,7 @@ static void IN_ShowHideScreenButtons( void )
 	}
 	else
 	{
-		if( rect.w <= 0 && ! hideScreenKeys )
+		if( rect.w <= 0 )
 		{
 			// Four buttons in a row, plus joystick, which is 2x bigger than buttons.
 			rect.w = rect.h = cls.glconfig.vidHeight / 6;
