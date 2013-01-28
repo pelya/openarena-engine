@@ -1052,6 +1052,9 @@ static void IN_ProcessEvents( void )
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect);
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
+							// Do not hide text input, we don't have gamepad key to invoke it
+							rect.w = rect.h = cls.glconfig.vidHeight / 10;
+							rect.x = rect.y = 0;
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
 							#endif
 						}
