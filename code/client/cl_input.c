@@ -350,12 +350,16 @@ void IN_Gesture(void) {in_buttons[3].wasPressed = qtrue;}
 void IN_CenterViewDown (void) {
 	//in_cameraAngles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
 
-	// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
-	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
-		in_joystickCenterOnAngle = 1;
-		in_joystickJumpTriggerTime = 0; // Do not jump if user rotated view and immediately put finger back on joystick
-		if( cg_underWater->integer )
-			in_swimUp = 255;
+	if( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+		// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
+		if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
+			in_joystickCenterOnAngle = 1;
+			in_joystickJumpTriggerTime = 0; // Do not jump if user rotated view and immediately put finger back on joystick
+			if( cg_underWater->integer )
+				in_swimUp = 255;
+		}
+	} else {
+		in_swimUp = 255; // Just jump, we don't need quick-rotate button with swipe controls
 	}
 }
 
