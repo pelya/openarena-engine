@@ -433,7 +433,7 @@ void CL_AdjustAngles( void ) {
 
 	// Swipe touchscreen gesture
 	if ( in_swipeActivated ) {
-		float diff = cls.unscaledFrametime * cl_yawspeed->value * 0.001f * ( ( in_swipeAngle > 0 ) ? 1 : -1 );
+		float diff = cls.unscaledFrametime * 0.15f * ( ( in_swipeAngle > 0 ) ? 1 : -1 );
 		if ( fabs( in_swipeAngle ) <= fabs( diff ) ) {
 			diff = in_swipeAngle;
 			in_swipeActivated = 0;
@@ -750,7 +750,7 @@ void CL_MouseMove(usercmd_t *cmd)
 	}
 
 	if ( ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ) && in_buttons[0].active ) {
-		float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.unscaledFrametime * cl_yawspeed->value * 0.002f;
+		float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.unscaledFrametime * 0.15f;
 		float pitchSpeed = ( in_cameraAngles[PITCH] < -20 ) ? 0.0015f : ( in_cameraAngles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
 		float pitch = in_androidCameraPitchSpeed * cls.unscaledFrametime * cl_pitchspeed->value * pitchSpeed;
 
