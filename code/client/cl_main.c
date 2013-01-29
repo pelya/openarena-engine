@@ -2912,7 +2912,7 @@ CL_Frame
 
 ==================
 */
-void CL_Frame ( int msec ) {
+void CL_Frame ( int msec, int unscaledMsec ) {
 
 	if ( !com_cl_running->integer ) {
 		return;
@@ -3007,6 +3007,8 @@ void CL_Frame ( int msec ) {
 	cls.frametime = msec;
 
 	cls.realtime += cls.frametime;
+
+	cls.unscaledFrametime = unscaledMsec;
 
 	if ( cl_timegraph->integer ) {
 		SCR_DebugGraph ( cls.realFrametime * 0.25 );
@@ -3520,7 +3522,7 @@ void CL_Init( void ) {
 	j_side =         Cvar_Get ("j_side",         "0.25", CVAR_ARCHIVE);
 	j_up =           Cvar_Get ("j_up",           "1", CVAR_ARCHIVE);
 
-	j_androidJoystickJumpTime = Cvar_Get ("j_androidJoystickJumpTime", "250", CVAR_ARCHIVE);
+	j_androidJoystickJumpTime = Cvar_Get ("j_androidJoystickJumpTime", "300", CVAR_ARCHIVE);
 	j_androidAccelerometerSensitivity = Cvar_Get ("j_androidAccelerometerSensitivity", "4500", CVAR_ARCHIVE);
 	j_androidAccelerometerTapSensitivity = Cvar_Get ("j_androidAccelerometerTapSensitivity", "60", CVAR_ARCHIVE);
 	j_androidAutoCenterViewSpeed = Cvar_Get ("j_androidAutoCenterViewSpeed", "0.02", CVAR_ARCHIVE);

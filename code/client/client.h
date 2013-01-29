@@ -325,6 +325,7 @@ typedef struct {
 
 	int			realtime;			// ignores pause
 	int			realFrametime;		// ignoring pause, so console always works
+	int			unscaledFrametime;	// The real-world clock time, before timescale transformation
 
 	int			numlocalservers;
 	serverInfo_t	localServers[MAX_OTHER_SERVERS];

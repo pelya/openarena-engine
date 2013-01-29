@@ -52,9 +52,9 @@ kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed, in_androidWeaponSelectionBarActive;
-static short in_joystickCenterOnAngle, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
-static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY, in_tapMouseX, in_tapMouseY;
-static float in_joystickAngle;
+static short in_swipeActivated, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
+static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY, in_tapMouseX, in_tapMouseY, in_swipeTime;
+static float in_swipeAngle;
 #define TOUCHSCREEN_TAP_AREA (cls.glconfig.vidHeight / 6)
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
@@ -273,6 +273,9 @@ void IN_Button0Down(void)
 				IN_KeyDown(&in_buttons[0]);
 			else {
 				in_mouseSwipingActive = 1;
+				in_swipeTime = 0;
+				in_swipeAngle = cl.viewangles[YAW];
+				in_swipeActivated = 0;
 				if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
 					int tapArea = TOUCHSCREEN_TAP_AREA / 2;
 					if (	cl.touchscreenAttackButtonPos[4] > 0.0f &&
@@ -302,7 +305,14 @@ void IN_Button0Up(void)
 		if ( k != K_MOUSE1 )
 			IN_KeyUp(&in_buttons[0]);
 		else {
+			float angleDiff = AngleSubtract( cl.viewangles[YAW], in_swipeAngle ); // It will normalize the resulting angle
 			in_mouseSwipingActive = 0;
+			if ( in_swipeTime < 300 && fabs(angleDiff) > 25.0f ) {
+				in_swipeAngle = angleDiff > 0 ? 180.0f - angleDiff : -180.0f - angleDiff;
+				in_swipeActivated = 1;
+			}
+			// in_swipeActivated = 1;
+			// in_swipeAngle = 
 			if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
 				IN_KeyUp(&in_buttons[0]);
 				in_tapMouseX = in_mouseX;
@@ -353,7 +363,7 @@ void IN_CenterViewDown (void) {
 	if( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 		// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
 		if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
-			in_joystickCenterOnAngle = 1;
+			in_swipeActivated = 1;
 			in_joystickJumpTriggerTime = 0; // Do not jump if user rotated view and immediately put finger back on joystick
 			if( cg_underWater->integer )
 				in_swimUp = 255;
@@ -388,7 +398,7 @@ Moves the local angle positions
 void CL_AdjustAngles( void ) {
 	float right = CL_KeyState (&in_right), left = CL_KeyState (&in_left);
 	float up = CL_KeyState (&in_lookup), down = CL_KeyState (&in_lookdown);
-	float speed = cls.frametime * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
+	float speed = cls.unscaledFrametime * cl_sensitivity->value * cl.cgameSensitivity * 0.04f;
 
 	if ( left > 0 || right > 0 || up > 0 || down > 0 ) {
 		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
@@ -420,6 +430,25 @@ void CL_AdjustAngles( void ) {
 						(m_pitch->value < 0 ? -1 : 1);
 		cl.viewangles[PITCH] += speed * rescaled;
 	}
+
+	// Swipe touchscreen gesture
+	if ( in_swipeActivated ) {
+		float diff = cls.unscaledFrametime * cl_yawspeed->value * 0.001f * ( ( in_swipeAngle > 0 ) ? 1 : -1 );
+		if ( fabs( in_swipeAngle ) <= fabs( diff ) ) {
+			diff = in_swipeAngle;
+			in_swipeActivated = 0;
+			in_swipeAngle = 0;
+		} else {
+			in_swipeAngle -= diff;
+		}
+		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], - diff ); // It will normalize the resulting angle
+			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+		} else {
+			cl.viewangles[YAW] = AngleSubtract( cl.viewangles[YAW], - diff ); // It will normalize the resulting angle
+		}
+	}
+	in_swipeTime += cls.unscaledFrametime;
 }
 
 /*
@@ -610,7 +639,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 
 	if ( cl.joystickAxis[JOY_AXIS_SCREENJOY_X] == 0 && cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] == 0 ) {
 		if ( in_joystickJumpTriggerTime > 0 ) {
-			in_joystickJumpTriggerTime -= cls.frametime;
+			in_joystickJumpTriggerTime -= cls.unscaledFrametime;
 			if ( in_joystickJumpTriggerTime * 2 > j_androidJoystickJumpTime->integer ) {
 				cmd->rightmove = ClampChar( cmd->rightmove + oldRightMove );
 				cmd->forwardmove = ClampChar( cmd->forwardmove + oldForwardMove );
@@ -631,10 +660,10 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		in_joystickJumpTriggerTime = j_androidJoystickJumpTime->integer;
 
 		angle = RAD2DEG( atan2( cl.joystickAxis[JOY_AXIS_SCREENJOY_X], cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] ) );
-		if( !in_joystickCenterOnAngle ) {
-			in_joystickAngle = angle + 180.0f;
-			if ( in_joystickAngle > 180.0f )
-				in_joystickAngle -= 360.0f;
+		if( !in_swipeActivated && cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+			in_swipeAngle = angle + 180.0f;
+			if ( in_swipeAngle > 180.0f )
+				in_swipeAngle -= 360.0f;
 		}
 		angle -= 90.0f;
 		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING )
@@ -645,23 +674,6 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		cmd->rightmove = ClampChar( cmd->rightmove + cos( angle ) * 127.0f );
 		oldForwardMove = cmd->forwardmove;
 		oldRightMove = cmd->rightmove;
-	}
-
-	if ( in_joystickCenterOnAngle ) {
-		float diff = cls.frametime * cl_yawspeed->value * 0.005f * ( ( in_joystickAngle > 0 ) ? 1 : -1 );
-		if ( fabs( in_joystickAngle ) <= fabs( diff ) ) {
-			diff = in_joystickAngle;
-			in_joystickCenterOnAngle = 0;
-			in_joystickAngle = 0;
-		} else {
-			in_joystickAngle -= diff;
-		}
-		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
-			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], - diff ); // It will normalize the resulting angle
-			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
-		} else {
-			cl.viewangles[YAW] = AngleSubtract( cl.viewangles[YAW], - diff ); // It will normalize the resulting angle
-		}
 	}
 
 	cmd->upmove = ClampChar( cmd->upmove + in_swimUp );
@@ -730,7 +742,7 @@ void CL_MouseMove(usercmd_t *cmd)
 		oldMouseY = in_mouseY;
 		// Fade-out the on-screen attack button, until it disappears
 		if ( cl.touchscreenAttackButtonPos[4] > 0.0f ) {
-			cl.touchscreenAttackButtonPos[4] -= cls.frametime * 0.001f;
+			cl.touchscreenAttackButtonPos[4] -= cls.unscaledFrametime * 0.001f;
 			if( cl.touchscreenAttackButtonPos[4] < 0.10f )
 				cl.touchscreenAttackButtonPos[4] = 0.0f;
 		}
@@ -738,9 +750,9 @@ void CL_MouseMove(usercmd_t *cmd)
 	}
 
 	if ( ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ) && in_buttons[0].active ) {
-		float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.frametime * cl_yawspeed->value * 0.002f;
+		float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.unscaledFrametime * cl_yawspeed->value * 0.002f;
 		float pitchSpeed = ( in_cameraAngles[PITCH] < -20 ) ? 0.0015f : ( in_cameraAngles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
-		float pitch = in_androidCameraPitchSpeed * cls.frametime * cl_pitchspeed->value * pitchSpeed;
+		float pitch = in_androidCameraPitchSpeed * cls.unscaledFrametime * cl_pitchspeed->value * pitchSpeed;
 
 		in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], -yaw ); // It will also normalize it between (-180:180)
 
@@ -761,27 +773,27 @@ void CL_MouseMove(usercmd_t *cmd)
 		//Com_Printf( "axis %+8d diff %+8d normalized %d\n", cl.joystickAxis[2], cl.joystickAxis[2] - prevAccelValue, (int)((cl.joystickAxis[2] - prevAccelValue) / cls.frametime) );
 		if ( cl.joystickAxis[2] > j_androidAccelerometerSensitivity->value ) {
 			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW],
-				cls.frametime * cl_yawspeed->value * 0.001f *
+				cls.unscaledFrametime * cl_yawspeed->value * 0.001f *
 				( ( cl.joystickAxis[2] - j_androidAccelerometerSensitivity->value * 0.5f ) / j_androidAccelerometerSensitivity->value ) );
 			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 		}
 
 		if ( cl.joystickAxis[2] < -j_androidAccelerometerSensitivity->value ) {
 			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW],
-				cls.frametime * cl_yawspeed->value * 0.001f *
+				cls.unscaledFrametime * cl_yawspeed->value * 0.001f *
 				( ( cl.joystickAxis[2] + j_androidAccelerometerSensitivity->value * 0.5f ) / j_androidAccelerometerSensitivity->value ) );
 			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 		}
 
 		if ( instantRotate > -90 ) {
-			float angle = cls.frametime * cl_yawspeed->value * 0.002f;
+			float angle = cls.unscaledFrametime * cl_yawspeed->value * 0.002f;
 			instantRotate -= angle;
 			if ( instantRotate > 0 ) {
 				in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], instantRotateDir * angle );
 				VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 			}
 		} else {
-			if ( abs( cl.joystickAxis[2] - prevAccelValue ) > j_androidAccelerometerTapSensitivity->value * cls.frametime ) {
+			if ( abs( cl.joystickAxis[2] - prevAccelValue ) > j_androidAccelerometerTapSensitivity->value * cls.unscaledFrametime ) {
 				instantRotate = 90;
 				instantRotateDir = ( cl.joystickAxis[2] - prevAccelValue > 0 ) ? 1 : -1;
 			}
@@ -792,8 +804,8 @@ void CL_MouseMove(usercmd_t *cmd)
 	}
 
 	if ( in_cameraAngles[PITCH] != 0 && cl_pitchAutoCenter->integer ) {
-		in_cameraAngles[PITCH] += j_androidAutoCenterViewSpeed->value * cls.frametime * ( ( in_cameraAngles[PITCH] > 0 ) ? -1 : 1 );
-		if ( fabs( in_cameraAngles[PITCH] ) < j_androidAutoCenterViewSpeed->value * cls.frametime * 2.0f )
+		in_cameraAngles[PITCH] += j_androidAutoCenterViewSpeed->value * cls.unscaledFrametime * ( ( in_cameraAngles[PITCH] > 0 ) ? -1 : 1 );
+		if ( fabs( in_cameraAngles[PITCH] ) < j_androidAutoCenterViewSpeed->value * cls.unscaledFrametime * 2.0f )
 			in_cameraAngles[PITCH] = 0;
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	}

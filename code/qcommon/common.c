@@ -3053,7 +3053,7 @@ Com_Frame
 */
 void Com_Frame( void ) {
 
-	int		msec, minMsec;
+	int		msec, minMsec, realMsec;
 	int		timeVal, timeValSV;
 	static int	lastTime = 0, bias = 0;
  
@@ -3148,6 +3148,7 @@ void Com_Frame( void ) {
 	}
 
 	// mess with msec if needed
+	realMsec = msec;
 	msec = Com_ModifyMsec(msec);
 
 	//
@@ -3195,7 +3196,7 @@ void Com_Frame( void ) {
 		timeBeforeClient = Sys_Milliseconds ();
 	}
 
-	CL_Frame( msec );
+	CL_Frame( msec, realMsec );
 
 	if ( com_speeds->integer ) {
 		timeAfter = Sys_Milliseconds ();

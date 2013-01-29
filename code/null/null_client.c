@@ -42,7 +42,7 @@ void CL_Mouse2Event( int dx, int dy, int time ) {
 void Key_WriteBindings( fileHandle_t f ) {
 }
 
-void CL_Frame ( int msec ) {
+void CL_Frame ( int msec, int unscaledMsec ) {
 }
 
 void CL_PacketEvent( netadr_t from, msg_t *msg ) {
