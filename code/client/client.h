@@ -111,7 +111,7 @@ typedef struct {
 
 	int			parseEntitiesNum;	// index (not anded off) into cl_parse_entities[]
 
-	int			mouseDx[2], mouseDy[2];	// added to by mouse events
+	float		touchscreenAttackButtonPos[5];
 	int			mouseIndex;
 	int			joystickAxis[MAX_JOYSTICK_AXIS];	// set by joystick events
 
@@ -352,6 +352,7 @@ typedef struct {
 	qhandle_t	charSetShader;
 	qhandle_t	whiteShader;
 	qhandle_t	consoleShader;
+	qhandle_t	touchscreenAttackButton;
 } clientStatic_t;
 
 extern	clientStatic_t		cls;
@@ -421,7 +422,7 @@ extern	cvar_t	*j_androidAutoCenterViewSpeed;
 extern	cvar_t	*cg_underWater;
 extern	cvar_t	*cg_weaponBarActiveWidth;
 extern	cvar_t	*cg_weaponBarActiveWeapons;
-extern	cvar_t	*cg_swipeFreeAiming;
+extern	cvar_t	*cg_touchscreenControls;
 
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;

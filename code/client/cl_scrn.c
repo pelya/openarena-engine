@@ -447,6 +447,20 @@ void SCR_DrawDebugGraph (void)
 
 //=============================================================================
 
+SCR_DrawTouchscreenAttackButton (void)
+{
+	float color[] = { 1.0f, 1.0f, 1.0f, cl.touchscreenAttackButtonPos[4] };
+	if ( cl.touchscreenAttackButtonPos[4] <= 0 )
+		return;
+	re.SetColor( color );
+	re.DrawStretchPic(	cl.touchscreenAttackButtonPos[0], cl.touchscreenAttackButtonPos[1],
+						cl.touchscreenAttackButtonPos[2], cl.touchscreenAttackButtonPos[3],
+						0, 0, 1, 1, cls.touchscreenAttackButton );
+	re.SetColor( NULL );
+}
+
+//=============================================================================
+
 /*
 ==================
 SCR_Init
@@ -546,6 +560,7 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 	if ( cl_debuggraph->integer || cl_timegraph->integer || cl_debugMove->integer ) {
 		SCR_DrawDebugGraph ();
 	}
+	SCR_DrawTouchscreenAttackButton ();
 }
 
 /*

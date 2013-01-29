@@ -1181,7 +1181,7 @@ static void IN_ShowHideScreenButtons( void )
 			rect.x = 0;
 			rect.w = rect.h = cls.glconfig.vidHeight - rect.y;
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
-			if( !cg_swipeFreeAiming->integer )
+			if( cg_touchscreenControls->integer == TOUCHSCREEN_FIRE_BUTTON )
 			{
 				// Set up Fire button
 				rect.w /= 1.5f;
@@ -1283,7 +1283,7 @@ void IN_Init( void )
 	in_joystick = Cvar_Get( "in_joystick", "0", CVAR_ARCHIVE|CVAR_LATCH );
 	in_joystickDebug = Cvar_Get( "in_joystickDebug", "0", CVAR_TEMP );
 	in_joystickThreshold = Cvar_Get( "joy_threshold", "0.15", CVAR_ARCHIVE );
-	cg_swipeFreeAiming = Cvar_Get ("cg_swipeFreeAiming", "0", CVAR_ARCHIVE);
+	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", "0", CVAR_ARCHIVE);
 
 #ifdef MACOS_X_ACCELERATION_HACK
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );

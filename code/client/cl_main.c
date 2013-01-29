@@ -110,7 +110,7 @@ cvar_t	*j_androidAutoCenterViewSpeed;
 cvar_t	*cg_underWater;
 cvar_t	*cg_weaponBarActiveWidth;
 cvar_t	*cg_weaponBarActiveWeapons;
-cvar_t	*cg_swipeFreeAiming;
+cvar_t	*cg_touchscreenControls;
 
 cvar_t	*cl_activeAction;
 
@@ -3105,6 +3105,7 @@ void CL_InitRenderer( void ) {
 	cls.charSetShader = re.RegisterShader( "gfx/2d/bigchars" );
 	cls.whiteShader = re.RegisterShader( "white" );
 	cls.consoleShader = re.RegisterShader( "console" );
+	cls.touchscreenAttackButton = re.RegisterShader( "gfx/2d/overlay-fire-button" );
 	g_console_field_width = cls.glconfig.vidWidth / SMALLCHAR_WIDTH - 2;
 	g_consoleField.widthInChars = g_console_field_width;
 }
@@ -3527,7 +3528,7 @@ void CL_Init( void ) {
 	cg_underWater = Cvar_Get ("cg_underWater", "0", 0);
 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);
 	cg_weaponBarActiveWeapons = Cvar_Get ("cg_weaponBarActiveWeapons", "", 0);
-	cg_swipeFreeAiming = Cvar_Get ("cg_swipeFreeAiming", "0", CVAR_ARCHIVE);
+	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", "0", CVAR_ARCHIVE);
 
 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);
 	j_yaw_axis =     Cvar_Get ("j_yaw_axis",     "4", CVAR_ARCHIVE);

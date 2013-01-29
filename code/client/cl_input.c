@@ -53,8 +53,9 @@ kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed, in_androidWeaponSelectionBarActive;
 static short in_joystickCenterOnAngle, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
-static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY;
+static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY, in_tapMouseX, in_tapMouseY;
 static float in_joystickAngle;
+#define TOUCHSCREEN_TAP_AREA (cls.glconfig.vidHeight / 6)
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
 #endif
@@ -261,7 +262,7 @@ void IN_Button0Down(void)
 		strncat ( cmd, c, c2 - c );
 		Cbuf_AddText( cmd );
 	} else {
-		if ( cg_swipeFreeAiming->integer ) {
+		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 			IN_KeyDown(&in_buttons[0]);
 		} else {
 			// Ignore mouse keypresses, process only keyboard
@@ -270,14 +271,27 @@ void IN_Button0Down(void)
 				k = atoi(Cmd_Argv(1));
 			if ( k != K_MOUSE1 )
 				IN_KeyDown(&in_buttons[0]);
-			else
+			else {
 				in_mouseSwipingActive = 1;
+				if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
+					int tapArea = TOUCHSCREEN_TAP_AREA / 2;
+					if (	cl.touchscreenAttackButtonPos[4] > 0.0f &&
+							in_mouseX > in_tapMouseX - tapArea &&
+							in_mouseX < in_tapMouseX + tapArea &&
+							in_mouseY > in_tapMouseY - tapArea &&
+							in_mouseY < in_tapMouseY + tapArea ) { // TODO: make it octagon, not square
+						IN_KeyDown(&in_buttons[0]);
+					}
+					cl.touchscreenAttackButtonPos[4] = 0.0f;
+				}
+			}
 		}
 	}
 }
 void IN_Button0Up(void)
 {
-	if ( cg_swipeFreeAiming->integer ) {
+	cl.touchscreenAttackButtonPos[4] = 0.0f;
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 		IN_KeyUp(&in_buttons[0]);
 		in_attackButtonReleased = 1;
 	} else {
@@ -287,8 +301,20 @@ void IN_Button0Up(void)
 			k = atoi(Cmd_Argv(1));
 		if ( k != K_MOUSE1 )
 			IN_KeyUp(&in_buttons[0]);
-		else
+		else {
 			in_mouseSwipingActive = 0;
+			if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
+				IN_KeyUp(&in_buttons[0]);
+				in_tapMouseX = in_mouseX;
+				in_tapMouseY = in_mouseY;
+				cl.touchscreenAttackButtonPos[2] = cl.touchscreenAttackButtonPos[3] = TOUCHSCREEN_TAP_AREA;
+				cl.touchscreenAttackButtonPos[0] = in_mouseX - cl.touchscreenAttackButtonPos[2] * 0.5f;
+				cl.touchscreenAttackButtonPos[1] = in_mouseY - cl.touchscreenAttackButtonPos[3] * 0.5f;
+				cl.touchscreenAttackButtonPos[4] = 0.75f;
+				if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE ) // We're inside UI, disable on-screen button
+					cl.touchscreenAttackButtonPos[4] = 0.0f;
+			}
+		}
 	}
 }
 void IN_Button1Down(void) {IN_KeyDown(&in_buttons[1]);}
@@ -361,7 +387,7 @@ void CL_AdjustAngles( void ) {
 	float speed = cls.frametime * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
 
 	if ( left > 0 || right > 0 || up > 0 || down > 0 ) {
-		if ( cg_swipeFreeAiming->integer ) {
+		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 			in_cameraAngles[YAW] -= speed * right;
 			in_cameraAngles[YAW] += speed * left;
 			in_cameraAngles[PITCH] -= speed * up;
@@ -448,7 +474,7 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 
 	in_androidCameraYawSpeed = in_androidCameraPitchSpeed = in_androidWeaponSelectionBarActive = 0;
 
-	if ( !cg_swipeFreeAiming->integer ) {
+	if ( cg_touchscreenControls->integer != TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 		if ( y < border )
 			in_androidWeaponSelectionBarActive = 1;
 		return;
@@ -519,7 +545,7 @@ CL_Mouse2Event
 =================
 */
 void CL_Mouse2Event( int x, int y, int time ) {
-	if ( !cg_swipeFreeAiming->integer && in_multitouchActive ) {
+	if ( (cg_touchscreenControls->integer != TOUCHSCREEN_SWIPE_FREE_AIMING) && in_multitouchActive ) {
 		int dx = x - in_multitouchX;
 		int dy = y - in_multitouchY;
 		cl.viewangles[YAW] -= (float)dx * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
@@ -530,7 +556,7 @@ void CL_Mouse2Event( int x, int y, int time ) {
 }
 
 void IN_MultitouchDown(void) {
-	if ( cg_swipeFreeAiming->integer ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 		int dx = in_multitouchX - in_mouseX;
 		int dy = in_multitouchY - in_mouseY;
 		if ( abs( dx ) > abs( dy ) ) {
@@ -544,7 +570,7 @@ void IN_MultitouchDown(void) {
 }
 
 void IN_MultitouchUp(void) {
-	if ( cg_swipeFreeAiming->integer ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 		in_androidCameraMultitouchYawSpeed = 0;
 		Com_QueueEvent( 0, SE_KEY, '/', qfalse, 0, NULL );
 		Com_QueueEvent( 0, SE_KEY, K_BACKSPACE, qfalse, 0, NULL );
@@ -607,7 +633,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 				in_joystickAngle -= 360.0f;
 		}
 		angle -= 90.0f;
-		if ( cg_swipeFreeAiming->integer )
+		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING )
 			angle += in_cameraAngles[YAW] - SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) - cl.viewangles[YAW];
 		angle = DEG2RAD( angle );
 
@@ -626,7 +652,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		} else {
 			in_joystickAngle -= diff;
 		}
-		if ( cg_swipeFreeAiming->integer ) {
+		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], - diff ); // It will normalize the resulting angle
 			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 		} else {
@@ -686,7 +712,7 @@ void CL_MouseMove(usercmd_t *cmd)
 	if ( !cgvm )
 		return;
 
-	if ( !cg_swipeFreeAiming->integer ) {
+	if ( cg_touchscreenControls->integer != TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 		static int oldMouseX, oldMouseY;
 		int dx = in_mouseX - oldMouseX;
 		int dy = in_mouseY - oldMouseY;
@@ -698,6 +724,12 @@ void CL_MouseMove(usercmd_t *cmd)
 
 		oldMouseX = in_mouseX;
 		oldMouseY = in_mouseY;
+		// Fade-out the on-screen attack button, until it disappears
+		if ( cl.touchscreenAttackButtonPos[4] > 0.0f ) {
+			cl.touchscreenAttackButtonPos[4] -= cls.frametime * 0.001f;
+			if( cl.touchscreenAttackButtonPos[4] < 0.10f )
+				cl.touchscreenAttackButtonPos[4] = 0.0f;
+		}
 		return;
 	}
 
@@ -792,7 +824,7 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		}
 		in_buttons[i].wasPressed = qfalse;
 	}
-	if ( cg_swipeFreeAiming->integer ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 		if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed || in_androidWeaponSelectionBarActive || cl.cgameUserCmdValue == WP_RAILGUN )
 			cmd->buttons &= ~1; // Stop firing when we are rotating camera
 		if ( cl.cgameUserCmdValue == WP_RAILGUN && in_attackButtonReleased &&
