@@ -55,6 +55,7 @@ static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCam
 static short in_swipeActivated, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY, in_tapMouseX, in_tapMouseY, in_swipeTime;
 static float in_swipeAngle;
+static qboolean in_railgunZoomActive;
 static const float in_swipeSpeed = 0.2f;
 #define TOUCHSCREEN_TAP_AREA (cls.glconfig.vidHeight / 6)
 #ifdef USE_VOIP
@@ -312,9 +313,9 @@ void IN_Button0Up(void)
 				in_swipeAngle = angleDiff > 0 ? 180.0f - angleDiff : -180.0f - angleDiff;
 				in_swipeActivated = 1;
 			}
-			// in_swipeActivated = 1;
-			// in_swipeAngle = 
 			if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
+				if ( in_buttons[0].active )
+					in_attackButtonReleased = 1;
 				IN_KeyUp(&in_buttons[0]);
 				in_tapMouseX = in_mouseX;
 				in_tapMouseY = in_mouseY;
@@ -842,11 +843,27 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		in_buttons[i].wasPressed = qfalse;
 	}
 	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
-		if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed || in_androidWeaponSelectionBarActive || cl.cgameUserCmdValue == WP_RAILGUN )
-			cmd->buttons &= ~1; // Stop firing when we are rotating camera
+		if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ||
+				in_androidWeaponSelectionBarActive || cl.cgameUserCmdValue == WP_RAILGUN )
+			cmd->buttons &= ~BUTTON_ATTACK; // Stop firing when we are rotating camera, or using railgun
 		if ( cl.cgameUserCmdValue == WP_RAILGUN && in_attackButtonReleased &&
 			! ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidWeaponSelectionBarActive ) )
-			cmd->buttons |= 1;
+			cmd->buttons |= BUTTON_ATTACK; // Fire when button is released
+		in_attackButtonReleased = 0;
+	} else if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
+		if ( cl.cgameUserCmdValue == WP_RAILGUN ) {
+			if ( !in_railgunZoomActive && (cmd->buttons & BUTTON_ATTACK) ) {
+				in_railgunZoomActive = qtrue;
+				Cbuf_AddText( "+zoom\n" );
+			}
+			if ( in_railgunZoomActive && !(cmd->buttons & BUTTON_ATTACK) ) {
+				in_railgunZoomActive = qfalse;
+				Cbuf_AddText( "-zoom\n" );
+			}
+			cmd->buttons &= ~BUTTON_ATTACK; // Do not fire immediately when railgun selected, zoom instead
+		}
+		if ( cl.cgameUserCmdValue == WP_RAILGUN && in_attackButtonReleased )
+			cmd->buttons |= BUTTON_ATTACK; // Fire when button is released
 		in_attackButtonReleased = 0;
 	}
 
