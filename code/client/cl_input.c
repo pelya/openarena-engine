@@ -55,6 +55,7 @@ static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCam
 static short in_swipeActivated, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY, in_tapMouseX, in_tapMouseY, in_swipeTime;
 static float in_swipeAngle;
+static const float in_swipeSpeed = 0.2f;
 #define TOUCHSCREEN_TAP_AREA (cls.glconfig.vidHeight / 6)
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
@@ -433,7 +434,7 @@ void CL_AdjustAngles( void ) {
 
 	// Swipe touchscreen gesture
 	if ( in_swipeActivated ) {
-		float diff = cls.unscaledFrametime * 0.15f * ( ( in_swipeAngle > 0 ) ? 1 : -1 );
+		float diff = cls.unscaledFrametime * in_swipeSpeed * ( ( in_swipeAngle > 0 ) ? 1 : -1 );
 		if ( fabs( in_swipeAngle ) <= fabs( diff ) ) {
 			diff = in_swipeAngle;
 			in_swipeActivated = 0;
