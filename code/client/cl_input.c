@@ -251,7 +251,7 @@ void IN_Button0Down(void)
 		char * c = cg_weaponBarActiveWeapons->string, * c2;
 		int i;
 
-		in_androidWeaponSelectionBarActive = 0;
+		//in_androidWeaponSelectionBarActive = 0;
 		for ( i = 0; i < count; i++ ) {
 			c = strchr ( c, '/' );
 			if ( c == NULL )
@@ -314,6 +314,7 @@ void IN_Button0Up(void)
 				in_swipeActivated = 1;
 			}
 			if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
+				int weaponX = in_mouseX * 640 / cls.glconfig.vidWidth;
 				if ( in_buttons[0].active )
 					in_attackButtonReleased = 1;
 				IN_KeyUp(&in_buttons[0]);
@@ -323,8 +324,13 @@ void IN_Button0Up(void)
 				cl.touchscreenAttackButtonPos[0] = in_mouseX - cl.touchscreenAttackButtonPos[2] * 0.5f;
 				cl.touchscreenAttackButtonPos[1] = in_mouseY - cl.touchscreenAttackButtonPos[3] * 0.5f;
 				cl.touchscreenAttackButtonPos[4] = 0.75f;
-				if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE ) // We're inside UI, disable on-screen button
+				if ( ( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE ) || (
+					in_androidWeaponSelectionBarActive &&
+					weaponX > 320 - cg_weaponBarActiveWidth->integer &&
+					weaponX < 320 + cg_weaponBarActiveWidth->integer ) ) {
+					// We're inside UI, or toggling weapons, disable on-screen button
 					cl.touchscreenAttackButtonPos[4] = 0.0f;
+				}
 			}
 		}
 	}
