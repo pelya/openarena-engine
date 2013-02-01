@@ -439,6 +439,16 @@ void CL_AdjustAngles( void ) {
 		cl.viewangles[PITCH] += speed * rescaled;
 	}
 
+	// Gyroscope
+	cl.viewangles[YAW] -= speed * (cl.joystickAxis[JOY_AXIS_GYRO_X] * 60); // 60 = 180 / M_PI approximation
+	cl.viewangles[PITCH] += speed * (cl.joystickAxis[JOY_AXIS_GYRO_Y] * 60);
+	cl.viewangles[ROLL] += speed * (cl.joystickAxis[JOY_AXIS_GYRO_Z] * 60);
+	if( cl.viewangles[ROLL] != 0.0f ) {
+		cl.viewangles[ROLL] -= cl.viewangles[ROLL] > 0 ? 0.1f : -0.1f;
+		if( fabs(cl.viewangles[ROLL]) < 0.2f )
+			cl.viewangles[ROLL] = 0.0f;
+	}
+
 	// Swipe touchscreen gesture
 	if ( in_swipeActivated ) {
 		float diff = cls.unscaledFrametime * in_swipeSpeed * ( ( in_swipeAngle > 0 ) ? 1 : -1 );
