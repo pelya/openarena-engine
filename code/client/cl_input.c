@@ -440,13 +440,16 @@ void CL_AdjustAngles( void ) {
 	}
 
 	// Gyroscope
-	cl.viewangles[YAW] -= speed * (cl.joystickAxis[JOY_AXIS_GYRO_X] * 60); // 60 = 180 / M_PI approximation
-	cl.viewangles[PITCH] += speed * (cl.joystickAxis[JOY_AXIS_GYRO_Y] * 60);
-	cl.viewangles[ROLL] += speed * (cl.joystickAxis[JOY_AXIS_GYRO_Z] * 60);
-	if( cl.viewangles[ROLL] != 0.0f ) {
-		cl.viewangles[ROLL] -= cl.viewangles[ROLL] > 0 ? 0.1f : -0.1f;
-		if( fabs(cl.viewangles[ROLL]) < 0.2f )
-			cl.viewangles[ROLL] = 0.0f;
+	//Com_Printf ("Gyro: %d %d %d\n", cl.joystickAxis[JOY_AXIS_GYRO_X], cl.joystickAxis[JOY_AXIS_GYRO_Y], cl.joystickAxis[JOY_AXIS_GYRO_Z]);
+	if ( abs(cl.joystickAxis[JOY_AXIS_GYRO_X]) > 3500 || abs(cl.joystickAxis[JOY_AXIS_GYRO_Y]) > 3500 || abs(cl.joystickAxis[JOY_AXIS_GYRO_Z]) > 3500 ) {
+		cl.viewangles[YAW] += (cl.joystickAxis[JOY_AXIS_GYRO_X]) * (1.0f / 65536.0f) * cl.cgameSensitivity;
+		cl.viewangles[PITCH] += (cl.joystickAxis[JOY_AXIS_GYRO_Y]) * (1.0f / 65536.0f) * cl.cgameSensitivity;
+		cl.viewangles[ROLL] -= (cl.joystickAxis[JOY_AXIS_GYRO_Z]) * (1.0f / 65536.0f);
+	}
+	if( fabs(cl.viewangles[ROLL]) > speed * 2000.0f ) {
+		cl.viewangles[ROLL] -= ( cl.viewangles[ROLL] > 0 ) ? speed * 2000.0f : speed * -2000.0f;
+		if( fabs(cl.viewangles[ROLL]) > 8.0f )
+			cl.viewangles[ROLL] = ( cl.viewangles[ROLL] > 0 ) ? 8.0f :  -8.0f;
 	}
 
 	// Swipe touchscreen gesture
