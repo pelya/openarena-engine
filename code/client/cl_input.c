@@ -407,21 +407,19 @@ void CL_AdjustAngles( void ) {
 	float right = CL_KeyState (&in_right), left = CL_KeyState (&in_left);
 	float up = CL_KeyState (&in_lookup), down = CL_KeyState (&in_lookdown);
 	float speed = cls.unscaledFrametime * cl_sensitivity->value * cl.cgameSensitivity * 0.04f;
+	vec3_t angles;
+
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+		VectorCopy(in_cameraAngles, angles);
+	} else {
+		VectorCopy(cl.viewangles, angles);
+	}
 
 	if ( left > 0 || right > 0 || up > 0 || down > 0 ) {
-		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
-			in_cameraAngles[YAW] -= speed * right;
-			in_cameraAngles[YAW] += speed * left;
-			in_cameraAngles[PITCH] -= speed * up;
-			in_cameraAngles[PITCH] += speed * down;
-			if ( cgvm )
-				VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
-		} else {
-			cl.viewangles[YAW] -= speed * right;
-			cl.viewangles[YAW] += speed * left;
-			cl.viewangles[PITCH] -= speed * up;
-			cl.viewangles[PITCH] += speed * down;
-		}
+		angles[YAW] -= speed * right;
+		angles[YAW] += speed * left;
+		angles[PITCH] -= speed * up;
+		angles[PITCH] += speed * down;
 	}
 
 	speed /= 32767.0f;
@@ -429,27 +427,27 @@ void CL_AdjustAngles( void ) {
 	if ( abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X]) > 4096 ) {
 		int rescaled = (abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X]) - 4096) *
 						(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X] > 0 ? 1 : -1);
-		cl.viewangles[YAW] -= speed * rescaled;
+		angles[YAW] -= speed * rescaled;
 	}
 	// Slower vertical movement
 	if ( abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y]) > 12288 ) {
 		int rescaled = (abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y]) - 12288) *
 						(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y] > 0 ? 1 : -1) *
 						(m_pitch->value < 0 ? -1 : 1);
-		cl.viewangles[PITCH] += speed * rescaled;
+		angles[PITCH] += speed * rescaled;
 	}
 
 	// Gyroscope
 	if ( cl.joystickAxis[JOY_AXIS_GYRO_X] != 0 || cl.joystickAxis[JOY_AXIS_GYRO_Y] != 0 || cl.joystickAxis[JOY_AXIS_GYRO_Z] != 0 ) {
 		//Com_Printf ("Gyro: %d %d %d\n", cl.joystickAxis[JOY_AXIS_GYRO_X], cl.joystickAxis[JOY_AXIS_GYRO_Y], cl.joystickAxis[JOY_AXIS_GYRO_Z]);
-		cl.viewangles[YAW] += (cl.joystickAxis[JOY_AXIS_GYRO_X]) * (1.0f / 16384.0f) * cl.cgameSensitivity;
-		cl.viewangles[PITCH] += (cl.joystickAxis[JOY_AXIS_GYRO_Y]) * (1.0f / 16384.0f) * cl.cgameSensitivity;
-		cl.viewangles[ROLL] -= (cl.joystickAxis[JOY_AXIS_GYRO_Z]) * (1.0f / 16384.0f);
+		angles[YAW] += (cl.joystickAxis[JOY_AXIS_GYRO_X]) * (1.0f / 16384.0f) * cl.cgameSensitivity;
+		angles[PITCH] += (cl.joystickAxis[JOY_AXIS_GYRO_Y]) * (1.0f / 16384.0f) * cl.cgameSensitivity;
+		angles[ROLL] -= (cl.joystickAxis[JOY_AXIS_GYRO_Z]) * (1.0f / 16384.0f);
 	}
-	if( fabs(cl.viewangles[ROLL]) > speed * 2000.0f ) {
-		cl.viewangles[ROLL] -= ( cl.viewangles[ROLL] > 0 ) ? speed * 2000.0f : speed * -2000.0f;
-		if( fabs(cl.viewangles[ROLL]) > 8.0f )
-			cl.viewangles[ROLL] = ( cl.viewangles[ROLL] > 0 ) ? 8.0f :  -8.0f;
+	if( fabs(angles[ROLL]) > speed * 2000.0f ) {
+		angles[ROLL] -= ( angles[ROLL] > 0 ) ? speed * 2000.0f : speed * -2000.0f;
+		if( fabs(angles[ROLL]) > 8.0f )
+			angles[ROLL] = ( angles[ROLL] > 0 ) ? 8.0f :  -8.0f;
 	}
 
 	// Swipe touchscreen gesture
@@ -466,10 +464,18 @@ void CL_AdjustAngles( void ) {
 			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], - diff ); // It will normalize the resulting angle
 			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 		} else {
-			cl.viewangles[YAW] = AngleSubtract( cl.viewangles[YAW], - diff ); // It will normalize the resulting angle
+			angles[YAW] = AngleSubtract( angles[YAW], - diff ); // It will normalize the resulting angle
 		}
 	}
 	in_swipeTime += cls.unscaledFrametime;
+
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+		VectorCopy(angles, in_cameraAngles);
+		if ( cgvm )
+			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+	} else {
+		VectorCopy(angles, cl.viewangles);
+	}
 }
 
 /*
