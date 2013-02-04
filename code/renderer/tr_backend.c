@@ -1129,6 +1129,15 @@ const void	*RB_SwapBuffers( const void *data ) {
 
 	GLimp_EndFrame();
 
+#ifdef __ANDROID__
+	// On-screen keyboard messes up GL state a bit
+	glState.currenttextures[0] = 0;
+	glState.currenttmu = 0;
+	glState.texEnv[glState.currenttmu] = GL_MODULATE;
+	glState.glStateBits &= ~(GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS);
+	glState.glStateBits |= (GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA);
+#endif
+
 	backEnd.projection2D = qfalse;
 
 	return (const void *)(cmd + 1);

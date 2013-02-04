@@ -191,4 +191,9 @@ typedef	refexport_t* (QDECL *GetRefAPI_t) (int apiVersion, refimport_t * rimp);
 refexport_t*GetRefAPI( int apiVersion, refimport_t *rimp );
 #endif
 
+#ifdef __ANDROID__
+// For debugging
+void R_DumpOpenGlState( void );
+#endif
+
 #endif	// __TR_PUBLIC_H
