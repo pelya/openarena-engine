@@ -111,6 +111,7 @@ cvar_t	*cg_underWater;
 cvar_t	*cg_weaponBarActiveWidth;
 cvar_t	*cg_weaponBarActiveWeapons;
 cvar_t	*cg_touchscreenControls;
+cvar_t	*cg_holdingUsableItem;
 
 cvar_t	*cl_activeAction;
 
@@ -3531,6 +3532,7 @@ void CL_Init( void ) {
 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);
 	cg_weaponBarActiveWeapons = Cvar_Get ("cg_weaponBarActiveWeapons", "", 0);
 	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", "0", CVAR_ARCHIVE);
+	cg_holdingUsableItem = Cvar_Get ("cg_holdingUsableItem", "0", 0);
 
 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);
 	j_yaw_axis =     Cvar_Get ("j_yaw_axis",     "4", CVAR_ARCHIVE);

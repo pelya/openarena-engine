@@ -243,26 +243,33 @@ void IN_Button0Down(void)
 {
 	int weaponX = in_mouseX * 640 / cls.glconfig.vidWidth;
 
-	if (	in_androidWeaponSelectionBarActive &&
+	if (	in_androidWeaponSelectionBarActive && (
 			weaponX > 320 - cg_weaponBarActiveWidth->integer &&
-			weaponX < 320 + cg_weaponBarActiveWidth->integer ) {
-		char cmd[64] = "weapon ";
-		int count = ( weaponX - 320 + cg_weaponBarActiveWidth->integer ) / 40;
-		char * c = cg_weaponBarActiveWeapons->string, * c2;
-		int i;
+			weaponX < 320 + cg_weaponBarActiveWidth->integer ||
+			(cg_holdingUsableItem->integer && weaponX > 590)) ) {
+		if (cg_holdingUsableItem->integer && weaponX > 590) {
+			// Use item
+			IN_KeyDown(&in_buttons[2]);
+			IN_KeyUp(&in_buttons[2]);
+		} else {
+			char cmd[64] = "weapon ";
+			int count = ( weaponX - 320 + cg_weaponBarActiveWidth->integer ) / 40;
+			char * c = cg_weaponBarActiveWeapons->string, * c2;
+			int i;
 
-		//in_androidWeaponSelectionBarActive = 0;
-		for ( i = 0; i < count; i++ ) {
-			c = strchr ( c, '/' );
-			if ( c == NULL )
+			//in_androidWeaponSelectionBarActive = 0;
+			for ( i = 0; i < count; i++ ) {
+				c = strchr ( c, '/' );
+				if ( c == NULL )
+					return;
+				c++;
+			}
+			c2 = strchr ( c, '/' );
+			if ( c2 == NULL )
 				return;
-			c++;
+			strncat ( cmd, c, c2 - c );
+			Cbuf_AddText( cmd );
 		}
-		c2 = strchr ( c, '/' );
-		if ( c2 == NULL )
-			return;
-		strncat ( cmd, c, c2 - c );
-		Cbuf_AddText( cmd );
 	} else {
 		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 			IN_KeyDown(&in_buttons[0]);
@@ -324,9 +331,10 @@ void IN_Button0Up(void)
 				cl.touchscreenAttackButtonPos[1] = in_mouseY - cl.touchscreenAttackButtonPos[3] * 0.5f;
 				cl.touchscreenAttackButtonPos[4] = 0.75f;
 				if ( ( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE ) || (
-					in_androidWeaponSelectionBarActive &&
+					in_androidWeaponSelectionBarActive && (
 					weaponX > 320 - cg_weaponBarActiveWidth->integer &&
-					weaponX < 320 + cg_weaponBarActiveWidth->integer ) ) {
+					weaponX < 320 + cg_weaponBarActiveWidth->integer ||
+					(cg_holdingUsableItem->integer && weaponX > 590)))) {
 					// We're inside UI, or toggling weapons, disable on-screen button
 					cl.touchscreenAttackButtonPos[4] = 0.0f;
 				}
