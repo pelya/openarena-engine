@@ -703,8 +703,14 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 	if ( cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_TRIGGER] > 20000 )
 		cmd->upmove = ClampChar( cmd->upmove + 10 );
 
-	if ( cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_TRIGGER] > 20000 ) // Fire button pressed
-		cmd->buttons |= 1;
+	if ( cl.cgameUserCmdValue == WP_RAILGUN ) {
+		if ( cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_TRIGGER] > 10000 )
+			cmd->buttons |= BUTTON_ATTACK; // Zoom
+		if ( cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_TRIGGER] > 30000 )
+			in_attackButtonReleased = 1; // Fire
+			
+	} else if ( cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_TRIGGER] > 20000 ) // Fire button pressed
+		cmd->buttons |= BUTTON_ATTACK;
 #else
 
 	float	anglespeed;
@@ -861,7 +867,7 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		Cbuf_AddText( "-zoom\n" );
 	}
 	if ( cl.cgameUserCmdValue == WP_RAILGUN ) {
-		if (cmd->buttons & BUTTON_ATTACK) )
+		if ( cmd->buttons & BUTTON_ATTACK )
 			cmd->buttons &= ~BUTTON_ATTACK; // Do not fire immediately when railgun selected, zoom instead
 		if ( in_attackButtonReleased )
 			cmd->buttons |= BUTTON_ATTACK; // Fire when button is released
@@ -923,8 +929,6 @@ usercmd_t CL_CreateCmd( void ) {
 	
 	Com_Memset( &cmd, 0, sizeof( cmd ) );
 
-	CL_CmdButtons( &cmd );
-
 	// get basic movement from keyboard
 	CL_KeyMove( &cmd );
 
@@ -933,6 +937,8 @@ usercmd_t CL_CreateCmd( void ) {
 
 	// get basic movement from joystick
 	CL_JoystickMove( &cmd );
+
+	CL_CmdButtons( &cmd );
 
 	// check to make sure the angles haven't wrapped
 	if ( cl.viewangles[PITCH] - oldAngles[PITCH] > 90 ) {
