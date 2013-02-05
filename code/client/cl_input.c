@@ -867,9 +867,11 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		in_buttons[i].wasPressed = qfalse;
 	}
 	// Auto-zoom for railgun
-	if ( cl.cgameUserCmdValue == WP_RAILGUN && !in_railgunZoomActive && (cmd->buttons & BUTTON_ATTACK) ) {
-		in_railgunZoomActive = qtrue;
-		Cbuf_AddText( "+zoom\n" );
+	if ( cl.cgameUserCmdValue == WP_RAILGUN && (cmd->buttons & BUTTON_ATTACK) ) {
+		if ( !in_railgunZoomActive ) {
+			in_railgunZoomActive = qtrue;
+			Cbuf_AddText( "+zoom\n" );
+		}
 	} else if( in_railgunZoomActive ) {
 		in_railgunZoomActive = qfalse;
 		Cbuf_AddText( "-zoom\n" );
