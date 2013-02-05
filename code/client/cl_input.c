@@ -296,9 +296,10 @@ void IN_Button0Down(void)
 void IN_Button0Up(void)
 {
 	cl.touchscreenAttackButtonPos[4] = 0.0f;
+	if ( in_buttons[0].active )
+		in_attackButtonReleased = 1;
 	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 		IN_KeyUp(&in_buttons[0]);
-		in_attackButtonReleased = 1;
 	} else {
 		// Ignore mouse keypresses, process only keyboard
 		int k = -1;
@@ -315,8 +316,6 @@ void IN_Button0Up(void)
 			}
 			if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
 				int weaponX = in_mouseX * 640 / cls.glconfig.vidWidth;
-				if ( in_buttons[0].active )
-					in_attackButtonReleased = 1;
 				IN_KeyUp(&in_buttons[0]);
 				in_tapMouseX = in_mouseX;
 				in_tapMouseY = in_mouseY;
@@ -462,7 +461,6 @@ void CL_AdjustAngles( void ) {
 		}
 		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], - diff ); // It will normalize the resulting angle
-			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 		} else {
 			angles[YAW] = AngleSubtract( angles[YAW], - diff ); // It will normalize the resulting angle
 		}
@@ -471,8 +469,6 @@ void CL_AdjustAngles( void ) {
 
 	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 		VectorCopy(angles, in_cameraAngles);
-		if ( cgvm )
-			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	} else {
 		VectorCopy(angles, cl.viewangles);
 	}
@@ -781,15 +777,8 @@ void CL_MouseMove(usercmd_t *cmd)
 		float pitchSpeed = ( in_cameraAngles[PITCH] < -20 ) ? 0.0015f : ( in_cameraAngles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
 		float pitch = in_androidCameraPitchSpeed * cls.unscaledFrametime * cl_pitchspeed->value * pitchSpeed;
 
-		in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], -yaw ); // It will also normalize it between (-180:180)
-
-		in_cameraAngles[PITCH] = in_cameraAngles[PITCH] + pitch;
-		if ( in_cameraAngles[PITCH] > 180 )
-			in_cameraAngles[PITCH] = 180;
-		else if ( in_cameraAngles[PITCH] < -90 )
-			in_cameraAngles[PITCH] = -90;
-
-		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+		in_cameraAngles[YAW] += yaw;
+		in_cameraAngles[PITCH] += pitch;
 	} else {
 #ifdef __ANDROID__
 #if 0 // Accelerometer disabled, because it's awkward
@@ -802,14 +791,12 @@ void CL_MouseMove(usercmd_t *cmd)
 			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW],
 				cls.unscaledFrametime * cl_yawspeed->value * 0.001f *
 				( ( cl.joystickAxis[2] - j_androidAccelerometerSensitivity->value * 0.5f ) / j_androidAccelerometerSensitivity->value ) );
-			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 		}
 
 		if ( cl.joystickAxis[2] < -j_androidAccelerometerSensitivity->value ) {
 			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW],
 				cls.unscaledFrametime * cl_yawspeed->value * 0.001f *
 				( ( cl.joystickAxis[2] + j_androidAccelerometerSensitivity->value * 0.5f ) / j_androidAccelerometerSensitivity->value ) );
-			VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 		}
 
 		if ( instantRotate > -90 ) {
@@ -817,7 +804,6 @@ void CL_MouseMove(usercmd_t *cmd)
 			instantRotate -= angle;
 			if ( instantRotate > 0 ) {
 				in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], instantRotateDir * angle );
-				VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 			}
 		} else {
 			if ( abs( cl.joystickAxis[2] - prevAccelValue ) > j_androidAccelerometerTapSensitivity->value * cls.unscaledFrametime ) {
@@ -834,7 +820,6 @@ void CL_MouseMove(usercmd_t *cmd)
 		in_cameraAngles[PITCH] += j_androidAutoCenterViewSpeed->value * cls.unscaledFrametime * ( ( in_cameraAngles[PITCH] > 0 ) ? -1 : 1 );
 		if ( fabs( in_cameraAngles[PITCH] ) < j_androidAutoCenterViewSpeed->value * cls.unscaledFrametime * 2.0f )
 			in_cameraAngles[PITCH] = 0;
-		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	}
 }
 
@@ -867,29 +852,26 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		}
 		in_buttons[i].wasPressed = qfalse;
 	}
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
-		if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ||
-				in_androidWeaponSelectionBarActive || cl.cgameUserCmdValue == WP_RAILGUN )
-			cmd->buttons &= ~BUTTON_ATTACK; // Stop firing when we are rotating camera, or using railgun
-		if ( cl.cgameUserCmdValue == WP_RAILGUN && in_attackButtonReleased &&
-			! ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidWeaponSelectionBarActive ) )
-			cmd->buttons |= BUTTON_ATTACK; // Fire when button is released
-		in_attackButtonReleased = 0;
-	} else if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
-		if ( cl.cgameUserCmdValue == WP_RAILGUN ) {
-			if ( !in_railgunZoomActive && (cmd->buttons & BUTTON_ATTACK) ) {
-				in_railgunZoomActive = qtrue;
-				Cbuf_AddText( "+zoom\n" );
-			}
-			if ( in_railgunZoomActive && !(cmd->buttons & BUTTON_ATTACK) ) {
-				in_railgunZoomActive = qfalse;
-				Cbuf_AddText( "-zoom\n" );
-			}
+	// Auto-zoom for railgun
+	if ( cl.cgameUserCmdValue == WP_RAILGUN && !in_railgunZoomActive && (cmd->buttons & BUTTON_ATTACK) ) {
+		in_railgunZoomActive = qtrue;
+		Cbuf_AddText( "+zoom\n" );
+	} else if( in_railgunZoomActive ) {
+		in_railgunZoomActive = qfalse;
+		Cbuf_AddText( "-zoom\n" );
+	}
+	if ( cl.cgameUserCmdValue == WP_RAILGUN ) {
+		if (cmd->buttons & BUTTON_ATTACK) )
 			cmd->buttons &= ~BUTTON_ATTACK; // Do not fire immediately when railgun selected, zoom instead
-		}
-		if ( cl.cgameUserCmdValue == WP_RAILGUN && in_attackButtonReleased )
+		if ( in_attackButtonReleased )
 			cmd->buttons |= BUTTON_ATTACK; // Fire when button is released
-		in_attackButtonReleased = 0;
+	}
+	in_attackButtonReleased = 0;
+
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+		if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed ||
+				in_androidCameraMultitouchYawSpeed || in_androidWeaponSelectionBarActive )
+			cmd->buttons &= ~BUTTON_ATTACK; // Stop firing when we are rotating camera
 	}
 
 	if ( Key_GetCatcher( ) ) {
@@ -958,6 +940,18 @@ usercmd_t CL_CreateCmd( void ) {
 	} else if ( oldAngles[PITCH] - cl.viewangles[PITCH] > 90 ) {
 		cl.viewangles[PITCH] = oldAngles[PITCH] - 90;
 	} 
+
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING && cgvm ) {
+		if ( in_cameraAngles[YAW] > 180.0f )
+			in_cameraAngles[YAW] -= 360.0f;
+		else if ( in_cameraAngles[YAW] < -180.0f )
+			in_cameraAngles[YAW] += 360.0f;
+		if ( in_cameraAngles[PITCH] > 180 )
+			in_cameraAngles[PITCH] = 180;
+		else if ( in_cameraAngles[PITCH] < -90 )
+			in_cameraAngles[PITCH] = -90;
+		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
+	}
 
 	// store out the final values
 	CL_FinishMove( &cmd );
