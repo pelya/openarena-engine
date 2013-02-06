@@ -445,16 +445,19 @@ void CL_AdjustAngles( void ) {
 	}
 
 	// Gyroscope
-	if ( cl.joystickAxis[JOY_AXIS_GYRO_X] != 0 || cl.joystickAxis[JOY_AXIS_GYRO_Y] != 0 || cl.joystickAxis[JOY_AXIS_GYRO_Z] != 0 ) {
-		//Com_Printf ("Gyro: %d %d %d\n", cl.joystickAxis[JOY_AXIS_GYRO_X], cl.joystickAxis[JOY_AXIS_GYRO_Y], cl.joystickAxis[JOY_AXIS_GYRO_Z]);
-		angles[YAW] += (cl.joystickAxis[JOY_AXIS_GYRO_X]) * (1.0f / 16384.0f) * cl.cgameSensitivity;
-		angles[PITCH] += (cl.joystickAxis[JOY_AXIS_GYRO_Y]) * (1.0f / 16384.0f) * cl.cgameSensitivity;
-		angles[ROLL] -= (cl.joystickAxis[JOY_AXIS_GYRO_Z]) * (1.0f / 16384.0f);
-	}
-	if( fabs(angles[ROLL]) > speed * 2000.0f ) {
-		angles[ROLL] -= ( angles[ROLL] > 0 ) ? speed * 2000.0f : speed * -2000.0f;
-		if( fabs(angles[ROLL]) > 8.0f )
-			angles[ROLL] = ( angles[ROLL] > 0 ) ? 8.0f :  -8.0f;
+	if ( in_gyroscope->integer ) {
+		if ( cl.joystickAxis[JOY_AXIS_GYRO_X] != 0 || cl.joystickAxis[JOY_AXIS_GYRO_Y] != 0 || cl.joystickAxis[JOY_AXIS_GYRO_Z] != 0 ) {
+			angles[YAW] += (cl.joystickAxis[JOY_AXIS_GYRO_X]) * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
+			angles[PITCH] += (cl.joystickAxis[JOY_AXIS_GYRO_Y]) * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
+			angles[ROLL] -= (cl.joystickAxis[JOY_AXIS_GYRO_Z]) * (1.0f / 16384.0f);
+		}
+		if( fabs(angles[ROLL]) > speed * 2000.0f ) {
+			angles[ROLL] -= ( angles[ROLL] > 0 ) ? speed * 2000.0f : speed * -2000.0f;
+			if( fabs(angles[ROLL]) > 8.0f )
+				angles[ROLL] = ( angles[ROLL] > 0 ) ? 8.0f :  -8.0f;
+		}
+	} else {
+		angles[ROLL] = 0;
 	}
 
 	// Swipe touchscreen gesture

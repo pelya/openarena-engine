@@ -1034,11 +1034,11 @@ static void IN_ProcessEvents( void )
 			
 			case SDL_JOYAXISMOTION: // Android accelerometer and on-screen joystick
 				{
-					if( e.jaxis.which == 0 && e.jaxis.axis < 2 ) // joy 0 axes 0-1 = screen joystick
+					if( e.jaxis.which == JOY_SDL_TOUCHSCREEN && e.jaxis.axis < 2 ) // joy 0 axes 0-1 = screen joystick
 						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis + JOY_AXIS_SCREENJOY_X, e.jaxis.value, 0, NULL );
-					if( e.jaxis.which == 1 && e.jaxis.axis >= 2 && e.jaxis.axis <= 4 ) // joy 1 axes  2-4 = gyroscope
+					if( e.jaxis.which == JOY_SDL_GYROSCOPE && e.jaxis.axis >= 2 && e.jaxis.axis <= 4 ) // joy 1 axes  2-4 = gyroscope
 						gyroscope[ e.jaxis.axis - 2 ] += e.jaxis.value;
-					if( e.jaxis.which == 2 && e.jaxis.axis < 6 ) // joy 2-5 = gamepad
+					if( e.jaxis.which == JOY_SDL_GAMEPAD && e.jaxis.axis < 6 ) // joy 2-5 = gamepad
 					{
 						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis + JOY_AXIS_GAMEPADLEFT_X, e.jaxis.value, 0, NULL );
 						if ( !hideScreenKeys && e.jaxis.axis == JOY_AXIS_GAMEPADRIGHT_X - JOY_AXIS_GAMEPADLEFT_X && abs(e.jaxis.value) > 20000 )
@@ -1066,7 +1066,7 @@ static void IN_ProcessEvents( void )
 			case SDL_JOYBUTTONDOWN: // Android multitouch
 			case SDL_JOYBUTTONUP:
 				{
-					if( e.jaxis.which == 0 && e.jbutton.button < MAX_POINTERS )
+					if( e.jaxis.which == JOY_SDL_TOUCHSCREEN && e.jbutton.button < MAX_POINTERS )
 					{
 						touchPointers[e.jbutton.button].pressed = (e.jbutton.state == SDL_PRESSED);
 						IN_ProcessTouchPoints();
@@ -1075,7 +1075,7 @@ static void IN_ProcessEvents( void )
 				break;
 			case SDL_JOYBALLMOTION: // Android multitouch
 				{
-					if( e.jaxis.which == 0 && e.jball.ball < MAX_POINTERS )
+					if( e.jaxis.which == JOY_SDL_TOUCHSCREEN && e.jball.ball < MAX_POINTERS )
 					{
 						int i;
 						touchPointers[e.jball.ball].x = e.jball.xrel;
@@ -1206,6 +1206,17 @@ static void IN_ShowHideScreenButtons( void )
 #endif
 }
 
+void IN_OpenCloseGyroscope( void )
+{
+	if ( in_gyroscope->integer && !sticks[JOY_SDL_GYROSCOPE] ) {
+		sticks[JOY_SDL_GYROSCOPE] = SDL_JoystickOpen( JOY_SDL_GYROSCOPE );
+	}
+	if ( !in_gyroscope->integer && sticks[JOY_SDL_GYROSCOPE] == NULL ) {
+		SDL_JoystickClose( sticks[JOY_SDL_GYROSCOPE] );
+		sticks[JOY_SDL_GYROSCOPE] = NULL;
+	}
+}
+
 /*
 ===============
 IN_Frame
@@ -1218,6 +1229,7 @@ void IN_Frame( void )
 	IN_JoyMove( );
 	IN_ProcessEvents( );
 	IN_ShowHideScreenButtons( );
+	IN_OpenCloseGyroscope( );
 
 	// If not DISCONNECTED (main menu) or ACTIVE (in game), we're loading
 	loading = ( clc.state != CA_DISCONNECTED && clc.state != CA_ACTIVE );
@@ -1289,6 +1301,7 @@ void IN_Init( void )
 	in_joystickDebug = Cvar_Get( "in_joystickDebug", "0", CVAR_TEMP );
 	in_joystickThreshold = Cvar_Get( "joy_threshold", "0.15", CVAR_ARCHIVE );
 	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", "0", CVAR_ARCHIVE);
+	in_gyroscope = Cvar_Get ("in_gyroscope", "1", CVAR_ARCHIVE);
 
 #ifdef MACOS_X_ACCELERATION_HACK
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );

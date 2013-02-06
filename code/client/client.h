@@ -419,6 +419,8 @@ extern	cvar_t	*j_androidJoystickJumpTime;
 extern	cvar_t	*j_androidAccelerometerSensitivity;
 extern	cvar_t	*j_androidAccelerometerTapSensitivity;
 extern	cvar_t	*j_androidAutoCenterViewSpeed;
+extern	cvar_t	*in_gyroscope;
+extern	cvar_t	*in_gyroscopeSensitivity;
 // Some part of game state needed for touchscreen input handling
 extern	cvar_t	*cg_underWater;
 extern	cvar_t	*cg_weaponBarActiveWidth;

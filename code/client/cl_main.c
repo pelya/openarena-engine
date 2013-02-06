@@ -107,6 +107,8 @@ cvar_t	*j_androidJoystickJumpTime;
 cvar_t	*j_androidAccelerometerSensitivity;
 cvar_t	*j_androidAccelerometerTapSensitivity;
 cvar_t	*j_androidAutoCenterViewSpeed;
+cvar_t	*in_gyroscope;
+cvar_t	*in_gyroscopeSensitivity;
 cvar_t	*cg_underWater;
 cvar_t	*cg_weaponBarActiveWidth;
 cvar_t	*cg_weaponBarActiveWeapons;
@@ -3527,6 +3529,9 @@ void CL_Init( void ) {
 	j_androidAccelerometerSensitivity = Cvar_Get ("j_androidAccelerometerSensitivity", "4500", CVAR_ARCHIVE);
 	j_androidAccelerometerTapSensitivity = Cvar_Get ("j_androidAccelerometerTapSensitivity", "60", CVAR_ARCHIVE);
 	j_androidAutoCenterViewSpeed = Cvar_Get ("j_androidAutoCenterViewSpeed", "0.02", CVAR_ARCHIVE);
+
+	in_gyroscope = Cvar_Get ("in_gyroscope", "1", CVAR_ARCHIVE);
+	in_gyroscopeSensitivity = Cvar_Get ("in_gyroscopeSensitivity", "2", CVAR_ARCHIVE);
 
 	cg_underWater = Cvar_Get ("cg_underWater", "0", 0);
 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);
