@@ -843,7 +843,7 @@ void CL_SetAimingAngles( const vec3_t angles )
 
 void CL_SetCameraAngles( const vec3_t angles )
 {
-	Com_Printf ("CL_SetCameraAngles %f %f -> %f %f\n", in_cameraAngles[YAW], in_cameraAngles[PITCH], angles[YAW], angles[PITCH]);
+	//Com_Printf ("CL_SetCameraAngles %f %f -> %f %f\n", in_cameraAngles[YAW], in_cameraAngles[PITCH], angles[YAW], angles[PITCH]);
 	VectorCopy( angles, in_cameraAngles );
 }
 
@@ -854,7 +854,7 @@ CL_CmdButtons
 */
 void CL_CmdButtons( usercmd_t *cmd ) {
 	int		i;
-	static qboolean zoomReleaseDeferred = qfalse;
+	static int zoomDeferred = 0;
 
 	//
 	// figure button bits
@@ -867,20 +867,26 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		}
 		in_buttons[i].wasPressed = qfalse;
 	}
-	// Do not zoom out and fire immediately, it will skew aiming
-	if ( zoomReleaseDeferred ) {
-		zoomReleaseDeferred = qfalse;
-		Cbuf_AddText( "-zoom\n" );
+	// Do not zoom out and fire immediately, it will skew aiming, because input events not passed to cgame yet
+	if ( zoomDeferred > 0 ) {
+		zoomDeferred--;
+		if ( !zoomDeferred )
+			Cbuf_AddText( "+zoom\n" );
+	}
+	if ( zoomDeferred < 0 ) {
+		zoomDeferred++;
+		if ( !zoomDeferred )
+			Cbuf_AddText( "-zoom\n" );
 	}
 	// Auto-zoom for railgun
 	if ( cl.cgameUserCmdValue == WP_RAILGUN && (cmd->buttons & BUTTON_ATTACK) ) {
 		if ( !in_railgunZoomActive ) {
 			in_railgunZoomActive = qtrue;
-			Cbuf_AddText( "+zoom\n" );
+			zoomDeferred = 1;
 		}
 	} else if ( in_railgunZoomActive ) {
 		in_railgunZoomActive = qfalse;
-		zoomReleaseDeferred = qtrue;
+		zoomDeferred = -1;
 	}
 	if ( cl.cgameUserCmdValue == WP_RAILGUN ) {
 		if ( cmd->buttons & BUTTON_ATTACK )
