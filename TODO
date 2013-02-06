@@ -1,9 +1,8 @@
 Next release:
 Q_vsnprintf inside bg_lib.c is buggy with %f output
 Add GUI for gyroscope-assisted aiming
-Make personal teleporter usable
 Add "Chat" entry to in-game menu, for Ouya
-
+Navigating menu with arrow keys is impossible
 
 Distant future:
 VOIP chat support, that will require support from SDL
