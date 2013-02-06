@@ -1,17 +1,3 @@
-diff --git a/code/client/cl_main.c b/code/client/cl_main.c
-index 699af12..d94c6f3 100644
---- a/code/client/cl_main.c
-+++ b/code/client/cl_main.c
-@@ -3527,7 +3527,8 @@ void CL_Init( void ) {
- 	cg_underWater = Cvar_Get ("cg_underWater", "0", 0);
- 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);
- 	cg_weaponBarActiveWeapons = Cvar_Get ("cg_weaponBarActiveWeapons", "", 0);
--	cg_swipeFreeAiming = Cvar_Get ("cg_swipeFreeAiming", "0", CVAR_ARCHIVE);
-+	cg_swipeFreeAiming = Cvar_Get ("cg_swipeFreeAiming", "0", 0);
-+	Cvar_Set ("cg_swipeFreeAiming", "0");
- 
- 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);
- 	j_yaw_axis =     Cvar_Get ("j_yaw_axis",     "4", CVAR_ARCHIVE);
 diff --git a/code/qcommon/q_shared.h b/code/qcommon/q_shared.h
 index e4c98f6..2810e87 100644
 --- a/code/qcommon/q_shared.h
@@ -27,17 +13,3 @@ index e4c98f6..2810e87 100644
  #else
    #define PRODUCT_NAME			"ioq3"
    #define BASEGAME			"baseq3"
-diff --git a/code/sdl/sdl_input.c b/code/sdl/sdl_input.c
-index fe32399..bb87e01 100644
---- a/code/sdl/sdl_input.c
-+++ b/code/sdl/sdl_input.c
-@@ -1280,7 +1280,8 @@ void IN_Init( void )
- 	in_joystick = Cvar_Get( "in_joystick", "0", CVAR_ARCHIVE|CVAR_LATCH );
- 	in_joystickDebug = Cvar_Get( "in_joystickDebug", "0", CVAR_TEMP );
- 	in_joystickThreshold = Cvar_Get( "joy_threshold", "0.15", CVAR_ARCHIVE );
--	cg_swipeFreeAiming = Cvar_Get ("cg_swipeFreeAiming", "0", CVAR_ARCHIVE);
-+	cg_swipeFreeAiming = Cvar_Get ("cg_swipeFreeAiming", "0", 0);
-+	Cvar_Set ("cg_swipeFreeAiming", "0");
- 
- #ifdef MACOS_X_ACCELERATION_HACK
- 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
