@@ -467,11 +467,7 @@ void CL_AdjustAngles( void ) {
 		} else {
 			in_swipeAngle -= diff;
 		}
-		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
-			in_cameraAngles[YAW] = AngleSubtract( in_cameraAngles[YAW], - diff ); // It will normalize the resulting angle
-		} else {
-			angles[YAW] = AngleSubtract( angles[YAW], - diff ); // It will normalize the resulting angle
-		}
+		angles[YAW] += diff;
 	}
 	in_swipeTime += cls.unscaledFrametime;
 
