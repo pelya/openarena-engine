@@ -2,6 +2,8 @@ Next release:
 Q_vsnprintf inside bg_lib.c is buggy with %f output
 Add "Chat" entry to in-game menu, for Ouya
 Navigating menu with arrow keys is impossible
+Fix railgun zoom in swipe-free mode
+Options to disable railgun auto-zoom and swipe-to-rotate
 
 Distant future:
 VOIP chat support, that will require support from SDL
