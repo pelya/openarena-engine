@@ -1,10 +1,12 @@
 Next release:
 Q_vsnprintf inside bg_lib.c is buggy with %f output
-Add "Chat" entry to in-game menu, for Ouya
-Navigating menu with arrow keys is impossible
 Fix railgun zoom in swipe-free mode
-Options to disable railgun auto-zoom and swipe-to-rotate
+Options to disable railgun auto-zoom, swipe-to-rotate, and hide weapon
 
 Distant future:
 VOIP chat support, that will require support from SDL
 4-players split-screen mode, to be taken from https://github.com/zturtleman/spearmint
+
+Minor:
+Add "Chat" entry to in-game menu, for Ouya
+Navigating menu with arrow keys is impossible

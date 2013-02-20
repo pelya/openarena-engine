@@ -1199,7 +1199,10 @@ static void IN_ShowHideScreenButtons( void )
 			if( SDL_ANDROID_GetScreenKeyboardRedefinedByUser() )
 			{
 				for( i = 0; i < SDL_ANDROID_SCREENKEYBOARD_BUTTON_NUM; i++ )
-					SDL_ANDROID_SetScreenKeyboardButtonPos(i, &userRedefinedPos[i]);
+				{
+					if( !( cg_touchscreenControls->integer != TOUCHSCREEN_FIRE_BUTTON && i == SDL_ANDROID_SCREENKEYBOARD_BUTTON_4 ) )
+						SDL_ANDROID_SetScreenKeyboardButtonPos(i, &userRedefinedPos[i]);
+				}
 			}
 		}
 	}
