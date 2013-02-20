@@ -1,7 +1,7 @@
 Next release:
-Q_vsnprintf inside bg_lib.c is buggy with %f output
 Fix railgun zoom in swipe-free mode
-Options to disable railgun auto-zoom, swipe-to-rotate, and hide weapon
+Options to disable railgun auto-zoom, swipe-to-rotate disable/90/180 degrees, hide weapon, zoom locking, gyroscope axes remap
+Touch sensitivity range should be increased
 
 Distant future:
 VOIP chat support, that will require support from SDL
@@ -10,3 +10,4 @@ VOIP chat support, that will require support from SDL
 Minor:
 Add "Chat" entry to in-game menu, for Ouya
 Navigating menu with arrow keys is impossible
+Q_vsnprintf inside bg_lib.c is buggy with %f output
