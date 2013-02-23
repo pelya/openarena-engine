@@ -656,6 +656,17 @@ void CL_JoystickEvent( int axis, int value, int time ) {
 	cl.joystickAxis[axis] = value;
 }
 
+static void CL_ScaleMovementCmdToMaximiumForStrafeJump( usercmd_t *cmd ) {
+	// Normalize them to 127
+	if ( abs(cmd->forwardmove) > abs(cmd->rightmove) ) {
+		cmd->rightmove = ClampChar( (short)cmd->rightmove * 127 / abs(cmd->forwardmove) );
+		cmd->forwardmove = (cmd->forwardmove > 0) ? 127 : -127;
+	} else if ( abs(cmd->rightmove) > abs(cmd->forwardmove) ) {
+		cmd->forwardmove = ClampChar( (short)cmd->forwardmove * 127 / abs(cmd->rightmove) );
+		cmd->rightmove = (cmd->rightmove > 0) ? 127 : -127;
+	}
+}
+
 /*
 =================
 CL_JoystickMove
@@ -664,10 +675,11 @@ CL_JoystickMove
 void CL_JoystickMove( usercmd_t *cmd ) {
 #ifdef __ANDROID__
 
-	static int oldRightMove = 0, oldForwardMove = 0;
+	static int oldRightMove = 0, oldForwardMove = 0, oldJump = 0;
 	float angle;
 
 	if ( cl.joystickAxis[JOY_AXIS_SCREENJOY_X] == 0 && cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] == 0 ) {
+		oldJump = 0;
 		if ( in_joystickJumpTriggerTime > 0 ) {
 			in_joystickJumpTriggerTime -= cls.unscaledFrametime;
 			if ( in_joystickJumpTriggerTime * 2 > j_androidJoystickJumpTime->integer ) {
@@ -682,11 +694,13 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 
 			cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
 			cmd->rightmove = ClampChar( cmd->rightmove + cos( angle ) * 127.0f );
+			CL_ScaleMovementCmdToMaximiumForStrafeJump( cmd );
 		}
 	} else {
 		if ( in_joystickJumpTriggerTime > 0 && in_joystickJumpTriggerTime < j_androidJoystickJumpTime->integer ) {
-			cmd->upmove = ClampChar( cmd->upmove + 10 );
+			oldJump = 127;
 		}
+		cmd->upmove = ClampChar( cmd->upmove + oldJump );
 		in_joystickJumpTriggerTime = j_androidJoystickJumpTime->integer;
 
 		angle = RAD2DEG( atan2( cl.joystickAxis[JOY_AXIS_SCREENJOY_X], cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] ) );
@@ -702,6 +716,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 
 		cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
 		cmd->rightmove = ClampChar( cmd->rightmove + cos( angle ) * 127.0f );
+		CL_ScaleMovementCmdToMaximiumForStrafeJump( cmd );
 		oldForwardMove = cmd->forwardmove;
 		oldRightMove = cmd->rightmove;
 	}
