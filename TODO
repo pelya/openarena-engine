@@ -1,7 +1,9 @@
 Next release:
-Fix railgun zoom in swipe-free mode
 Options to disable railgun auto-zoom, swipe-to-rotate disable/90/180 degrees, hide weapon, zoom locking, gyroscope axes remap
-Touch sensitivity range should be increased
+Make weblinks and emails clickable in chat text and in server messages
+Change default buttons layout
+Move ammo and health info away from the joystick
+
 
 Distant future:
 VOIP chat support, that will require support from SDL
