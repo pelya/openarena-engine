@@ -2,12 +2,12 @@ Next release:
 Options to disable railgun auto-zoom, swipe-to-rotate disable/90/180 degrees, hide weapon, zoom locking, gyroscope axes remap
 Make weblinks and emails clickable in chat text and in server messages
 Change default buttons layout
-Move ammo and health info away from the joystick
 
 
 Distant future:
 VOIP chat support, that will require support from SDL
 4-players split-screen mode, to be taken from https://github.com/zturtleman/spearmint
+
 
 Minor:
 Add "Chat" entry to in-game menu, for Ouya
