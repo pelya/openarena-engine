@@ -1184,7 +1184,7 @@ static void RB_SurfaceAxis( void ) {
 	qglLineWidth( 1 );
 #else
 	// TODO: I'm too lazy to implement debug stuff
-	Com_Printf("Error: RB_SurfaceAxis() not implemented on GLES\n");
+	//Com_Printf("Error: RB_SurfaceAxis() not implemented on GLES\n");
 #endif
 }
 
