@@ -656,7 +656,7 @@ IN_JoyMove
 */
 static void IN_JoyMove( void )
 {
-#ifndef __ANDROID__
+#if 0 //#ifndef __ANDROID__
 	qboolean joy_pressed[ARRAY_LEN(joy_keys)];
 	unsigned int axes = 0;
 	unsigned int hats = 0;

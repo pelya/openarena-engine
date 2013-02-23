@@ -880,7 +880,10 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 	}
 	// Auto-zoom for railgun
 	if ( cl.cgameUserCmdValue == WP_RAILGUN && (cmd->buttons & BUTTON_ATTACK) ) {
-		if ( !in_railgunZoomActive ) {
+		if ( !in_railgunZoomActive &&
+			( cg_touchscreenControls->integer != TOUCHSCREEN_SWIPE_FREE_AIMING || // Prevent zooming in if we're rotating view
+			! ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed ||
+				in_androidCameraMultitouchYawSpeed || in_androidWeaponSelectionBarActive ))) {
 			in_railgunZoomActive = qtrue;
 			zoomDeferred = 1;
 		}
