@@ -1158,6 +1158,7 @@ static void IN_ShowHideScreenButtons( void )
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect);
 			// TODO: implement automatic keyboard toggling from text fields - see MenuField_Key()
 			rect.w = rect.h = cls.glconfig.vidHeight / 10;
 			rect.x = rect.y = 0;
