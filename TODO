@@ -2,6 +2,9 @@ Next release:
 Options to disable railgun auto-zoom, swipe-to-rotate disable/90/180 degrees, hide weapon, zoom locking, gyroscope axes remap
 Make weblinks and emails clickable in chat text and in server messages
 Change default buttons layout
+Show last console messages in text input field
+Text input automatically toggles console in UI
+SDL: when downloading data, show cancel dialog when pressing Back.
 
 
 Distant future:
