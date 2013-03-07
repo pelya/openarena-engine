@@ -5,6 +5,7 @@ Change default buttons layout
 Show last console messages in text input field
 Text input automatically toggles console in UI
 SDL: when downloading data, show cancel dialog when pressing Back.
+Enable text input box when pressing "t" on keyboard
 
 
 Distant future:
