@@ -32,7 +32,7 @@ int g_console_field_width = 39; //78;
 
 #define	NUM_CON_TIMES 4
 
-#define		CON_TEXTSIZE	32768
+#define		CON_TEXTSIZE	512 //32768 // No need for big scrollbuffer on Android, because we cannot scroll back
 typedef struct {
 	qboolean	initialized;
 
@@ -96,6 +96,12 @@ void Con_MessageMode_f (void) {
 	chatField.widthInChars = 30;
 
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
+
+#ifdef __ANDROID__
+	if ( !SDL_IsScreenKeyboardShown ( NULL ) ) {
+		SDL_ANDROID_ToggleScreenKeyboardTextInput( "" );
+	}
+#endif
 }
 
 /*
@@ -109,6 +115,12 @@ void Con_MessageMode2_f (void) {
 	Field_Clear( &chatField );
 	chatField.widthInChars = 25;
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
+
+#ifdef __ANDROID__
+	if ( !SDL_IsScreenKeyboardShown ( NULL ) ) {
+		SDL_ANDROID_ToggleScreenKeyboardTextInput( "" );
+	}
+#endif
 }
 
 /*
@@ -126,6 +138,12 @@ void Con_MessageMode3_f (void) {
 	Field_Clear( &chatField );
 	chatField.widthInChars = 30;
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
+
+#ifdef __ANDROID__
+	if ( !SDL_IsScreenKeyboardShown ( NULL ) ) {
+		SDL_ANDROID_ToggleScreenKeyboardTextInput( "" );
+	}
+#endif
 }
 
 /*
@@ -143,6 +161,12 @@ void Con_MessageMode4_f (void) {
 	Field_Clear( &chatField );
 	chatField.widthInChars = 30;
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
+
+#ifdef __ANDROID__
+	if ( !SDL_IsScreenKeyboardShown ( NULL ) ) {
+		SDL_ANDROID_ToggleScreenKeyboardTextInput( "" );
+	}
+#endif
 }
 
 /*
@@ -221,6 +245,56 @@ void Con_Dump_f (void)
 
 	FS_FCloseFile( f );
 }
+
+
+// Dump console to Android text input control
+
+#ifdef __ANDROID__
+enum { ANDROID_SHOW_LINES = 7 }; // Text input field may be very small even on big devices, it actually shows this number minus one
+static void Con_AndroidTextInputShowLastMessages (void) {
+	int		l, x, i, f;
+	short	*line;
+	char	buffer[(CON_TEXTSIZE * 11) / 10]; // Small extra space for \n symbols
+	int		lastLines[ANDROID_SHOW_LINES];
+
+	Com_Memset( lastLines, 0, sizeof(lastLines) );
+	// skip empty lines
+	for ( l = con.current - con.totallines + 1 ; l <= con.current ; l++ )
+	{
+		line = con.text + (l%con.totallines)*con.linewidth;
+		for (x=0 ; x<con.linewidth ; x++)
+			if ((line[x] & 0xff) != ' ')
+				break;
+		if (x != con.linewidth)
+			break;
+	}
+
+	// write the remaining lines
+	for ( f = 0; l <= con.current ; l++, f++ )
+	{
+		line = con.text + (l%con.totallines)*con.linewidth;
+		for( i=0; i<con.linewidth; i++, f++ )
+			buffer[f] = line[i] & 0xff;
+		for ( x=con.linewidth-1, f-- ; x>=0 ; x--, f-- )
+		{
+			if (buffer[f] == ' ')
+				buffer[f] = 0;
+			else
+				break;
+		}
+		f++;
+		buffer[f] = '\n';
+		for( x = 1; x < ANDROID_SHOW_LINES; x++ )
+			lastLines[x-1] = lastLines[x];
+		lastLines[ANDROID_SHOW_LINES-1] = f + 1;
+	}
+	if( f > 0 )
+		f--;
+	buffer[ f ] = 0;
+
+	SDL_ANDROID_SetScreenKeyboardHintMesage( buffer + lastLines[0] );
+}
+#endif
 
 						
 /*
@@ -481,6 +555,10 @@ void CL_ConsolePrint( char *txt ) {
 		// -NERVE - SMF
 			con.times[con.current % NUM_CON_TIMES] = cls.realtime;
 	}
+
+#ifdef __ANDROID__
+	Con_AndroidTextInputShowLastMessages( );
+#endif
 }
 
 
@@ -789,14 +867,33 @@ void Con_RunConsole (void) {
 	if( clc.state == CA_ACTIVE && ( Key_GetCatcher( ) & ~(KEYCATCH_CGAME | KEYCATCH_MESSAGE) ) == 0 ) // Check if we're playing and not in UI
 	{
 		// If screen keyboard shown, but we're not in message mode and not showing console - toggle message mode
-		if ( SDL_IsScreenKeyboardShown ( NULL ) && ! ( Key_GetCatcher( ) & KEYCATCH_MESSAGE ) && ! ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
+		if ( SDL_IsScreenKeyboardShown ( NULL ) && ! ( Key_GetCatcher( ) & KEYCATCH_MESSAGE ) && ! ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) ) {
 			Con_MessageMode_f( );
+			//Con_AndroidTextInputShowLastMessages( );
+		}
 		// If screen keyboard hidden, but we're still in message mode - send Enter to message field
-		if ( ! SDL_IsScreenKeyboardShown ( NULL ) && ( Key_GetCatcher( ) & KEYCATCH_MESSAGE ) )
-		{
+		if ( ! SDL_IsScreenKeyboardShown ( NULL ) && ( Key_GetCatcher( ) & KEYCATCH_MESSAGE ) ) {
 			//Message_Key( K_ENTER );
 			CL_KeyEvent( K_ENTER, qtrue, 0 );
 			CL_KeyEvent( K_ENTER, qfalse, 0 );
+		}
+	} else {
+		static int needReturn = 0;
+		// If screen keyboard shown in UI - switch to console
+		if ( SDL_IsScreenKeyboardShown ( NULL ) && ! ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) ) {
+			Con_ToggleConsole_f( );
+			//Con_AndroidTextInputShowLastMessages( );
+			needReturn = 1;
+		}
+		// If screen keyboard hidden, but we're still in message mode - send Enter to console
+		if ( ! SDL_IsScreenKeyboardShown ( NULL ) && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) && needReturn ) {
+			needReturn = 0;
+			//Console_Key( K_ENTER );
+			CL_KeyEvent( K_ENTER, qtrue, 0 );
+			CL_KeyEvent( K_ENTER, qfalse, 0 );
+			if( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) {
+				Con_ToggleConsole_f( );
+			}
 		}
 	}
 #endif
