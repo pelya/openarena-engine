@@ -317,7 +317,7 @@ void IN_Button0Up(void)
 		else {
 			float angleDiff = AngleSubtract( cl.viewangles[YAW], in_swipeAngleRotate ); // It will normalize the resulting angle
 			in_mouseSwipingActive = 0;
-			if ( in_swipeTime < 300 && fabs(angleDiff) > in_swipeSensitivity->value ) {
+			if ( in_swipeTime < 300 && fabs(angleDiff) > in_swipeSensitivity->value && in_swipeAngle->value ) {
 				in_swipeAngleRotate = angleDiff > 0 ? in_swipeAngle->value - angleDiff : -in_swipeAngle->value - angleDiff;
 				in_swipeActivated = 1;
 			}
