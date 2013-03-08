@@ -422,13 +422,16 @@ extern	cvar_t	*j_androidAccelerometerTapSensitivity;
 extern	cvar_t	*j_androidAutoCenterViewSpeed;
 extern	cvar_t	*in_gyroscope;
 extern	cvar_t	*in_gyroscopeSensitivity;
+extern	cvar_t	*in_gyroscopeAxesSwap;
+extern	cvar_t	*in_swipeAngle;
+extern	cvar_t	*in_swipeSensitivity;
+extern	cvar_t	*cg_railgunAutoZoom;
+extern	cvar_t	*cg_touchscreenControls;
 // Some part of game state needed for touchscreen input handling
 extern	cvar_t	*cg_underWater;
 extern	cvar_t	*cg_weaponBarActiveWidth;
 extern	cvar_t	*cg_weaponBarActiveWeapons;
-extern	cvar_t	*cg_touchscreenControls;
 extern	cvar_t	*cg_holdingUsableItem;
-extern	cvar_t	*cg_railgunAutoZoom;
 
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;

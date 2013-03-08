@@ -109,12 +109,16 @@ cvar_t	*j_androidAccelerometerTapSensitivity;
 cvar_t	*j_androidAutoCenterViewSpeed;
 cvar_t	*in_gyroscope;
 cvar_t	*in_gyroscopeSensitivity;
+cvar_t	*in_gyroscopeAxesSwap;
+cvar_t	*in_swipeAngle;
+cvar_t	*in_swipeSensitivity;
+cvar_t	*cg_railgunAutoZoom;
+cvar_t	*cg_touchscreenControls;
+
 cvar_t	*cg_underWater;
 cvar_t	*cg_weaponBarActiveWidth;
 cvar_t	*cg_weaponBarActiveWeapons;
-cvar_t	*cg_touchscreenControls;
 cvar_t	*cg_holdingUsableItem;
-cvar_t	*cg_railgunAutoZoom;
 
 cvar_t	*cl_activeAction;
 
@@ -3533,6 +3537,9 @@ void CL_Init( void ) {
 
 	in_gyroscope = Cvar_Get ("in_gyroscope", "1", CVAR_ARCHIVE);
 	in_gyroscopeSensitivity = Cvar_Get ("in_gyroscopeSensitivity", "2", CVAR_ARCHIVE);
+	in_gyroscopeAxesSwap = Cvar_Get ("in_gyroscopeAxesSwap", "0", CVAR_ARCHIVE);
+	in_swipeAngle = Cvar_Get ("in_swipeAngle", "180", CVAR_ARCHIVE);
+	in_swipeSensitivity = Cvar_Get ("in_swipeSensitivity", "25", CVAR_ARCHIVE);
 
 	cg_underWater = Cvar_Get ("cg_underWater", "0", 0);
 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);

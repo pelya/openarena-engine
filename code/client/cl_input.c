@@ -54,7 +54,7 @@ kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed, in_androidWeaponSelectionBarActive;
 static short in_swipeActivated, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY, in_tapMouseX, in_tapMouseY, in_swipeTime;
-static float in_swipeAngle;
+static float in_swipeAngleRotate;
 static qboolean in_railgunZoomActive;
 static const float in_swipeSpeed = 0.2f;
 #define TOUCHSCREEN_TAP_AREA (cls.glconfig.vidHeight / 6)
@@ -64,7 +64,7 @@ kbutton_t	in_voiprecord;
 kbutton_t	in_buttons[16];
 qboolean	in_mlooking;
 vec3_t		in_cameraAngles;
-
+enum { GYRO_AXES_SWAP_X = 1, GYRO_AXES_SWAP_Y = 2, GYRO_AXES_SWAP_XY = 4 };
 
 void IN_MLookDown( void ) {
 	in_mlooking = qtrue;
@@ -283,7 +283,7 @@ void IN_Button0Down(void)
 			else {
 				in_mouseSwipingActive = 1;
 				in_swipeTime = 0;
-				in_swipeAngle = cl.viewangles[YAW];
+				in_swipeAngleRotate = cl.viewangles[YAW];
 				in_swipeActivated = 0;
 				if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
 					int tapArea = TOUCHSCREEN_TAP_AREA / 2;
@@ -315,10 +315,10 @@ void IN_Button0Up(void)
 		if ( k != K_MOUSE1 )
 			IN_KeyUp(&in_buttons[0]);
 		else {
-			float angleDiff = AngleSubtract( cl.viewangles[YAW], in_swipeAngle ); // It will normalize the resulting angle
+			float angleDiff = AngleSubtract( cl.viewangles[YAW], in_swipeAngleRotate ); // It will normalize the resulting angle
 			in_mouseSwipingActive = 0;
-			if ( in_swipeTime < 300 && fabs(angleDiff) > 25.0f ) {
-				in_swipeAngle = angleDiff > 0 ? 180.0f - angleDiff : -180.0f - angleDiff;
+			if ( in_swipeTime < 300 && fabs(angleDiff) > in_swipeSensitivity->value ) {
+				in_swipeAngleRotate = angleDiff > 0 ? in_swipeAngle->value - angleDiff : -in_swipeAngle->value - angleDiff;
 				in_swipeActivated = 1;
 			}
 			if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
@@ -446,10 +446,22 @@ void CL_AdjustAngles( void ) {
 
 	// Gyroscope
 	if ( in_gyroscope->integer ) {
-		if ( cl.joystickAxis[JOY_AXIS_GYRO_X] != 0 || cl.joystickAxis[JOY_AXIS_GYRO_Y] != 0 || cl.joystickAxis[JOY_AXIS_GYRO_Z] != 0 ) {
-			angles[YAW] += (cl.joystickAxis[JOY_AXIS_GYRO_X]) * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
-			angles[PITCH] += (cl.joystickAxis[JOY_AXIS_GYRO_Y]) * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
-			angles[ROLL] -= (cl.joystickAxis[JOY_AXIS_GYRO_Z]) * (1.0f / 16384.0f);
+		float x = cl.joystickAxis[JOY_AXIS_GYRO_X], y = cl.joystickAxis[JOY_AXIS_GYRO_Y];
+		if ( in_gyroscopeAxesSwap->integer & GYRO_AXES_SWAP_X ) {
+			x = -x;
+		}
+		if ( in_gyroscopeAxesSwap->integer & GYRO_AXES_SWAP_Y ) {
+			y = -y;
+		}
+		if ( in_gyroscopeAxesSwap->integer & GYRO_AXES_SWAP_XY ) {
+			float xy = x;
+			x = y;
+			y = xy;
+		}
+		if ( x != 0 || y != 0 || cl.joystickAxis[JOY_AXIS_GYRO_Z] != 0 ) {
+			angles[YAW] += x * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
+			angles[PITCH] += y * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
+			angles[ROLL] -= cl.joystickAxis[JOY_AXIS_GYRO_Z] * (1.0f / 16384.0f);
 		}
 		if( fabs(angles[ROLL]) > speed * 2000.0f ) {
 			angles[ROLL] -= ( angles[ROLL] > 0 ) ? speed * 2000.0f : speed * -2000.0f;
@@ -462,13 +474,13 @@ void CL_AdjustAngles( void ) {
 
 	// Swipe touchscreen gesture
 	if ( in_swipeActivated ) {
-		float diff = cls.unscaledFrametime * in_swipeSpeed * ( ( in_swipeAngle > 0 ) ? 1 : -1 );
-		if ( fabs( in_swipeAngle ) <= fabs( diff ) ) {
-			diff = in_swipeAngle;
+		float diff = cls.unscaledFrametime * in_swipeSpeed * ( ( in_swipeAngleRotate > 0 ) ? 1 : -1 );
+		if ( fabs( in_swipeAngleRotate ) <= fabs( diff ) ) {
+			diff = in_swipeAngleRotate;
 			in_swipeActivated = 0;
-			in_swipeAngle = 0;
+			in_swipeAngleRotate = 0;
 		} else {
-			in_swipeAngle -= diff;
+			in_swipeAngleRotate -= diff;
 		}
 		angles[YAW] += diff;
 	}
@@ -705,9 +717,9 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 
 		angle = RAD2DEG( atan2( cl.joystickAxis[JOY_AXIS_SCREENJOY_X], cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] ) );
 		if( !in_swipeActivated && cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
-			in_swipeAngle = angle + 180.0f;
-			if ( in_swipeAngle > 180.0f )
-				in_swipeAngle -= 360.0f;
+			in_swipeAngleRotate = angle + 180.0f;
+			if ( in_swipeAngleRotate > 180.0f )
+				in_swipeAngleRotate -= 360.0f;
 		}
 		angle -= 90.0f;
 		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING )
