@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 int g_console_field_width = 39; //78;
-
+int g_console_text_input_toggled_ui = 0;
 
 #define	NUM_CON_TIMES 5
 
@@ -882,18 +882,23 @@ void Con_RunConsole (void) {
 		static int needReturn = 0;
 		// If screen keyboard shown in UI - switch to console
 		if ( SDL_IsScreenKeyboardShown ( NULL ) && ! ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) ) {
-			Con_ToggleConsole_f( );
-			//Con_AndroidTextInputShowLastMessages( );
-			needReturn = 1;
+			if ( !g_console_text_input_toggled_ui ) {
+				Con_ToggleConsole_f( );
+				//Con_AndroidTextInputShowLastMessages( );
+				needReturn = 1;
+			}
 		}
 		// If screen keyboard hidden, but we're still in message mode - send Enter to console
-		if ( ! SDL_IsScreenKeyboardShown ( NULL ) && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) && needReturn ) {
-			needReturn = 0;
-			//Console_Key( K_ENTER );
-			CL_KeyEvent( K_ENTER, qtrue, 0 );
-			CL_KeyEvent( K_ENTER, qfalse, 0 );
-			if( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) {
-				Con_ToggleConsole_f( );
+		if ( ! SDL_IsScreenKeyboardShown ( NULL ) ) {
+			g_console_text_input_toggled_ui = 0;
+			if ( ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) && needReturn ) {
+				needReturn = 0;
+				//Console_Key( K_ENTER );
+				CL_KeyEvent( K_ENTER, qtrue, 0 );
+				CL_KeyEvent( K_ENTER, qfalse, 0 );
+				if( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) {
+					Con_ToggleConsole_f( );
+				}
 			}
 		}
 	}

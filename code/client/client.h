@@ -90,6 +90,7 @@ typedef struct {
 #define	MAX_PARSE_ENTITIES	2048
 
 extern int g_console_field_width;
+extern int g_console_text_input_toggled_ui;
 
 typedef struct {
 	int			timeoutcount;		// it requres several frames in a timeout condition

@@ -1174,59 +1174,68 @@ static void IN_ShowHideScreenButtons( void )
 			rect.w = rect.h = cls.glconfig.vidHeight / 6;
 			rect2.w = rect2.h = rect.w / 2;
 			rect2.y += rect2.h/2;
+			// Text input
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect2);
 			rect.y += rect.h;
 			rect2.y += rect.h;
+			// Scoretable
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect2);
-			rect.y += rect.h;
-			rect2.y += rect.h;
-			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect);
-			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect2);
 			rect.x = cls.glconfig.vidWidth - rect.w;
 			rect2.x = cls.glconfig.vidWidth - rect2.w;
+			// Sniper view
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect);
+			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect2);
+			rect.y += rect.h;
+			rect2.y += rect.h;
+			rect.x = 0;
+			rect2.x = 0;
+			// Change weapon
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect2);
+			rect.x = cls.glconfig.vidWidth - rect.w;
+			rect2.x = cls.glconfig.vidWidth - rect2.w;
 
 			if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING )
 			{
-				rect.y -= rect.h;
-				rect2.y -= rect.h;
+				// Jump
 				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect);
 				SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect2);
-				rect.y += rect.h * 2;
+				rect.y += rect.h;
 				rect.x = 0;
 				rect.w *= 2;
+				// Centerview
 				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
 				rect.y += rect.h;
 				rect.x = 0;
 				rect.w = rect.h = cls.glconfig.vidHeight - rect.y;
+				// Dpad
 				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
 			}
 			else
 			{
-				rect.y -= rect.h;
-				rect2.y -= rect.h;
+				// Jump/centerview
 				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
 				SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect2);
-				rect.y += rect.h * 2;
+				rect.y += rect.h;
 				rect.x = 0;
 				rect.w = rect.h = cls.glconfig.vidHeight - rect.y;
 				rect2.w = rect2.h = rect.w / 2;
 				rect2.x = rect.x + rect2.w / 2;
 				rect2.y = rect.y + rect2.h / 2;
+				// Dpad
 				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
 				SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect2);
 			}
 
 			if( cg_touchscreenControls->integer == TOUCHSCREEN_FIRE_BUTTON )
 			{
-				// Set up Fire button
 				rect.w = cls.glconfig.vidHeight * 2 / 9;
 				rect.h = rect.w;
 				rect.x = cls.glconfig.vidWidth - rect.w * 2;
 				rect.y = cls.glconfig.vidHeight - rect.h * 2;
+				// Fire button
 				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
 				SDL_ANDROID_SetScreenKeyboardButtonGenerateTouchEvents(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, 1);
 			}

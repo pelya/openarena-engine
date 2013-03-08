@@ -896,6 +896,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 
 	case UI_SCREENKEYBOARDTEXTINPUT:
 #ifdef __ANDROID__
+		g_console_text_input_toggled_ui = 1;
 		SDL_ANDROID_ToggleScreenKeyboardTextInput( VMA(1) );
 #endif
 		return 0;
