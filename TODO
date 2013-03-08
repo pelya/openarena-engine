@@ -1,11 +1,6 @@
 Next release:
 Options to disable railgun auto-zoom, swipe-to-rotate disable/90/180 degrees, hide weapon, zoom locking, gyroscope axes remap
 Make weblinks and emails clickable in chat text and in server messages
-Change default buttons layout
-Show last console messages in text input field
-Text input automatically toggles console in UI
-SDL: when downloading data, show cancel dialog when pressing Back.
-Enable text input box when pressing "t" on keyboard
 
 
 Distant future:
@@ -14,6 +9,5 @@ VOIP chat support, that will require support from SDL
 
 
 Minor:
-Add "Chat" entry to in-game menu, for Ouya
 Navigating menu with arrow keys is impossible
 Q_vsnprintf inside bg_lib.c is buggy with %f output

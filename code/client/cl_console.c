@@ -30,9 +30,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 int g_console_field_width = 39; //78;
 
 
-#define	NUM_CON_TIMES 4
+#define	NUM_CON_TIMES 5
 
 #define		CON_TEXTSIZE	512 //32768 // No need for big scrollbuffer on Android, because we cannot scroll back
+
 typedef struct {
 	qboolean	initialized;
 
@@ -643,7 +644,7 @@ void Con_DrawNotify (void)
 			}
 			buf[0] = text[x] & 0xff;
 			buf[1] = 0;
-			SCR_DrawBigStringColor( cl_conXOffset->integer + con.xadjust + (x+1)*BIGCHAR_WIDTH, v, buf, g_color_table[currentColor], qtrue );
+			SCR_DrawBigStringColor( 20 /*cl_conXOffset->integer*/ + con.xadjust + (x+1)*BIGCHAR_WIDTH, v, buf, g_color_table[currentColor], qtrue );
 		}
 
 		v += BIGCHAR_HEIGHT;

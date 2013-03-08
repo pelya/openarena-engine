@@ -1138,7 +1138,7 @@ static void IN_ProcessEvents( void )
 static void IN_ShowHideScreenButtons( void )
 {
 #ifdef __ANDROID__
-	SDL_Rect rect;
+	SDL_Rect rect, rect2;
 	int i;
 	static SDL_Rect userRedefinedPos[SDL_ANDROID_SCREENKEYBOARD_BUTTON_NUM];
 	if( hideScreenKeys )
@@ -1170,27 +1170,60 @@ static void IN_ShowHideScreenButtons( void )
 		if( rect.w <= 0 )
 		{
 			// Four buttons in a row, plus joystick, which is 2x bigger than buttons.
+			rect.x = rect.y = rect2.x = rect2.y = 0;
 			rect.w = rect.h = cls.glconfig.vidHeight / 6;
-			rect.x = rect.y = 0;
+			rect2.w = rect2.h = rect.w / 2;
+			rect2.y += rect2.h/2;
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
-			rect.x += rect.w;
+			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect2);
+			rect.y += rect.h;
+			rect2.y += rect.h;
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect);
-			rect.x = 0;
+			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect2);
 			rect.y += rect.h;
+			rect2.y += rect.h;
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect);
-			rect.y += rect.h;
+			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect2);
+			rect.x = cls.glconfig.vidWidth - rect.w;
+			rect2.x = cls.glconfig.vidWidth - rect2.w;
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect);
-			rect.y += rect.h;
-			rect.w *= 2;
-			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
-			rect.y += rect.h;
-			rect.x = 0;
-			rect.w = rect.h = cls.glconfig.vidHeight - rect.y;
-			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
+			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect2);
+
+			if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING )
+			{
+				rect.y -= rect.h;
+				rect2.y -= rect.h;
+				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect);
+				SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect2);
+				rect.y += rect.h * 2;
+				rect.x = 0;
+				rect.w *= 2;
+				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
+				rect.y += rect.h;
+				rect.x = 0;
+				rect.w = rect.h = cls.glconfig.vidHeight - rect.y;
+				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
+			}
+			else
+			{
+				rect.y -= rect.h;
+				rect2.y -= rect.h;
+				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
+				SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect2);
+				rect.y += rect.h * 2;
+				rect.x = 0;
+				rect.w = rect.h = cls.glconfig.vidHeight - rect.y;
+				rect2.w = rect2.h = rect.w / 2;
+				rect2.x = rect.x + rect2.w / 2;
+				rect2.y = rect.y + rect2.h / 2;
+				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
+				SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect2);
+			}
+
 			if( cg_touchscreenControls->integer == TOUCHSCREEN_FIRE_BUTTON )
 			{
 				// Set up Fire button
-				rect.w /= 1.5f;
+				rect.w = cls.glconfig.vidHeight * 2 / 9;
 				rect.h = rect.w;
 				rect.x = cls.glconfig.vidWidth - rect.w * 2;
 				rect.y = cls.glconfig.vidHeight - rect.h * 2;
