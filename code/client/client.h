@@ -427,6 +427,7 @@ extern	cvar_t	*cg_weaponBarActiveWidth;
 extern	cvar_t	*cg_weaponBarActiveWeapons;
 extern	cvar_t	*cg_touchscreenControls;
 extern	cvar_t	*cg_holdingUsableItem;
+extern	cvar_t	*cg_railgunAutoZoom;
 
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;

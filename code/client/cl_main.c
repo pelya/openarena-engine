@@ -114,6 +114,7 @@ cvar_t	*cg_weaponBarActiveWidth;
 cvar_t	*cg_weaponBarActiveWeapons;
 cvar_t	*cg_touchscreenControls;
 cvar_t	*cg_holdingUsableItem;
+cvar_t	*cg_railgunAutoZoom;
 
 cvar_t	*cl_activeAction;
 
@@ -3538,6 +3539,7 @@ void CL_Init( void ) {
 	cg_weaponBarActiveWeapons = Cvar_Get ("cg_weaponBarActiveWeapons", "", 0);
 	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", "0", CVAR_ARCHIVE);
 	cg_holdingUsableItem = Cvar_Get ("cg_holdingUsableItem", "0", 0);
+	cg_railgunAutoZoom = Cvar_Get ("cg_railgunAutoZoom", "1", CVAR_ARCHIVE);
 
 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);
 	j_yaw_axis =     Cvar_Get ("j_yaw_axis",     "4", CVAR_ARCHIVE);
