@@ -1,10 +1,10 @@
 Next release:
-Make weblinks and emails clickable in chat text and in server messages
+VOIP chat support, that will require support from SDL
 
 
 Distant future:
-VOIP chat support, that will require support from SDL
 4-players split-screen mode, to be taken from https://github.com/zturtleman/spearmint
+Make weblinks and emails clickable in chat text and in server messages
 
 
 Minor:
