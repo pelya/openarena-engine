@@ -32,6 +32,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "snd_local.h"
 #include "snd_codec.h"
 #include "client.h"
+#ifdef __ANDROID__
+#include <SDL_android.h>
+#endif
+
 
 void S_Update_( void );
 void S_Base_StopAllSounds(void);
@@ -116,6 +120,107 @@ void S_Base_SoundInfo(void) {
 
 
 #ifdef USE_VOIP
+#ifdef __ANDROID__
+
+enum { REC_BUF_SIZE = 16000 }; // Circular buffer, one second of audio in size
+static byte rec_buffer[REC_BUF_SIZE];
+static volatile int rec_pos; // atomic. hopefully
+static volatile int rec_read; // GCC provides things like __sync_fetch_and_add, we should probably use it here, but I'm lazy
+
+static void rec_callback(void *userdata, Uint8 *stream, int len)
+{
+	int pos = rec_pos;
+	if( pos + len > REC_BUF_SIZE )
+		pos = 0;
+	Com_Printf("rec_callback stream %p len %d rec_pos %d rec_read %d\n", stream, len, pos, rec_read);
+	Com_Memcpy( rec_buffer + pos, stream, len );
+	pos += len;
+	rec_pos = pos;
+}
+
+static
+void S_Base_StartCapture( void )
+{
+	SDL_AudioSpec spec;
+	Com_Memset( &spec, 0, sizeof(spec) );
+	spec.freq = clc.speexSampleRate; // 8000
+	spec.format = AUDIO_S16;
+	spec.channels = 1;
+	spec.size = clc.speexFrameSize * 4; // speexFrameSize = 10 ms, which is too CPU-intensive, so we'll use 40 ms
+	spec.callback = rec_callback;
+	spec.userdata = NULL;
+	SDL_ANDROID_OpenAudioRecording(&spec);
+}
+
+static
+int S_Base_AvailableCaptureSamples( void )
+{
+	int pos = rec_pos, pos_read = rec_read, size;
+
+	if( pos_read < pos )
+		size = pos - pos_read;
+	else if( pos_read > pos )
+		size = REC_BUF_SIZE + pos - pos_read;
+	else
+		size = 0;
+
+	Com_Printf("S_Base_AvailableCaptureSamples: rec_pos %d rec_read %d size %d\n", pos, pos_read, size);
+
+	return size;
+}
+
+static
+void S_Base_Capture( int samples, byte *data )
+{
+	int pos = rec_pos, pos_read = rec_read, size, size2;
+
+	if( pos_read < pos )
+		size = pos - pos_read;
+	else if( pos_read > pos )
+		size = REC_BUF_SIZE + pos - pos_read;
+	else
+		size = 0;
+	/*
+	while( samples > size )
+	{
+		Sys_Sleep(20);
+	}
+	*/
+	if( samples > size )
+	{
+		Com_Printf( "S_Base_Capture(): error: trying to read more bytes %d than available %d\n", samples, size );
+		return;
+	}
+
+	size = samples;
+	size2 = pos_read + size - REC_BUF_SIZE;
+	if( size2 > 0 ) // wrap around
+	{
+		size -= size2;
+		Com_Memcpy( data, rec_buffer + pos_read, size );
+		data += size;
+		size = size2;
+		pos_read = 0;
+	}
+	Com_Memcpy( data, rec_buffer + pos_read, size );
+	pos_read += size;
+	rec_read = pos_read;
+}
+
+static
+void S_Base_StopCapture( void )
+{
+	SDL_ANDROID_CloseAudioRecording();
+}
+
+static
+void S_Base_MasterGain( float val )
+{
+	// Not supported on Android (exists only as a private API)
+}
+
+#else
+
 static
 void S_Base_StartCapture( void )
 {
@@ -146,6 +251,8 @@ void S_Base_MasterGain( float val )
 {
 	// !!! FIXME: write me.
 }
+
+#endif
 #endif
 
 

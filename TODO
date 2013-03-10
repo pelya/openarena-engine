@@ -1,4 +1,6 @@
 Next release:
+Move help text in settings to the bottom
+Option to hide weapon and to configuure camera distance
 VOIP chat support, that will require support from SDL
 
 
