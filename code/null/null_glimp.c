@@ -20,7 +20,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "../renderer/tr_local.h"
+#include TR_CONFIG_H
+#include TR_LOCAL_H
 
 qboolean ( * qwglSwapIntervalEXT)( int interval );
 void ( * qglMultiTexCoord2fARB )( GLenum texture, float s, float t );

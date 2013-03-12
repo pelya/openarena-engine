@@ -20,7 +20,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "tr_local.h"
+#include TR_CONFIG_H
+#include TR_LOCAL_H
 
 // tr_shader.c -- this file deals with the parsing and definition of shaders
 
@@ -1151,7 +1152,7 @@ static qboolean ParseStage( shaderStage_t *stage, char **text )
 			else if ( !Q_stricmp( token, "$lightmap" ) )
 			{
 				stage->bundle[0].isLightmap = qtrue;
-				if ( shader.lightmapIndex < 0 || !tr.lightmaps ) {
+				if ( shader.lightmapIndex < 0 ) {
 					stage->bundle[0].image[0] = tr.whiteImage;
 				} else {
 					stage->bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
@@ -3335,7 +3336,7 @@ static void FixRenderCommandList( int newShader ) {
 SortNewShader
 
 Positions the most recently created shader in the tr.sortedShaders[]
-array so that the shader->sort key is sorted relative to the other
+array so that the shader->sort key is sorted reletive to the other
 shaders.
 
 Sets shader->sortedIndex

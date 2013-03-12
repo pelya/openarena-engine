@@ -8,7 +8,7 @@ It is intended to be as close as possible to 0.8.8 except when it makes
 sense to deviate.
 
 OpenArena 0.8.8 uses r1910 ioquake3 code.  This code currently targets
-r2336 which is the latest.
+r2328 which is the latest.
 
 Switching renderers
 -------------------
@@ -16,8 +16,7 @@ Switching renderers
 Recent ioquake3 versions allow for a modular renderer.  This allows you to
 select the renderer at runtime rather than compiling in one into the binary.
 
-This feature is enabled by default.  If you wish to disable it, uncomment
-USE_RENDERER_DLOPEN=0 in Makefile.local.
+To enable this feature, make sure Makefile.local has USE_RENDERER_DLOPEN=1.
 
 When you start OpenArena, you can pass the name of the dynamic library to
 load.  ioquake3 assumes a naming convention renderer_*_.
@@ -29,10 +28,6 @@ Example:
 
     # Enable the OpenArena renderer with GLSL, bloom support and more.
     $ ./openarena.i386 +set cl_renderer openarena1
-
-    # Enable Rend2 (formerly renderergl2) which is now in upstream
-    # Don't try this yet since OpenArena doesn't work with rend2 yet
-    #$ ./openarena.i386 +set cl_renderer rend2
 
 Building
 --------
@@ -74,9 +69,6 @@ Development
 Changes from 0.8.8 release
 --------------------------
 
-* Sync with upstream so openarena.i386 uses the base ioquake3, openarena_rend2.i386
-  uses Canete's Rend2 and openarena_oa.i386 uses the OA 0.8.8 renderer
-  (plus minor updates).
 * OA's renderer is now in renderer_oa and the base ioquake3 renderer is left
   untouched
 * This does not remove the game or cgame files.  They are never referenced or
@@ -95,8 +87,8 @@ Changes from 0.8.8 release
   HEARTBEAT_FOR_MASTER name since the code says to leave it unless you have a
   good reason.
 * Any trivial whitespace changes were left out
-* James Canete's renderer is now in upstream so it's in this project too.
-  - It doesn't work yet with OA though
+* Added James Canete's Rend2 renderer (v31a+) as a branch named
+  opengl2_renderer
 * GrosBedo added win32 support back to the Makefile
 
 TODO

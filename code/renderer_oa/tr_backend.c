@@ -20,7 +20,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "tr_local.h"
+#include TR_CONFIG_H
+#include TR_LOCAL_H
 
 backEndData_t	*backEndData[SMP_FRAMES];
 backEndState_t	backEnd;
@@ -177,16 +178,30 @@ void GL_Cull( int cullType ) {
 	} 
 	else 
 	{
-		qboolean cullFront;
 		qglEnable( GL_CULL_FACE );
 
-		cullFront = (cullType == CT_FRONT_SIDED);
-		if ( backEnd.viewParms.isMirror )
+		if ( cullType == CT_BACK_SIDED )
 		{
-			cullFront = !cullFront;
+			if ( backEnd.viewParms.isMirror )
+			{
+				qglCullFace( GL_FRONT );
+			}
+			else
+			{
+				qglCullFace( GL_BACK );
+			}
 		}
-
-		qglCullFace( cullFront ? GL_FRONT : GL_BACK );
+		else
+		{
+			if ( backEnd.viewParms.isMirror )
+			{
+				qglCullFace( GL_BACK );
+			}
+			else
+			{
+				qglCullFace( GL_FRONT );
+			}
+		}
 	}
 }
 

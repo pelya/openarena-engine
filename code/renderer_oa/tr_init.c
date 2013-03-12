@@ -21,7 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 // tr_init.c -- functions that are not called every frame
 
-#include "tr_local.h"
+#include TR_CONFIG_H
+#include TR_LOCAL_H
 
 glconfig_t  glConfig;
 qboolean    textureFilterAnisotropic = qfalse;
@@ -231,6 +232,9 @@ static void InitOpenGL( void )
 
 	// init command buffers and SMP
 	R_InitCommandBuffers();
+
+	// print info
+	GfxInfo_f();
 
 	// set default state
 	GL_SetDefaultState();
@@ -897,27 +901,6 @@ void GL_SetDefaultState( void )
 	qglDisable( GL_BLEND );
 }
 
-/*
-================
-R_PrintLongString
-
-Workaround for ri.Printf's 1024 characters buffer limit.
-================
-*/
-void R_PrintLongString(const char *string) {
-	char buffer[1024];
-	const char *p;
-	int size = strlen(string);
-
-	p = string;
-	while(size > 0)
-	{
-		Q_strncpyz(buffer, p, sizeof (buffer) );
-		ri.Printf( PRINT_ALL, "%s", buffer );
-		p += 1023;
-		size -= 1023;
-	}
-}
 
 /*
 ================
@@ -940,9 +923,7 @@ void GfxInfo_f( void )
 	ri.Printf( PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
 	ri.Printf( PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
 	ri.Printf( PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
-	ri.Printf( PRINT_ALL, "GL_EXTENSIONS: " );
-	R_PrintLongString( glConfig.extensions_string );
-	ri.Printf( PRINT_ALL, "\n" );
+	ri.Printf( PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string );
 	ri.Printf( PRINT_ALL, "GL_MAX_TEXTURE_SIZE: %d\n", glConfig.maxTextureSize );
 	ri.Printf( PRINT_ALL, "GL_MAX_TEXTURE_UNITS_ARB: %d\n", glConfig.numTextureUnits );
 	ri.Printf( PRINT_ALL, "\nPIXELFORMAT: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits );
@@ -1408,8 +1389,6 @@ void R_Init( void ) {
 	if ( err != GL_NO_ERROR )
 		ri.Printf (PRINT_ALL, "glGetError() = 0x%x\n", err);
 
-	// print info
-	GfxInfo_f();
 	ri.Printf( PRINT_ALL, "----- finished R_Init -----\n" );
 }
 
