@@ -149,6 +149,8 @@ void S_Base_StartCapture( void )
 	spec.size = clc.speexFrameSize * 4; // speexFrameSize = 10 ms, which is too CPU-intensive, so we'll use 40 ms
 	spec.callback = rec_callback;
 	spec.userdata = NULL;
+	rec_pos = 0;
+	rec_read = 0;
 	SDL_ANDROID_OpenAudioRecording(&spec);
 }
 
@@ -164,7 +166,7 @@ int S_Base_AvailableCaptureSamples( void )
 	else
 		size = 0;
 
-	Com_Printf("S_Base_AvailableCaptureSamples: rec_pos %d rec_read %d size %d\n", pos, pos_read, size);
+	Com_Printf("S_Base_AvailableCaptureSamples(): rec_pos %d rec_read %d size %d\n", pos, pos_read, size);
 
 	return size;
 }
@@ -180,12 +182,7 @@ void S_Base_Capture( int samples, byte *data )
 		size = REC_BUF_SIZE + pos - pos_read;
 	else
 		size = 0;
-	/*
-	while( samples > size )
-	{
-		Sys_Sleep(20);
-	}
-	*/
+
 	if( samples > size )
 	{
 		Com_Printf( "S_Base_Capture(): error: trying to read more bytes %d than available %d\n", samples, size );
@@ -194,6 +191,7 @@ void S_Base_Capture( int samples, byte *data )
 
 	size = samples;
 	size2 = pos_read + size - REC_BUF_SIZE;
+	Com_Printf("S_Base_Capture(): rec_pos %d rec_read %d size %d size2 %d\n", pos, pos_read, size, size2);
 	if( size2 > 0 ) // wrap around
 	{
 		size -= size2;
@@ -216,7 +214,7 @@ void S_Base_StopCapture( void )
 static
 void S_Base_MasterGain( float val )
 {
-	// Not supported on Android (exists only as a private API)
+	// Not supported on Android
 }
 
 #else
