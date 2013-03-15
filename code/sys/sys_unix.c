@@ -806,6 +806,10 @@ Unix specific initialisation
 */
 void Sys_PlatformInit( void )
 {
+#ifdef __ANDROID__
+	stdinIsATTY = qfalse;
+	// Allow signals through, so Android native debugger will sohw us some stack trace
+#else
 	const char* term = getenv( "TERM" );
 
 	signal( SIGHUP, Sys_SigHandler );
@@ -816,6 +820,7 @@ void Sys_PlatformInit( void )
 
 	stdinIsATTY = isatty( STDIN_FILENO ) &&
 		!( term && ( !strcmp( term, "raw" ) || !strcmp( term, "dumb" ) ) );
+#endif
 }
 
 /*

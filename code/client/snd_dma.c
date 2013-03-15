@@ -132,8 +132,8 @@ static void rec_callback(void *userdata, Uint8 *stream, int len)
 	int pos = rec_pos;
 	if( pos + len > REC_BUF_SIZE )
 		pos = 0;
-	Com_Printf("rec_callback: memcpy pos %d len %d rec_read %d\n", pos, len, rec_read);
-	//Com_Memcpy( rec_buffer + pos, stream, len );
+	//Com_Printf("[skipnotify] rec_callback: memcpy pos %d len %d rec_read %d\n", pos, len, rec_read);
+	Com_Memcpy( rec_buffer + pos, stream, len );
 	pos += len;
 	rec_pos = pos;
 }
@@ -146,7 +146,7 @@ void S_Base_StartCapture( void )
 	spec.freq = clc.speexSampleRate; // 8000
 	spec.format = AUDIO_S16;
 	spec.channels = 1;
-	spec.size = clc.speexFrameSize * 4; // speexFrameSize = 10 ms, which is too CPU-intensive, so we'll use 40 ms
+	spec.size = clc.speexFrameSize * 5; // speexFrameSize = 10 ms, which is too CPU-intensive, so we'll use 50 ms
 	spec.callback = rec_callback;
 	spec.userdata = NULL;
 	rec_pos = 0;
@@ -166,7 +166,7 @@ int S_Base_AvailableCaptureSamples( void )
 	else
 		size = 0;
 
-	Com_Printf("S_Base_AvailableCaptureSamples(): rec_pos %d rec_read %d size %d\n", pos, pos_read, size);
+	//Com_Printf("[skipnotify] S_Base_AvailableCaptureSamples(): rec_pos %d rec_read %d size %d\n", pos, pos_read, size);
 
 	return size;
 }
@@ -191,18 +191,18 @@ void S_Base_Capture( int samples, byte *data )
 
 	size = samples;
 	size2 = pos_read + size - REC_BUF_SIZE;
-	Com_Printf("S_Base_Capture(): rec_pos %d rec_read %d samples %d size2 %d\n", pos, pos_read, samples, size2);
+	//Com_Printf("[skipnotify] S_Base_Capture(): rec_pos %d rec_read %d samples %d size2 %d\n", pos, pos_read, samples, size2);
 	if( size2 > 0 ) // wrap around
 	{
 		size -= size2;
-		Com_Printf("S_Base_Capture(): memcpy() pos_read %d size %d\n", pos_read, size);
-		//Com_Memcpy( data, rec_buffer + pos_read, size );
+		//Com_Printf("[skipnotify] S_Base_Capture(): memcpy() pos_read %d size %d\n", pos_read, size);
+		Com_Memcpy( data, rec_buffer + pos_read, size );
 		data += size;
 		size = size2;
 		pos_read = 0;
 	}
-	Com_Printf("S_Base_Capture(): memcpy() pos_read %d size %d\n", pos_read, size);
-	//Com_Memcpy( data, rec_buffer + pos_read, size );
+	//Com_Printf("[skipnotify] S_Base_Capture(): memcpy() pos_read %d size %d\n", pos_read, size);
+	Com_Memcpy( data, rec_buffer + pos_read, size );
 	pos_read += size;
 	rec_read = pos_read;
 }

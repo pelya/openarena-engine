@@ -558,7 +558,8 @@ void CL_ConsolePrint( char *txt ) {
 	}
 
 #ifdef __ANDROID__
-	Con_AndroidTextInputShowLastMessages( );
+	if( !skipnotify )
+		Con_AndroidTextInputShowLastMessages( );
 #endif
 }
 

@@ -648,11 +648,14 @@ int main( int argc, char **argv )
 
 	CON_Init( );
 
+#ifndef __ANDROID__
+	// Allow signals through, so Android native debugger will sohw us some stack trace
 	signal( SIGILL, Sys_SigHandler );
 	signal( SIGFPE, Sys_SigHandler );
 	signal( SIGSEGV, Sys_SigHandler );
 	signal( SIGTERM, Sys_SigHandler );
 	signal( SIGINT, Sys_SigHandler );
+#endif
 
 	while( 1 )
 	{
