@@ -1,7 +1,7 @@
 Next release:
-Move help text in settings to the bottom
-Option to hide weapon and to configuure camera distance
-VOIP chat support, that will require support from SDL
+Option to hide weapon and to configure camera distance
+VOIP chat support, shake-to-talk, and options to disable, sensitiviy and time.
+Fix local/internet servers intermixed in servers list
 
 
 Distant future:
@@ -10,5 +10,4 @@ Make weblinks and emails clickable in chat text and in server messages
 
 
 Minor:
-Navigating menu with arrow keys is impossible
 Q_vsnprintf inside bg_lib.c is buggy with %f output
