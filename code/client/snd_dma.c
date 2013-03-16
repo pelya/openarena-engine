@@ -146,7 +146,7 @@ void S_Base_StartCapture( void )
 	spec.freq = clc.speexSampleRate; // 8000
 	spec.format = AUDIO_S16;
 	spec.channels = 1;
-	spec.size = clc.speexFrameSize * 5; // speexFrameSize = 10 ms, which is too CPU-intensive, so we'll use 50 ms
+	spec.size = clc.speexFrameSize * 6; // speexFrameSize = 10 ms, which is too CPU-intensive, so we'll use 60 ms
 	spec.callback = rec_callback;
 	spec.userdata = NULL;
 	rec_pos = 0;
@@ -168,7 +168,7 @@ int S_Base_AvailableCaptureSamples( void )
 
 	//Com_Printf("[skipnotify] S_Base_AvailableCaptureSamples(): rec_pos %d rec_read %d size %d\n", pos, pos_read, size);
 
-	return size;
+	return size / 2; // Buffer size in int16_t values
 }
 
 static
@@ -183,6 +183,7 @@ void S_Base_Capture( int samples, byte *data )
 	else
 		size = 0;
 
+	samples *= 2; // Buffer size in int16_t values
 	if( samples > size )
 	{
 		Com_Printf( "S_Base_Capture(): error: trying to read more bytes %d than available %d\n", samples, size );
