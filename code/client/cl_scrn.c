@@ -357,11 +357,10 @@ void SCR_DrawVoipMeter( void ) {
 	char	buffer[16];
 	char	string[256];
 	int limit, i;
+	static const float color[] = { 1.0f, 1.0f, 0.0f, 0.7f };
 
 	if (!cl_voipShowMeter->integer)
 		return;  // player doesn't want to show meter at all.
-	else if (!cl_voipSend->integer)
-		return;  // not recording at the moment.
 	else if (clc.state != CA_ACTIVE)
 		return;  // not connected to a server.
 	else if (!clc.voipEnabled)
@@ -371,6 +370,11 @@ void SCR_DrawVoipMeter( void ) {
 	else if (!cl_voip->integer)
 		return;  // client has VoIP support disabled.
 
+	SCR_FillRect( 320 - 50, 380 + SMALLCHAR_HEIGHT, cl.accelerometerShake / 500, 5, color );
+
+	if (!cl_voipSend->integer)
+		return;  // not recording at the moment.
+	
 	limit = (int) (clc.voipPower * 10.0f);
 	if (limit > 10)
 		limit = 10;
@@ -382,7 +386,7 @@ void SCR_DrawVoipMeter( void ) {
 	buffer[i] = '\0';
 
 	sprintf( string, "VoIP: [%s]", buffer );
-	SCR_DrawStringExt( 320 - strlen( string ) * 4, 10, 8, string, g_color_table[7], qtrue, qfalse );
+	SCR_DrawStringExt( 320 - strlen( string ) * 4, 380, SMALLCHAR_HEIGHT, string, g_color_table[7], qtrue, qfalse );
 }
 #endif
 

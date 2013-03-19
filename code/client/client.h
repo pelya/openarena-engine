@@ -115,6 +115,9 @@ typedef struct {
 	float		touchscreenAttackButtonPos[5];
 	int			mouseIndex;
 	int			joystickAxis[MAX_JOYSTICK_AXIS];	// set by joystick events
+	int			gyroscope[3];	// increased by SDL events, cleared each frame
+	int			accelerometer[3];	// increased by SDL events, cleared each frame
+	int			accelerometerShake;	// Amount of shake, increases by accelerometer evens, decreases over time
 
 	// cgame communicates a few values to the client system
 	int			cgameUserCmdValue;	// current weapon to add to usercmd_t

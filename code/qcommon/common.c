@@ -2208,6 +2208,11 @@ int Com_EventLoop( void ) {
 			case SE_MOUSE2:
 				CL_Mouse2Event( ev.evValue, ev.evValue2, ev.evTime );
 			break;
+			case SE_GYROSCOPE:
+				CL_GyroscopeEvent( ev.evValue, ev.evValue2, ev.evTime );
+			case SE_ACCELEROMETER:
+				CL_AccelerometerEvent( ev.evValue, ev.evValue2, ev.evTime );
+			break;
 			default:
 				Com_Error( ERR_FATAL, "Com_EventLoop: bad event type %i", ev.evType );
 			break;

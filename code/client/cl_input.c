@@ -64,7 +64,7 @@ kbutton_t	in_voiprecord;
 kbutton_t	in_buttons[16];
 qboolean	in_mlooking;
 vec3_t		in_cameraAngles;
-enum { GYRO_AXES_SWAP_X = 1, GYRO_AXES_SWAP_Y = 2, GYRO_AXES_SWAP_XY = 4 };
+enum		{ GYRO_AXES_SWAP_X = 1, GYRO_AXES_SWAP_Y = 2, GYRO_AXES_SWAP_XY = 4 };
 
 void IN_MLookDown( void ) {
 	in_mlooking = qtrue;
@@ -446,7 +446,7 @@ void CL_AdjustAngles( void ) {
 
 	// Gyroscope
 	if ( in_gyroscope->integer ) {
-		float x = cl.joystickAxis[JOY_AXIS_GYRO_X], y = cl.joystickAxis[JOY_AXIS_GYRO_Y];
+		float x = cl.gyroscope[0], y = cl.gyroscope[1];
 		if ( in_gyroscopeAxesSwap->integer & GYRO_AXES_SWAP_X ) {
 			x = -x;
 		}
@@ -458,16 +458,18 @@ void CL_AdjustAngles( void ) {
 			x = y;
 			y = xy;
 		}
-		if ( x != 0 || y != 0 || cl.joystickAxis[JOY_AXIS_GYRO_Z] != 0 ) {
+		if ( x != 0 || y != 0 || cl.gyroscope[2] != 0 ) {
 			angles[YAW] += x * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
 			angles[PITCH] += y * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
-			angles[ROLL] -= cl.joystickAxis[JOY_AXIS_GYRO_Z] * (1.0f / 16384.0f);
+			angles[ROLL] -= cl.gyroscope[2] * (1.0f / 16384.0f);
 		}
 		if( fabs(angles[ROLL]) > speed * 2000.0f ) {
 			angles[ROLL] -= ( angles[ROLL] > 0 ) ? speed * 2000.0f : speed * -2000.0f;
 			if( fabs(angles[ROLL]) > 8.0f )
 				angles[ROLL] = ( angles[ROLL] > 0 ) ? 8.0f :  -8.0f;
 		}
+		// Clear it
+		cl.gyroscope[0] = cl.gyroscope[1] = cl.gyroscope[2] = 0;
 	} else {
 		angles[ROLL] = 0;
 	}
@@ -666,6 +668,38 @@ void CL_JoystickEvent( int axis, int value, int time ) {
 		Com_Error( ERR_DROP, "CL_JoystickEvent: bad axis %i", axis );
 	}
 	cl.joystickAxis[axis] = value;
+}
+
+void CL_GyroscopeEvent( int axis, int value, int time ) {
+	if ( axis < 0 || axis >= 3 ) {
+		Com_Error( ERR_DROP, "CL_GyroscopeEvent: bad axis %i", axis );
+	}
+	cl.gyroscope[axis] += value;
+}
+
+void CL_AccelerometerEvent( int axis, int value, int time ) {
+	if ( axis < 0 || axis >= 3 ) {
+		Com_Error( ERR_DROP, "CL_AccelerometerEvent: bad axis %i", axis );
+	}
+	cl.accelerometerShake += MIN( abs( cl.accelerometer[axis] - value ), 500 ); // Crop it to prevent random spikes when user drops the phone to the ground
+	cl.accelerometer[axis] = value;
+}
+
+static void CL_ProcessAccelerometer( void ) {
+	cl.accelerometerShake -= cls.unscaledFrametime;
+	if ( cl.accelerometerShake < 0 )
+		cl.accelerometerShake = 0;
+#ifdef USE_VOIP
+	if ( cl.accelerometerShake > 5000 ) {
+		if ( !cl_voipSend->integer ) {
+			Cvar_Set("cl_voipSend", "1");
+			cl.accelerometerShake += 5000; // Record audio for 5 seconds
+		}
+	} else {
+		if ( cl_voipSend->integer )
+			Cvar_Set("cl_voipSend", "0");
+	}
+#endif
 }
 
 static void CL_ScaleMovementCmdToMaximiumForStrafeJump( usercmd_t *cmd ) {
@@ -1012,6 +1046,8 @@ usercmd_t CL_CreateCmd( void ) {
 			in_cameraAngles[PITCH] = -90;
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	}
+
+	CL_ProcessAccelerometer();
 
 	// store out the final values
 	CL_FinishMove( &cmd );

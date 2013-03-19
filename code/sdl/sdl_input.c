@@ -965,7 +965,6 @@ static void IN_ProcessEvents( void )
 	SDL_Event e;
 	const char *character = NULL;
 	keyNum_t key = 0;
-	int gyroscope[3] = { 0, 0, 0 }; // Accumulates values
 
 
 	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
@@ -1038,8 +1037,10 @@ static void IN_ProcessEvents( void )
 				{
 					if( e.jaxis.which == JOY_SDL_TOUCHSCREEN && e.jaxis.axis < 2 ) // joy 0 axes 0-1 = screen joystick
 						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis + JOY_AXIS_SCREENJOY_X, e.jaxis.value, 0, NULL );
-					if( e.jaxis.which == JOY_SDL_GYROSCOPE && e.jaxis.axis >= 2 && e.jaxis.axis <= 4 ) // joy 1 axes  2-4 = gyroscope
-						gyroscope[ e.jaxis.axis - 2 ] += e.jaxis.value;
+					if( e.jaxis.which == JOY_SDL_GYROSCOPE && e.jaxis.axis >= 2 && e.jaxis.axis <= 4 ) // joy 1 axes 2-4 = gyroscope
+						Com_QueueEvent( 0, SE_GYROSCOPE, e.jaxis.axis - 2, e.jaxis.value, 0, NULL );
+					if( e.jaxis.which == JOY_SDL_GYROSCOPE && e.jaxis.axis >= 5 && e.jaxis.axis <= 7 ) // joy 1 axes 5-7 = accelerometer
+						Com_QueueEvent( 0, SE_ACCELEROMETER, e.jaxis.axis - 5, e.jaxis.value, 0, NULL );
 					if( e.jaxis.which == JOY_SDL_GAMEPAD && e.jaxis.axis < 6 ) // joy 2-5 = gamepad
 					{
 						Com_QueueEvent( 0, SE_JOYSTICK_AXIS, e.jaxis.axis + JOY_AXIS_GAMEPADLEFT_X, e.jaxis.value, 0, NULL );
@@ -1131,10 +1132,6 @@ static void IN_ProcessEvents( void )
 		if( !deferredTouch )
 			Com_QueueEvent( 0, SE_KEY, K_MOUSE1, qtrue, 0, NULL );
 	}
-
-	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, JOY_AXIS_GYRO_X, gyroscope[0], 0, NULL );
-	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, JOY_AXIS_GYRO_Y, gyroscope[1], 0, NULL );
-	Com_QueueEvent( 0, SE_JOYSTICK_AXIS, JOY_AXIS_GYRO_Z, gyroscope[2], 0, NULL );
 }
 
 static void IN_ShowHideScreenButtons( void )

@@ -805,6 +805,8 @@ typedef enum {
 	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
 	SE_CONSOLE,		// evPtr is a char*
 	SE_MOUSE2,		// Android multitouch
+	SE_GYROSCOPE,	// Android gyroscope
+	SE_ACCELEROMETER,	// Android accelerometer
 } sysEventType_t;
 
 typedef struct {
@@ -992,6 +994,10 @@ void CL_Mouse2Event( int dx, int dy, int time );
 
 void CL_JoystickEvent( int axis, int value, int time );
 
+void CL_GyroscopeEvent( int axis, int value, int time );
+
+void CL_AccelerometerEvent( int axis, int value, int time );
+
 void CL_PacketEvent( netadr_t from, msg_t *msg );
 
 void CL_ConsolePrint( char *text );
@@ -1067,9 +1073,6 @@ NON-PORTABLE SYSTEM SERVICES
 enum {	MAX_JOYSTICK_AXIS = 16,
 		JOY_AXIS_SCREENJOY_X = 0,
 		JOY_AXIS_SCREENJOY_Y = 1,
-		JOY_AXIS_GYRO_X = 2,
-		JOY_AXIS_GYRO_Y = 3,
-		JOY_AXIS_GYRO_Z = 4,
 		JOY_AXIS_GAMEPADLEFT_X = 5,
 		JOY_AXIS_GAMEPADLEFT_Y = 6,
 		JOY_AXIS_GAMEPADRIGHT_X = 7,
