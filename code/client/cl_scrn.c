@@ -367,10 +367,12 @@ void SCR_DrawVoipMeter( void ) {
 		return;  // server doesn't support VoIP.
 	else if (clc.demoplaying)
 		return;  // playing back a demo.
-	else if (!cl_voip->integer)
+	else if (!cl_voip->integer) {
+		SCR_FillRect( 320 - 100, 380 + SMALLCHAR_HEIGHT, cl.accelerometerShake / 100, 5, color );
 		return;  // client has VoIP support disabled.
+	}
 
-	SCR_FillRect( 320 - 50, 380 + SMALLCHAR_HEIGHT, cl.accelerometerShake / 500, 5, color );
+	SCR_FillRect( 320 - 100, 380 + SMALLCHAR_HEIGHT, cl.accelerometerShake / 2000, 5, color );
 
 	if (!cl_voipSend->integer)
 		return;  // not recording at the moment.
@@ -386,7 +388,7 @@ void SCR_DrawVoipMeter( void ) {
 	buffer[i] = '\0';
 
 	sprintf( string, "VoIP: [%s]", buffer );
-	SCR_DrawStringExt( 320 - strlen( string ) * 4, 380, SMALLCHAR_HEIGHT, string, g_color_table[7], qtrue, qfalse );
+	SCR_DrawStringExt( 320 - strlen( string ) * SMALLCHAR_WIDTH, 380, SMALLCHAR_HEIGHT, string, g_color_table[7], qtrue, qfalse );
 }
 #endif
 

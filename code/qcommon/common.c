@@ -2210,6 +2210,7 @@ int Com_EventLoop( void ) {
 			break;
 			case SE_GYROSCOPE:
 				CL_GyroscopeEvent( ev.evValue, ev.evValue2, ev.evTime );
+			break;
 			case SE_ACCELEROMETER:
 				CL_AccelerometerEvent( ev.evValue, ev.evValue2, ev.evTime );
 			break;
