@@ -491,7 +491,7 @@ static unsigned * ConvertPixels_RGBA_RGB( unsigned *src, unsigned size )
 		dst[ i * 3 + 1 ] = (c & 0xff00) / 0x100;
 		dst[ i * 3 + 2 ] = (c & 0xff0000) / 0x10000;
 	}
-	return dst;
+	return (unsigned *)dst;
 }
 
 static void R_qglTexImage2D( GLint miplevel, GLint internalFormat,
