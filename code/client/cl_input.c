@@ -681,28 +681,37 @@ void CL_AccelerometerEvent( int axis, int value, int time ) {
 	if ( axis < 0 || axis >= 3 ) {
 		Com_Error( ERR_DROP, "CL_AccelerometerEvent: bad axis %i", axis );
 	}
-	cl.accelerometerShake += MIN( abs( cl.accelerometer[axis] - value ), 500 ); // Crop it to prevent random spikes when user drops the phone to the ground
-	//Com_Printf("[skipnotify] CL_AccelerometerEvent: axis %d value old %d new %d shake %d\n", axis, cl.accelerometer[axis], value, cl.accelerometerShake);
+	if( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE ) {
+		return;
+	}
+	if ( abs( cl.accelerometer[axis] - value ) > 500 ) { // Accelerometer is noisy, crop the noise
+		cl.accelerometerShake += MIN( abs( cl.accelerometer[axis] - value ), 1500 ); // Crop it to prevent random spikes when user drops the phone to the ground
+		//Com_Printf("[skipnotify] CL_AccelerometerEvent: axis %6d value old %6d new %6d shake %10d\n", axis, cl.accelerometer[axis], value, cl.accelerometerShake);
+	}
 	cl.accelerometer[axis] = value;
 }
 
 static void CL_ProcessAccelerometer( void ) {
-	enum { SHAKE_DECREASE_COEFF = 100, SHAKE_THRESHOLD = 20000, VOIP_TALK_TIME = 3000 };
+	enum { SHAKE_DECREASE_COEFF = 100, SHAKE_THRESHOLD = 30000, VOIP_TALK_TIME = 3000 };
 	cl.accelerometerShake -= cls.unscaledFrametime * SHAKE_DECREASE_COEFF;
-	if ( cl.accelerometerShake < 0 || Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE )
+	if ( cl.accelerometerShake < 0 )
 		cl.accelerometerShake = 0;
 #ifdef USE_VOIP
-	if ( cl.accelerometerShake > SHAKE_THRESHOLD ) {
-		if ( !cl_voipSend->integer ) {
-			Cvar_Set("cl_voipSend", "1");
-			cl.accelerometerShake += VOIP_TALK_TIME * SHAKE_DECREASE_COEFF; // Record audio for 5 seconds
-		}
-		if( cl.accelerometerShake > VOIP_TALK_TIME * SHAKE_DECREASE_COEFF + SHAKE_THRESHOLD ) // Clamp it
-			cl.accelerometerShake = VOIP_TALK_TIME * SHAKE_DECREASE_COEFF + SHAKE_THRESHOLD;
+	if ( in_voiprecord.active ) {
+		cl.accelerometerShake = 0;
 	} else {
-		if ( cl_voipSend->integer ) {
-			Cvar_Set("cl_voipSend", "0");
-			cl.accelerometerShake = 0;
+		if ( cl.accelerometerShake > SHAKE_THRESHOLD ) {
+			if ( !cl_voipSend->integer ) {
+				Cvar_Set("cl_voipSend", "1");
+				cl.accelerometerShake += VOIP_TALK_TIME * SHAKE_DECREASE_COEFF; // Record audio for 5 seconds
+			}
+			if( cl.accelerometerShake > VOIP_TALK_TIME * SHAKE_DECREASE_COEFF + SHAKE_THRESHOLD ) // Clamp it
+				cl.accelerometerShake = VOIP_TALK_TIME * SHAKE_DECREASE_COEFF + SHAKE_THRESHOLD;
+		} else {
+			if ( cl_voipSend->integer ) {
+				Cvar_Set("cl_voipSend", "0");
+				cl.accelerometerShake = 0;
+			}
 		}
 	}
 #endif

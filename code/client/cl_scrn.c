@@ -368,11 +368,11 @@ void SCR_DrawVoipMeter( void ) {
 	else if (clc.demoplaying)
 		return;  // playing back a demo.
 	else if (!cl_voip->integer) {
-		SCR_FillRect( 320 - 100, 380 + SMALLCHAR_HEIGHT, cl.accelerometerShake / 100, 5, color );
+		SCR_FillRect( 320 - 100, 380 + SMALLCHAR_HEIGHT + 2, cl.accelerometerShake / 10, 5, color );
 		return;  // client has VoIP support disabled.
 	}
 
-	SCR_FillRect( 320 - 100, 380 + SMALLCHAR_HEIGHT, cl.accelerometerShake / 2000, 5, color );
+	SCR_FillRect( 320 - 100, 380 + SMALLCHAR_HEIGHT + 2, cl.accelerometerShake / 2000, 5, color );
 
 	if (!cl_voipSend->integer)
 		return;  // not recording at the moment.
