@@ -126,32 +126,41 @@ enum { REC_BUF_SIZE = 16000 }; // Circular buffer, one second of audio in size
 static byte rec_buffer[REC_BUF_SIZE];
 static volatile int rec_pos; // atomic. hopefully
 static volatile int rec_read; // GCC provides things like __sync_fetch_and_add, we should probably use it here, but I'm lazy
+static volatile int rec_active;
+static int rec_audio_device_opened;
 
 static void rec_callback(void *userdata, Uint8 *stream, int len)
 {
-	int pos = rec_pos;
-	if( pos + len > REC_BUF_SIZE )
-		pos = 0;
-	//Com_Printf("[skipnotify] rec_callback: memcpy pos %d len %d rec_read %d\n", pos, len, rec_read);
-	Com_Memcpy( rec_buffer + pos, stream, len );
-	pos += len;
-	rec_pos = pos;
+	if ( rec_active ) {
+		int pos = rec_pos;
+		if( pos + len > REC_BUF_SIZE )
+			pos = 0;
+		//Com_Printf("[skipnotify] rec_callback: memcpy pos %d len %d rec_read %d\n", pos, len, rec_read);
+		Com_Memcpy( rec_buffer + pos, stream, len );
+		pos += len;
+		rec_pos = pos;
+	}
 }
 
 static
 void S_Base_StartCapture( void )
 {
-	SDL_AudioSpec spec;
-	Com_Memset( &spec, 0, sizeof(spec) );
-	spec.freq = clc.speexSampleRate; // 8000
-	spec.format = AUDIO_S16;
-	spec.channels = 1;
-	spec.size = clc.speexFrameSize * 6; // speexFrameSize = 10 ms, which is too CPU-intensive, so we'll use 60 ms
-	spec.callback = rec_callback;
-	spec.userdata = NULL;
+	if ( !rec_audio_device_opened ) {
+		// Open audio device just once, because opening it freezes CPU for halfsecond
+		SDL_AudioSpec spec;
+		Com_Memset( &spec, 0, sizeof(spec) );
+		spec.freq = clc.speexSampleRate; // 8000
+		spec.format = AUDIO_S16;
+		spec.channels = 1;
+		spec.size = clc.speexFrameSize * 10; // speexFrameSize = 10 ms, which is too CPU-intensive, so we'll use 100 ms
+		spec.callback = rec_callback;
+		spec.userdata = NULL;
+		SDL_ANDROID_OpenAudioRecording(&spec);
+		rec_audio_device_opened = 1;
+	}
 	rec_pos = 0;
 	rec_read = 0;
-	SDL_ANDROID_OpenAudioRecording(&spec);
+	rec_active = 1;
 }
 
 static
@@ -211,7 +220,8 @@ void S_Base_Capture( int samples, byte *data )
 static
 void S_Base_StopCapture( void )
 {
-	SDL_ANDROID_CloseAudioRecording();
+	rec_active = 0;
+	//SDL_ANDROID_CloseAudioRecording(); // Never close it
 }
 
 static
