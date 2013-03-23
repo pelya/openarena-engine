@@ -45,6 +45,9 @@ cvar_t	*cl_voipGainDuringCapture;
 cvar_t	*cl_voipCaptureMult;
 cvar_t	*cl_voipShowMeter;
 cvar_t	*cl_voip;
+cvar_t	*cl_voipAccelShakeDecrease;
+cvar_t	*cl_voipAccelShakeThreshold;
+cvar_t	*cl_voipAccelShakeRecordingTime;
 #endif
 
 #ifdef USE_RENDERER_DLOPEN
@@ -3612,6 +3615,9 @@ void CL_Init( void ) {
 	cl_voipUseVAD = Cvar_Get ("cl_voipUseVAD", "0", CVAR_ARCHIVE);
 	cl_voipVADThreshold = Cvar_Get ("cl_voipVADThreshold", "0.25", CVAR_ARCHIVE);
 	cl_voipShowMeter = Cvar_Get ("cl_voipShowMeter", "1", CVAR_ARCHIVE);
+	cl_voipAccelShakeDecrease = Cvar_Get ("cl_voipAccelShakeDecrease", "100", CVAR_ARCHIVE);
+	cl_voipAccelShakeThreshold = Cvar_Get ("cl_voipAccelShakeThreshold", "30000", CVAR_ARCHIVE);
+	cl_voipAccelShakeRecordingTime = Cvar_Get ("cl_voipAccelShakeRecordingTime", "3000", CVAR_ARCHIVE);
 
 	// This is a protocol version number.
 	cl_voip = Cvar_Get ("cl_voip", "1", CVAR_USERINFO | CVAR_ARCHIVE);

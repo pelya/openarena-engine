@@ -692,30 +692,28 @@ void CL_AccelerometerEvent( int axis, int value, int time ) {
 }
 
 static void CL_ProcessAccelerometer( void ) {
-	enum { SHAKE_DECREASE_COEFF = 100, SHAKE_THRESHOLD = 30000, VOIP_TALK_TIME = 3000 };
-	cl.accelerometerShake -= cls.unscaledFrametime * SHAKE_DECREASE_COEFF;
+#ifdef USE_VOIP
+	cl.accelerometerShake -= cls.unscaledFrametime * cl_voipAccelShakeDecrease->integer;
 	if ( cl.accelerometerShake < 0 )
 		cl.accelerometerShake = 0;
-#ifdef USE_VOIP
 	if ( in_voiprecord.active ) {
 		cl.accelerometerShake = 0;
 	} else {
-		if ( cl.accelerometerShake > SHAKE_THRESHOLD ) {
-			if ( !cl_voipSend->integer ) {
+		if ( !cl_voipSend->integer ) {
+			if ( cl.accelerometerShake > cl_voipAccelShakeThreshold->integer ) {
 				Cvar_Set("cl_voipSend", "1");
-				cl.accelerometerShake += VOIP_TALK_TIME * SHAKE_DECREASE_COEFF; // Record audio for 5 seconds
+				cl.accelerometerShake = cl_voipAccelShakeRecordingTime->integer * cl_voipAccelShakeDecrease->integer;
 			}
-			if( cl.accelerometerShake > VOIP_TALK_TIME * SHAKE_DECREASE_COEFF + SHAKE_THRESHOLD ) // Clamp it
-				cl.accelerometerShake = VOIP_TALK_TIME * SHAKE_DECREASE_COEFF + SHAKE_THRESHOLD;
 		} else {
-			if ( cl_voipSend->integer ) {
+			if ( cl.accelerometerShake <= 0 ) {
 				Cvar_Set("cl_voipSend", "0");
-				cl.accelerometerShake = 0;
+			}
+			if( cl.accelerometerShake > cl_voipAccelShakeRecordingTime->integer * cl_voipAccelShakeDecrease->integer ) { // Clamp it
+				cl.accelerometerShake = cl_voipAccelShakeRecordingTime->integer * cl_voipAccelShakeDecrease->integer;
 			}
 		}
 	}
 #endif
-	//Com_Printf("[skipnotify] CL_ProcessAccelerometer: shake %d\n", cl.accelerometerShake);
 }
 
 static void CL_ScaleMovementCmdToMaximiumForStrafeJump( usercmd_t *cmd ) {

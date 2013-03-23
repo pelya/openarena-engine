@@ -357,7 +357,8 @@ void SCR_DrawVoipMeter( void ) {
 	char	buffer[16];
 	char	string[256];
 	int limit, i;
-	static const float color[] = { 1.0f, 1.0f, 0.0f, 0.7f };
+	static const float color[] = { 0.0f, 1.0f, 0.0f, 0.5f };
+	static const char * message = "voice chat: speak now";
 
 	if (!cl_voipShowMeter->integer)
 		return;  // player doesn't want to show meter at all.
@@ -367,28 +368,21 @@ void SCR_DrawVoipMeter( void ) {
 		return;  // server doesn't support VoIP.
 	else if (clc.demoplaying)
 		return;  // playing back a demo.
-	else if (!cl_voip->integer) {
-		SCR_FillRect( 320 - 100, 380 + SMALLCHAR_HEIGHT + 2, cl.accelerometerShake / 10, 5, color );
+	else if (!cl_voip->integer)
 		return;  // client has VoIP support disabled.
+	else if (!cl_voipSend->integer) {
+		i = cl.accelerometerShake * 200 / cl_voipAccelShakeThreshold->integer;
+		SCR_FillRect( 320 - i, 380 + SMALLCHAR_HEIGHT + 2, i * 2, 5, color );
+		return;  // not recording at the moment.
 	}
 
-	SCR_FillRect( 320 - 100, 380 + SMALLCHAR_HEIGHT + 2, cl.accelerometerShake / 2000, 5, color );
-
-	if (!cl_voipSend->integer)
-		return;  // not recording at the moment.
-	
-	limit = (int) (clc.voipPower * 10.0f);
-	if (limit > 10)
-		limit = 10;
-
-	for (i = 0; i < limit; i++)
-		buffer[i] = '*';
-	while (i < 10)
-		buffer[i++] = ' ';
-	buffer[i] = '\0';
-
-	sprintf( string, "VoIP: [%s]", buffer );
-	SCR_DrawStringExt( 320 - strlen( string ) * SMALLCHAR_WIDTH, 380, SMALLCHAR_HEIGHT, string, g_color_table[7], qtrue, qfalse );
+	i = cl.accelerometerShake * 200 / (cl_voipAccelShakeRecordingTime->integer * cl_voipAccelShakeDecrease->integer);
+	SCR_FillRect( 320 - i, 380 + SMALLCHAR_HEIGHT + 2, i * 2, 5, g_color_table[3] );
+	i = (int) (clc.voipPower * 100.0f);
+	if (i > 100)
+		i = 100;
+	SCR_FillRect( 320 - i, 380 + SMALLCHAR_HEIGHT + 10, i * 2, 5, g_color_table[4] );
+	SCR_DrawStringExt( 320 - strlen(message) * SMALLCHAR_WIDTH, 380, SMALLCHAR_HEIGHT, message, g_color_table[7], qtrue, qfalse );
 }
 #endif
 
