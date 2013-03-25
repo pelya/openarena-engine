@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "snd_codec.h"
 #include "client.h"
 #ifdef __ANDROID__
+#include <SDL.h>
 #include <SDL_android.h>
 #endif
 
@@ -147,6 +148,9 @@ void S_Base_StartCapture( void )
 	if ( !rec_audio_device_opened ) {
 		// Open audio device just once, because opening it freezes CPU for halfsecond
 		SDL_AudioSpec spec;
+		if( !SDL_WasInit( SDL_INIT_AUDIO ) ) {
+			SDL_InitSubSystem( SDL_INIT_AUDIO );
+		}
 		Com_Memset( &spec, 0, sizeof(spec) );
 		spec.freq = clc.speexSampleRate; // 8000
 		spec.format = AUDIO_S16;
