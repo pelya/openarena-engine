@@ -142,7 +142,6 @@ static void rec_callback(void *userdata, Uint8 *stream, int len)
 	}
 }
 
-static
 void S_Base_StartCapture( void )
 {
 	if ( !rec_audio_device_opened ) {
@@ -163,7 +162,6 @@ void S_Base_StartCapture( void )
 	rec_active = 1;
 }
 
-static
 int S_Base_AvailableCaptureSamples( void )
 {
 	int pos = rec_pos, pos_read = rec_read, size;
@@ -180,7 +178,6 @@ int S_Base_AvailableCaptureSamples( void )
 	return size / 2; // Buffer size in int16_t values
 }
 
-static
 void S_Base_Capture( int samples, byte *data )
 {
 	int pos = rec_pos, pos_read = rec_read, size, size2;
@@ -217,14 +214,12 @@ void S_Base_Capture( int samples, byte *data )
 	rec_read = pos_read;
 }
 
-static
 void S_Base_StopCapture( void )
 {
 	rec_active = 0;
 	//SDL_ANDROID_CloseAudioRecording(); // Never close it
 }
 
-static
 void S_Base_MasterGain( float val )
 {
 	// Not supported on Android

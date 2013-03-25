@@ -240,6 +240,14 @@ extern int	   sfxScratchIndex;
 
 qboolean S_Base_Init( soundInterface_t *si );
 
+#ifdef __ANDROID__
+void S_Base_StartCapture( void );
+int S_Base_AvailableCaptureSamples( void );
+void S_Base_Capture( int samples, byte *data );
+void S_Base_StopCapture( void );
+void S_Base_MasterGain( float val );
+#endif
+
 // OpenAL stuff
 typedef enum
 {

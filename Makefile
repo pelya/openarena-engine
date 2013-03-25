@@ -921,6 +921,8 @@ ifeq ($(USE_OPENAL),1)
   CLIENT_CFLAGS += -DUSE_OPENAL
   ifeq ($(USE_OPENAL_DLOPEN),1)
     CLIENT_CFLAGS += -DUSE_OPENAL_DLOPEN
+  else
+    CLIENT_LIBS += -lopenal
   endif
 endif
 

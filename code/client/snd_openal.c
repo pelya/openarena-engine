@@ -2537,6 +2537,7 @@ qboolean S_AL_Init( soundInterface_t *si )
 	qalDopplerVelocity( s_alDopplerSpeed->value );
 
 #ifdef USE_VOIP
+#ifndef __ANDROID__
 	// !!! FIXME: some of these alcCaptureOpenDevice() values should be cvars.
 	// !!! FIXME: add support for capture device enumeration.
 	// !!! FIXME: add some better error reporting.
@@ -2605,6 +2606,7 @@ qboolean S_AL_Init( soundInterface_t *si )
 		}
 	}
 #endif
+#endif
 
 	si->Shutdown = S_AL_Shutdown;
 	si->StartSound = S_AL_StartSound;
@@ -2628,11 +2630,19 @@ qboolean S_AL_Init( soundInterface_t *si )
 	si->SoundList = S_AL_SoundList;
 
 #ifdef USE_VOIP
+#ifdef __ANDROID__
+	si->StartCapture = S_Base_StartCapture;
+	si->AvailableCaptureSamples = S_Base_AvailableCaptureSamples;
+	si->Capture = S_Base_Capture;
+	si->StopCapture = S_Base_StopCapture;
+	si->MasterGain = S_Base_MasterGain;
+#else
 	si->StartCapture = S_AL_StartCapture;
 	si->AvailableCaptureSamples = S_AL_AvailableCaptureSamples;
 	si->Capture = S_AL_Capture;
 	si->StopCapture = S_AL_StopCapture;
 	si->MasterGain = S_AL_MasterGain;
+#endif
 #endif
 
 	return qtrue;
