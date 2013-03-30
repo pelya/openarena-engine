@@ -52,7 +52,7 @@ kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed, in_androidWeaponSelectionBarActive;
-static short in_swipeActivated, in_joystickJumpTriggerTime, in_swimUp, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
+static short in_swipeActivated, in_joystickJumpTriggerTime, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY, in_tapMouseX, in_tapMouseY, in_swipeTime;
 static float in_swipeAngleRotate;
 static qboolean in_railgunZoomActive;
@@ -375,21 +375,14 @@ void IN_Gesture(void) {in_buttons[3].wasPressed = qtrue;}
 void IN_CenterViewDown (void) {
 	//in_cameraAngles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
 
-	if( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
-		// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
-		if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
-			in_swipeActivated = 1;
-			in_joystickJumpTriggerTime = 0; // Do not jump if user rotated view and immediately put finger back on joystick
-			if( cg_underWater->integer )
-				in_swimUp = 255;
-		}
-	} else {
-		in_swimUp = 255; // Just jump, we don't need quick-rotate button with swipe controls
+	// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
+	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
+		in_swipeActivated = 1;
+		in_joystickJumpTriggerTime = 0; // Do not jump if user rotated view and immediately put finger back on joystick
 	}
 }
 
 void IN_CenterViewUp (void) {
-	in_swimUp = 0;
 }
 
 //==========================================================================
@@ -781,9 +774,8 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		oldRightMove = cmd->rightmove;
 	}
 
-	cmd->upmove = ClampChar( cmd->upmove + in_swimUp );
 	if ( cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_TRIGGER] > 20000 )
-		cmd->upmove = ClampChar( cmd->upmove + 10 );
+		cmd->upmove = ClampChar( cmd->upmove + 127 );
 
 	if ( cl.cgameUserCmdValue == WP_RAILGUN ) {
 		if ( cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_TRIGGER] > 10000 )

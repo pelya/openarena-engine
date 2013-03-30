@@ -118,7 +118,6 @@ cvar_t	*in_swipeSensitivity;
 cvar_t	*cg_railgunAutoZoom;
 cvar_t	*cg_touchscreenControls;
 
-cvar_t	*cg_underWater;
 cvar_t	*cg_weaponBarActiveWidth;
 cvar_t	*cg_weaponBarActiveWeapons;
 cvar_t	*cg_holdingUsableItem;
@@ -3544,7 +3543,6 @@ void CL_Init( void ) {
 	in_swipeAngle = Cvar_Get ("in_swipeAngle", "180", CVAR_ARCHIVE);
 	in_swipeSensitivity = Cvar_Get ("in_swipeSensitivity", "25", CVAR_ARCHIVE);
 
-	cg_underWater = Cvar_Get ("cg_underWater", "0", 0);
 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);
 	cg_weaponBarActiveWeapons = Cvar_Get ("cg_weaponBarActiveWeapons", "", 0);
 	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", "0", CVAR_ARCHIVE);
@@ -3616,11 +3614,11 @@ void CL_Init( void ) {
 	cl_voipVADThreshold = Cvar_Get ("cl_voipVADThreshold", "0.25", CVAR_ARCHIVE);
 	cl_voipShowMeter = Cvar_Get ("cl_voipShowMeter", "1", CVAR_ARCHIVE);
 	cl_voipAccelShakeDecrease = Cvar_Get ("cl_voipAccelShakeDecrease", "100", CVAR_ARCHIVE);
-	cl_voipAccelShakeThreshold = Cvar_Get ("cl_voipAccelShakeThreshold", "30000", CVAR_ARCHIVE);
+	cl_voipAccelShakeThreshold = Cvar_Get ("cl_voipAccelShakeThreshold", "40000", CVAR_ARCHIVE);
 	cl_voipAccelShakeRecordingTime = Cvar_Get ("cl_voipAccelShakeRecordingTime", "3000", CVAR_ARCHIVE);
 
 	// This is a protocol version number.
-	cl_voip = Cvar_Get ("cl_voip", "1", CVAR_USERINFO | CVAR_ARCHIVE);
+	cl_voip = Cvar_Get ("cl_voip", "1", CVAR_USERINFO | CVAR_ARCHIVE); // VoIP disabled by default on Android
 	Cvar_CheckRange( cl_voip, 0, 1, qtrue );
 
 	// If your data rate is too low, you'll get Connection Interrupted warnings

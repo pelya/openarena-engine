@@ -431,7 +431,6 @@ extern	cvar_t	*in_swipeSensitivity;
 extern	cvar_t	*cg_railgunAutoZoom;
 extern	cvar_t	*cg_touchscreenControls;
 // Some part of game state needed for touchscreen input handling
-extern	cvar_t	*cg_underWater;
 extern	cvar_t	*cg_weaponBarActiveWidth;
 extern	cvar_t	*cg_weaponBarActiveWeapons;
 extern	cvar_t	*cg_holdingUsableItem;

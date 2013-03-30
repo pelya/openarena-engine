@@ -359,6 +359,8 @@ void SCR_DrawVoipMeter( void ) {
 	int limit, i;
 	static const float color[] = { 0.0f, 1.0f, 0.0f, 0.5f };
 	static const char * message = "voice chat: speak now";
+	static const char * message2 = "speak";
+	static unsigned int messageCount = 0; // Show long message only three times, then show short message
 
 	if (!cl_voipShowMeter->integer)
 		return;  // player doesn't want to show meter at all.
@@ -373,8 +375,14 @@ void SCR_DrawVoipMeter( void ) {
 	else if (!cl_voipSend->integer) {
 		i = cl.accelerometerShake * 200 / cl_voipAccelShakeThreshold->integer;
 		SCR_FillRect( 320 - i, 380 + SMALLCHAR_HEIGHT + 2, i * 2, 5, color );
+		messageCount += (messageCount + 1) % 2;
 		return;  // not recording at the moment.
 	}
+
+	if ( messageCount >= 6 )
+		message = message2;
+	else
+		messageCount += messageCount % 2;
 
 	i = cl.accelerometerShake * 200 / (cl_voipAccelShakeRecordingTime->integer * cl_voipAccelShakeDecrease->integer);
 	SCR_FillRect( 320 - i, 380 + SMALLCHAR_HEIGHT + 2, i * 2, 5, g_color_table[3] );

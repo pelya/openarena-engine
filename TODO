@@ -8,6 +8,7 @@ Chat messages overlap with weapon bar.
 Cancel scanning button for server list.
 When switching from Favorites to Local+Internet, servers are listed twice.
 When waiting for answer from masterserver, GUI freezes.
+Option to move weapon bar to the bottom.
 
 
 Distant future:
@@ -17,3 +18,4 @@ Make weblinks and emails clickable in chat text and in server messages
 
 Minor:
 Q_vsnprintf inside bg_lib.c is buggy with %f output
+Fix chat messages split incorrectly
