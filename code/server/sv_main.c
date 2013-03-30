@@ -307,9 +307,11 @@ void SV_MasterHeartbeat(const char *message)
 			{
 				// if the address failed to resolve, clear it
 				// so we don't take repeated dns hits
+				// However if there was a temporary network outage,
+				// the server will go offline permanently, so this logic is disabled.
 				Com_Printf("Couldn't resolve address: %s\n", sv_master[i]->string);
-				Cvar_Set(sv_master[i]->name, "");
-				sv_master[i]->modified = qfalse;
+				//Cvar_Set(sv_master[i]->name, "");
+				//sv_master[i]->modified = qfalse;
 				continue;
 			}
 		}
