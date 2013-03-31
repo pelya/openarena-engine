@@ -613,11 +613,13 @@ void Con_DrawNotify (void)
 	int		time;
 	int		skip;
 	int		currentColor;
+	int		count;
 
 	currentColor = 7;
 	re.SetColor( g_color_table[currentColor] );
 
-	v = 0;
+	v = cg_weaponBarActiveWidth->integer ? 60 : 0;
+	count = cg_weaponBarActiveWidth->integer ? NUM_CON_TIMES - 2 : NUM_CON_TIMES; // Actual amount of lines to print
 	for (i= con.current-NUM_CON_TIMES+1 ; i<=con.current ; i++)
 	{
 		if (i < 0)
@@ -629,6 +631,8 @@ void Con_DrawNotify (void)
 		if (time > con_notifytime->value*1000)
 			continue;
 		text = con.text + (i % con.totallines)*con.linewidth;
+		if( i < con.current-count+1 )
+			continue;
 
 		if (cl.snap.ps.pm_type != PM_INTERMISSION && Key_GetCatcher( ) & (KEYCATCH_UI | KEYCATCH_CGAME) ) {
 			continue;

@@ -1,8 +1,4 @@
 Next release:
-VOIP chat support, shake-to-talk, and options to disable, sensitivity and time.
-Chat messages overlap with weapon bar.
-Значение «aiming sensitivity» в настройках не сохраняется.
-Значение «swipe sensitivity» работает наоборот – чем ниже значение, тем выше чувствительность.
 Кнопка «Джойстик» по умочанию все еще пересекается с элементами дашборда и возникающими сообщениями.
 Редактор экранных кнопок не дает возможности видеть весь лейаут целиком, предлагая кнопки по одной и без указания их функций, при том, что по их внешнему виду о назначении догадаться невозможно.
 Cancel scanning button for server list.
