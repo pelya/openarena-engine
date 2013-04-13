@@ -7,6 +7,7 @@ When waiting for answer from masterserver, GUI freezes.
 Option to move weapon bar to the bottom.
 Pressing Fire button sohuld not trigger events for other buttons if finger moves to them.
 Fix blurry railgun crosshair with r_picmip 5.
+Remove resolution setting from video menu.
 
 
 Distant future:
