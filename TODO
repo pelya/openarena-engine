@@ -18,3 +18,4 @@ Make weblinks and emails clickable in chat text and in server messages
 Minor:
 Q_vsnprintf inside bg_lib.c is buggy with %f output
 Fix chat messages split incorrectly
+Fix intro sound choppy due to modified gamespeed
