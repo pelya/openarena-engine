@@ -8,6 +8,7 @@ Option to move weapon bar to the bottom.
 Pressing Fire button sohuld not trigger events for other buttons if finger moves to them.
 Fix blurry railgun crosshair with r_picmip 5.
 Remove resolution setting from video menu.
+Option "Listen only" for voice chat.
 
 
 Distant future:
