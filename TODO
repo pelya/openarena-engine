@@ -1,9 +1,7 @@
 Next release:
 Кнопка «Джойстик» по умочанию все еще пересекается с элементами дашборда и возникающими сообщениями.
 Cancel scanning button for server list.
-When waiting for answer from masterserver, GUI freezes.
 Option to move weapon bar to the bottom.
-Pressing Fire button sohuld not trigger events for other buttons if finger moves to them.
 Remove resolution setting from video menu.
 Option "Listen only" for voice chat.
 
@@ -16,3 +14,4 @@ Make weblinks and emails clickable in chat text and in server messages
 Minor:
 Q_vsnprintf inside bg_lib.c is buggy with %f output
 Fix chat messages split incorrectly
+When waiting for answer from masterserver, GUI freezes.
