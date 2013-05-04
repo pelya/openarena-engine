@@ -159,8 +159,6 @@ static int CIN_HandleForVideo(void) {
 }
 
 
-extern int CL_ScaledMilliseconds(void);
-
 //-----------------------------------------------------------------------------
 // RllSetupTable
 //
@@ -1158,8 +1156,7 @@ redump:
 			if (cinTable[currentHandle].numQuads == -1) {
 				readQuadInfo( framedata );
 				setupQuad( 0, 0 );
-				// we need to use CL_ScaledMilliseconds because of the smp mode calls from the renderer
-				cinTable[currentHandle].startTime = cinTable[currentHandle].lastTime = CL_ScaledMilliseconds();
+				cinTable[currentHandle].startTime = cinTable[currentHandle].lastTime = cls.unscaledFrametime;
 			}
 			if (cinTable[currentHandle].numQuads != 1) cinTable[currentHandle].numQuads = 0;
 			break;
@@ -1226,8 +1223,7 @@ redump:
 
 static void RoQ_init( void )
 {
-	// we need to use CL_ScaledMilliseconds because of the smp mode calls from the renderer
-	cinTable[currentHandle].startTime = cinTable[currentHandle].lastTime = CL_ScaledMilliseconds();
+	cinTable[currentHandle].startTime = cinTable[currentHandle].lastTime = cls.unscaledFrametime;
 
 	cinTable[currentHandle].RoQPlayed = 24;
 
@@ -1358,13 +1354,11 @@ e_status CIN_RunCinematic (int handle)
 		return cinTable[currentHandle].status;
 	}
 
-	// we need to use CL_ScaledMilliseconds because of the smp mode calls from the renderer
-	thisTime = CL_ScaledMilliseconds();
+	thisTime = cls.unscaledFrametime;
 	if (cinTable[currentHandle].shader && (abs(thisTime - cinTable[currentHandle].lastTime))>100) {
 		cinTable[currentHandle].startTime += thisTime - cinTable[currentHandle].lastTime;
 	}
-	// we need to use CL_ScaledMilliseconds because of the smp mode calls from the renderer
-	cinTable[currentHandle].tfps = ((((CL_ScaledMilliseconds()) - cinTable[currentHandle].startTime)*3)/100);
+	cinTable[currentHandle].tfps = (((cls.unscaledFrametime - cinTable[currentHandle].startTime)*3)/100);
 
 	start = cinTable[currentHandle].startTime;
 	while(  (cinTable[currentHandle].tfps != cinTable[currentHandle].numQuads)
@@ -1372,8 +1366,7 @@ e_status CIN_RunCinematic (int handle)
 	{
 		RoQInterrupt();
 		if (start != cinTable[currentHandle].startTime) {
-			// we need to use CL_ScaledMilliseconds because of the smp mode calls from the renderer
-		  cinTable[currentHandle].tfps = ((((CL_ScaledMilliseconds())
+		  cinTable[currentHandle].tfps = (((cls.unscaledFrametime
 							  - cinTable[currentHandle].startTime)*3)/100);
 			start = cinTable[currentHandle].startTime;
 		}
