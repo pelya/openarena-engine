@@ -361,6 +361,7 @@ void SCR_DrawVoipMeter( void ) {
 	static const char * message = "voice chat: speak now";
 	static const char * message2 = "speak";
 	static unsigned int messageCount = 0; // Show long message only three times, then show short message
+	enum { Y_POS = 360 };
 
 	if (!cl_voipShowMeter->integer)
 		return;  // player doesn't want to show meter at all.
@@ -374,7 +375,7 @@ void SCR_DrawVoipMeter( void ) {
 		return;  // client has VoIP support disabled.
 	else if (!cl_voipSend->integer) {
 		i = cl.accelerometerShake * 200 / cl_voipAccelShakeThreshold->integer;
-		SCR_FillRect( 320 - i, 380 + SMALLCHAR_HEIGHT + 2, i * 2, 5, color );
+		SCR_FillRect( 320 - i, Y_POS + SMALLCHAR_HEIGHT + 2, i * 2, 5, color );
 		messageCount += (messageCount + 1) % 2;
 		return;  // not recording at the moment.
 	}
@@ -385,12 +386,12 @@ void SCR_DrawVoipMeter( void ) {
 		messageCount += messageCount % 2;
 
 	i = cl.accelerometerShake * 200 / (cl_voipAccelShakeRecordingTime->integer * cl_voipAccelShakeDecrease->integer);
-	SCR_FillRect( 320 - i, 380 + SMALLCHAR_HEIGHT + 2, i * 2, 5, g_color_table[3] );
+	SCR_FillRect( 320 - i, Y_POS + SMALLCHAR_HEIGHT + 2, i * 2, 5, g_color_table[3] );
 	i = (int) (clc.voipPower * 100.0f);
 	if (i > 100)
 		i = 100;
-	SCR_FillRect( 320 - i, 380 + SMALLCHAR_HEIGHT + 10, i * 2, 5, g_color_table[4] );
-	SCR_DrawStringExt( 320 - strlen(message) * SMALLCHAR_WIDTH, 380, SMALLCHAR_HEIGHT, message, g_color_table[7], qtrue, qfalse );
+	SCR_FillRect( 320 - i, Y_POS + SMALLCHAR_HEIGHT + 10, i * 2, 5, g_color_table[4] );
+	SCR_DrawStringExt( 320 - strlen(message) * SMALLCHAR_WIDTH, Y_POS, SMALLCHAR_HEIGHT, message, g_color_table[7], qtrue, qfalse );
 }
 #endif
 
