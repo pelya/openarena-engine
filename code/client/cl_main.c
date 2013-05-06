@@ -115,6 +115,8 @@ cvar_t	*in_gyroscopeSensitivity;
 cvar_t	*in_gyroscopeAxesSwap;
 cvar_t	*in_swipeAngle;
 cvar_t	*in_swipeSensitivity;
+cvar_t	*in_swipeFreeCrosshairOffset;
+cvar_t	*in_swipeFreeStickyEdges;
 cvar_t	*cg_railgunAutoZoom;
 cvar_t	*cg_touchscreenControls;
 
@@ -3548,6 +3550,8 @@ void CL_Init( void ) {
 	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", "0", CVAR_ARCHIVE);
 	cg_holdingUsableItem = Cvar_Get ("cg_holdingUsableItem", "0", 0);
 	cg_railgunAutoZoom = Cvar_Get ("cg_railgunAutoZoom", "1", CVAR_ARCHIVE);
+	in_swipeFreeCrosshairOffset = Cvar_Get ("in_swipeFreeCrosshairOffset", "1", CVAR_ARCHIVE);
+	in_swipeFreeStickyEdges = Cvar_Get ("in_swipeFreeStickyEdges", "1", CVAR_ARCHIVE);
 
 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);
 	j_yaw_axis =     Cvar_Get ("j_yaw_axis",     "4", CVAR_ARCHIVE);

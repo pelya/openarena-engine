@@ -541,6 +541,7 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 	int y = *dy;
 	// TODO: hardcoded values, make them configurable
 	int border = cls.glconfig.vidHeight / 6;
+	int offset = border / 2 * in_swipeFreeCrosshairOffset->value;
 
 	in_androidCameraYawSpeed = in_androidCameraPitchSpeed = in_androidWeaponSelectionBarActive = 0;
 
@@ -553,11 +554,13 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 	if ( x < border * 3 ) {
 		if ( x < border * 2 )
 			in_androidCameraYawSpeed = 1;
-		SCALE( x, border * 3, border * 2, border / 2 );
+		if ( in_swipeFreeStickyEdges->integer )
+			SCALE( x, border * 3, border * 2, offset );
 	} else if ( x > cls.glconfig.vidWidth - border * 2 ) {
 		if ( x > cls.glconfig.vidWidth - border )
 			in_androidCameraYawSpeed = -1;
-		SCALE( x, cls.glconfig.vidWidth - border * 2, cls.glconfig.vidWidth - border, cls.glconfig.vidWidth + border / 2 );
+		if ( in_swipeFreeStickyEdges->integer )
+			SCALE( x, cls.glconfig.vidWidth - border * 2, cls.glconfig.vidWidth - border, cls.glconfig.vidWidth + offset );
 	}
 
 	if ( y < border * 2 ) {
@@ -565,16 +568,18 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 			in_androidCameraPitchSpeed = -1;
 			in_androidWeaponSelectionBarActive = 1;
 		}
-		SCALE( y, border * 2, border, border / 2 );
+		if ( in_swipeFreeStickyEdges->integer )
+			SCALE( y, border * 2, border, offset );
 	} else if ( y > cls.glconfig.vidHeight - border * 2 ) {
 		if ( y > cls.glconfig.vidHeight - border )
 			in_androidCameraPitchSpeed = 1;
-		SCALE( y, cls.glconfig.vidHeight - border * 2, cls.glconfig.vidHeight - border, cls.glconfig.vidHeight + border / 2 );
+		if ( in_swipeFreeStickyEdges->integer )
+			SCALE( y, cls.glconfig.vidHeight - border * 2, cls.glconfig.vidHeight - border, cls.glconfig.vidHeight + offset );
 	}
 
 	// Offset crosshair, so it won't be right under finger
-	x = x - border / 2;
-	y = y - border / 2;
+	x = x - offset;
+	y = y - offset;
 
 	// Boundary checks
 	if ( x < 0 )

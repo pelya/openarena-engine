@@ -428,6 +428,8 @@ extern	cvar_t	*in_gyroscopeSensitivity;
 extern	cvar_t	*in_gyroscopeAxesSwap;
 extern	cvar_t	*in_swipeAngle;
 extern	cvar_t	*in_swipeSensitivity;
+extern	cvar_t	*in_swipeFreeCrosshairOffset;
+extern	cvar_t	*in_swipeFreeStickyEdges;
 extern	cvar_t	*cg_railgunAutoZoom;
 extern	cvar_t	*cg_touchscreenControls;
 // Some part of game state needed for touchscreen input handling
