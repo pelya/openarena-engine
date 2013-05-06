@@ -1069,7 +1069,7 @@ static void IN_ProcessEvents( void )
 			case SDL_JOYBUTTONDOWN: // Android multitouch
 			case SDL_JOYBUTTONUP:
 				{
-					if( e.jaxis.which == JOY_SDL_TOUCHSCREEN && e.jbutton.button < MAX_POINTERS )
+					if( e.jbutton.which == JOY_SDL_TOUCHSCREEN && e.jbutton.button < MAX_POINTERS )
 					{
 						touchPointers[e.jbutton.button].pressed = (e.jbutton.state == SDL_PRESSED);
 						IN_ProcessTouchPoints();
@@ -1250,10 +1250,10 @@ static void IN_ShowHideScreenButtons( void )
 
 void IN_OpenCloseGyroscope( void )
 {
-	if ( in_gyroscope->integer && !sticks[JOY_SDL_GYROSCOPE] ) {
+	if ( (in_gyroscope->integer || cl_voip->integer == VOIP_ENABLED) && sticks[JOY_SDL_GYROSCOPE] == NULL ) {
 		sticks[JOY_SDL_GYROSCOPE] = SDL_JoystickOpen( JOY_SDL_GYROSCOPE );
 	}
-	if ( !in_gyroscope->integer && sticks[JOY_SDL_GYROSCOPE] == NULL ) {
+	if ( !(in_gyroscope->integer || cl_voip->integer == VOIP_ENABLED) && sticks[JOY_SDL_GYROSCOPE] != NULL ) {
 		SDL_JoystickClose( sticks[JOY_SDL_GYROSCOPE] );
 		sticks[JOY_SDL_GYROSCOPE] = NULL;
 	}

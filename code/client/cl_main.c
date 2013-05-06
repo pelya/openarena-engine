@@ -477,7 +477,7 @@ void CL_CaptureVoip(void)
 			dontCapture = qtrue;  // single player game.
 		else if (clc.demoplaying)
 			dontCapture = qtrue;  // playing back a demo.
-		else if ( cl_voip->integer == 0 )
+		else if ( cl_voip->integer != VOIP_ENABLED )
 			dontCapture = qtrue;  // client has VoIP support disabled.
 		else if ( audioMult == 0.0f )
 			dontCapture = qtrue;  // basically silenced incoming audio.
@@ -3618,8 +3618,8 @@ void CL_Init( void ) {
 	cl_voipAccelShakeRecordingTime = Cvar_Get ("cl_voipAccelShakeRecordingTime", "3000", CVAR_ARCHIVE);
 
 	// This is a protocol version number.
-	cl_voip = Cvar_Get ("cl_voip", "1", CVAR_USERINFO | CVAR_ARCHIVE); // VoIP disabled by default on Android
-	Cvar_CheckRange( cl_voip, 0, 1, qtrue );
+	cl_voip = Cvar_Get ("cl_voip", "2", CVAR_USERINFO | CVAR_ARCHIVE); // Listed only by default
+	Cvar_CheckRange( cl_voip, 0, 2, qtrue );
 
 	// If your data rate is too low, you'll get Connection Interrupted warnings
 	//  when VoIP packets arrive, even if you have a broadband connection.
