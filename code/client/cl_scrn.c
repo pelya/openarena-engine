@@ -456,7 +456,7 @@ void SCR_DrawDebugGraph (void)
 
 //=============================================================================
 
-SCR_DrawTouchscreenAttackButton (void)
+void SCR_DrawTouchscreenAttackButton (void)
 {
 	float color[] = { 1.0f, 1.0f, 1.0f, cl.touchscreenAttackButtonPos[4] };
 	if ( cl.touchscreenAttackButtonPos[4] <= 0 )
