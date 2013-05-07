@@ -243,33 +243,34 @@ void IN_Button0Down(void)
 {
 	int weaponX = in_mouseX * 640 / cls.glconfig.vidWidth;
 
-	if (	in_androidWeaponSelectionBarActive && (
-			weaponX > 320 - cg_weaponBarActiveWidth->integer &&
-			weaponX < 320 + cg_weaponBarActiveWidth->integer ||
-			(cg_holdingUsableItem->integer && weaponX > 590)) ) {
-		if (cg_holdingUsableItem->integer && weaponX > 590) {
-			// Use item
-			IN_KeyDown(&in_buttons[2]);
-			IN_KeyUp(&in_buttons[2]);
-		} else {
-			char cmd[64] = "weapon ";
-			int count = ( weaponX - 320 + cg_weaponBarActiveWidth->integer ) / 40;
-			char * c = cg_weaponBarActiveWeapons->string, * c2;
-			int i;
+	if (	cg_holdingUsableItem->integer &&
+			in_mouseY < cls.glconfig.vidHeight / 6 &&
+			in_mouseX > cls.glconfig.vidWidth * 5 / 6 ) {
+		// Use item
+		IN_KeyDown(&in_buttons[2]);
+		IN_KeyUp(&in_buttons[2]);
+	} else if (	in_androidWeaponSelectionBarActive && ( (
+				!cg_weaponBarAtBottom->integer &&
+				weaponX > 320 - cg_weaponBarActiveWidth->integer &&
+				weaponX < 320 + cg_weaponBarActiveWidth->integer ) || (
+				cg_weaponBarAtBottom->integer &&
+				weaponX > 640 - cg_weaponBarActiveWidth->integer * 2 ) ) ) {
+		char cmd[64] = "weapon ";
+		int count = ( !cg_weaponBarAtBottom->integer ? weaponX - 320 + cg_weaponBarActiveWidth->integer : weaponX - 640 + cg_weaponBarActiveWidth->integer * 2 ) / 40;
+		char * c = cg_weaponBarActiveWeapons->string, * c2;
+		int i;
 
-			//in_androidWeaponSelectionBarActive = 0;
-			for ( i = 0; i < count; i++ ) {
-				c = strchr ( c, '/' );
-				if ( c == NULL )
-					return;
-				c++;
-			}
-			c2 = strchr ( c, '/' );
-			if ( c2 == NULL )
+		for ( i = 0; i < count; i++ ) {
+			c = strchr ( c, '/' );
+			if ( c == NULL )
 				return;
-			strncat ( cmd, c, c2 - c );
-			Cbuf_AddText( cmd );
+			c++;
 		}
+		c2 = strchr ( c, '/' );
+		if ( c2 == NULL )
+			return;
+		strncat ( cmd, c, c2 - c );
+		Cbuf_AddText( cmd );
 	} else {
 		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
 			IN_KeyDown(&in_buttons[0]);
@@ -331,10 +332,12 @@ void IN_Button0Up(void)
 				cl.touchscreenAttackButtonPos[1] = in_mouseY - cl.touchscreenAttackButtonPos[3] * 0.5f;
 				cl.touchscreenAttackButtonPos[4] = 0.75f;
 				if ( ( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE ) || (
-					in_androidWeaponSelectionBarActive && (
+					in_androidWeaponSelectionBarActive && ( (
+					!cg_weaponBarAtBottom->integer &&
 					weaponX > 320 - cg_weaponBarActiveWidth->integer &&
-					weaponX < 320 + cg_weaponBarActiveWidth->integer ||
-					(cg_holdingUsableItem->integer && weaponX > 590)))) {
+					weaponX < 320 + cg_weaponBarActiveWidth->integer ) || (
+					cg_weaponBarAtBottom->integer &&
+					weaponX > 640 - cg_weaponBarActiveWidth->integer * 2 ) ) ) ) {
 					// We're inside UI, or toggling weapons, disable on-screen button
 					cl.touchscreenAttackButtonPos[4] = 0.0f;
 				}
@@ -546,8 +549,13 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 	in_androidCameraYawSpeed = in_androidCameraPitchSpeed = in_androidWeaponSelectionBarActive = 0;
 
 	if ( cg_touchscreenControls->integer != TOUCHSCREEN_SWIPE_FREE_AIMING ) {
-		if ( y < border )
-			in_androidWeaponSelectionBarActive = 1;
+		if ( !cg_weaponBarAtBottom->integer ) {
+			if ( y < border )
+				in_androidWeaponSelectionBarActive = 1;
+		} else {
+			if ( y > cls.glconfig.vidHeight - border )
+				in_androidWeaponSelectionBarActive = 1;
+		}
 		return;
 	}
 
@@ -566,13 +574,17 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 	if ( y < border * 2 ) {
 		if ( y < border ) {
 			in_androidCameraPitchSpeed = -1;
-			in_androidWeaponSelectionBarActive = 1;
+			if ( !cg_weaponBarAtBottom->integer )
+				in_androidWeaponSelectionBarActive = 1;
 		}
 		if ( in_swipeFreeStickyEdges->integer )
 			SCALE( y, border * 2, border, offset );
 	} else if ( y > cls.glconfig.vidHeight - border * 2 ) {
-		if ( y > cls.glconfig.vidHeight - border )
+		if ( y > cls.glconfig.vidHeight - border ) {
 			in_androidCameraPitchSpeed = 1;
+			if ( cg_weaponBarAtBottom->integer )
+				in_androidWeaponSelectionBarActive = 1;
+		}
 		if ( in_swipeFreeStickyEdges->integer )
 			SCALE( y, cls.glconfig.vidHeight - border * 2, cls.glconfig.vidHeight - border, cls.glconfig.vidHeight + offset );
 	}

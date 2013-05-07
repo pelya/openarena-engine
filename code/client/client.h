@@ -435,7 +435,9 @@ extern	cvar_t	*cg_touchscreenControls;
 // Some part of game state needed for touchscreen input handling
 extern	cvar_t	*cg_weaponBarActiveWidth;
 extern	cvar_t	*cg_weaponBarActiveWeapons;
+extern	cvar_t	*cg_weaponBarAtBottom;
 extern	cvar_t	*cg_holdingUsableItem;
+
 
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;

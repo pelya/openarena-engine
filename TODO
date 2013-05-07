@@ -1,12 +1,18 @@
 Next release:
-Option to move weapon bar to the bottom.
-
+Bugfixes, if any
 
 Distant future:
 4-players split-screen mode, to be taken from https://github.com/zturtleman/spearmint
 Make weblinks and emails clickable in chat text and in server messages
-
+Ouya support, likely in a separate branch:
+  Here is our team's feedback. Please consider it. We'd be thrilled if you resubmitted.
+  1. "U" button is used to select.  Per OUYA interface guidelines, "O" is the preferred button to select.
+     https://devs.ouya.tv/developers/docs/interface-guidelines
+  2. In "Settings" under "Controls" PC controls are listed.
+  3. Initial load time exceeds 25 min
+  4. System button does not pause game or return ot Open Arena Menu
 
 Minor:
 Fix chat messages split incorrectly
-When waiting for answer from masterserver on bad connection, GUI freezes.
+When waiting for answer from masterserver on bad connection, GUI freezes
+Voting breaks map rotation on dedicated server
