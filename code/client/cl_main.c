@@ -125,6 +125,8 @@ cvar_t	*cg_weaponBarActiveWeapons;
 cvar_t	*cg_weaponBarAtBottom;
 cvar_t	*cg_holdingUsableItem;
 
+cvar_t	*cl_serverlistGamename;
+
 cvar_t	*cl_activeAction;
 
 cvar_t	*cl_motdString;
@@ -2362,7 +2364,7 @@ void CL_CheckForResend( void ) {
 		// The challenge request shall be followed by a client challenge so no malicious server can hijack this connection.
 		// Add the gamename so the server knows we're running the correct game or can reject the client
 		// with a meaningful message
-		Com_sprintf(data, sizeof(data), "getchallenge %d %s", clc.challenge, com_gamename->string);
+		Com_sprintf(data, sizeof(data), "getchallenge %d %s", clc.challenge, cl_serverlistGamename->string);
 
 		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "%s", data);
 		break;
@@ -3555,6 +3557,8 @@ void CL_Init( void ) {
 	in_swipeFreeCrosshairOffset = Cvar_Get ("in_swipeFreeCrosshairOffset", "1", CVAR_ARCHIVE);
 	in_swipeFreeStickyEdges = Cvar_Get ("in_swipeFreeStickyEdges", "1", CVAR_ARCHIVE);
 
+	cl_serverlistGamename = Cvar_Get ("cl_serverlistGamename", GAMENAME_FOR_MASTER, CVAR_ARCHIVE);
+
 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);
 	j_yaw_axis =     Cvar_Get ("j_yaw_axis",     "4", CVAR_ARCHIVE);
 	j_forward_axis = Cvar_Get ("j_forward_axis", "1", CVAR_ARCHIVE);
@@ -3825,7 +3829,7 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 		gameMismatch = qfalse;
 	else
 #endif
-		gameMismatch = !*gamename || strcmp(gamename, com_gamename->string) != 0;
+		gameMismatch = !*gamename || strcmp(gamename, cl_serverlistGamename->string) != 0;
 
 	if (gameMismatch)
 	{
@@ -4212,17 +4216,17 @@ void CL_GlobalServers_f( void ) {
 		if(v4enabled)
 		{
 			Com_sprintf(command, sizeof(command), "getserversExt %s %s",
-				com_gamename->string, Cmd_Argv(2));
+				cl_serverlistGamename->string, Cmd_Argv(2));
 		}
 		else
 		{
 			Com_sprintf(command, sizeof(command), "getserversExt %s %s ipv6",
-				com_gamename->string, Cmd_Argv(2));
+				cl_serverlistGamename->string, Cmd_Argv(2));
 		}
 	}
 	else
 		Com_sprintf(command, sizeof(command), "getservers %s %s",
-			com_gamename->string, Cmd_Argv(2));
+			cl_serverlistGamename->string, Cmd_Argv(2));
 
 	for (i=3; i < count; i++)
 	{
