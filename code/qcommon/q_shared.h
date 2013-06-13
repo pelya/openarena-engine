@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
   #define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
   #define GAMENAME_FOR_MASTER		"OpenArenaAndroid"	// Android-exclusive server list
   #define GAMENAME_FOR_MASTER_PC	"Quake3Arena"	// must NOT contain whitespace.  No servers show up if you use "openarena"
-  #define LEGACY_PROTOCOL		1 // OA still uses the legacy protocol // OA for Android have no use of the old servers anyway
+  #define LEGACY_PROTOCOL		// OA still uses the legacy protocol
 #else
   #define PRODUCT_NAME			"ioq3"
   #define BASEGAME			"baseq3"
