@@ -2376,8 +2376,10 @@ void CL_CheckForResend( void ) {
 		Q_strncpyz( info, Cvar_InfoString( CVAR_USERINFO ), sizeof( info ) );
 		
 #ifdef LEGACY_PROTOCOL
-		if(com_legacyprotocol->integer == com_protocol->integer)
-			clc.compat = qtrue;
+		// This breaks connection to servers, which do not support legacy protocol.
+		// BTW setting PROTOCOL_VERSION == PROTOCOL_LEGACY_VERSION wasn't the smartest move.
+		//if(com_legacyprotocol->integer == com_protocol->integer)
+		//	clc.compat = qtrue;
 
 		if(clc.compat)
 			Info_SetValueForKey(info, "protocol", va("%i", com_legacyprotocol->integer));
