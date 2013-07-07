@@ -27,6 +27,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../game/bg_public.h"
 
 //=============================================================================
+#ifdef LEGACY_PROTOCOL
+#undef LEGACY_PROTOCOL // Hack hack hackity hack, because local games do not work
+#endif
+
 
 #define	PERS_SCORE				0		// !!! MUST NOT CHANGE, SERVER AND
 										// GAME BOTH REFERENCE !!!
