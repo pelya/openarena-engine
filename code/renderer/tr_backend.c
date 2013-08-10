@@ -696,6 +696,9 @@ RB_SetGL2D
 
 ================
 */
+
+#define OUYA_BORDER 50
+
 void	RB_SetGL2D (void) {
 	backEnd.projection2D = qtrue;
 
@@ -704,7 +707,10 @@ void	RB_SetGL2D (void) {
 	qglScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
 	qglMatrixMode(GL_PROJECTION);
     qglLoadIdentity ();
-	qglOrtho (0, glConfig.vidWidth, glConfig.vidHeight, 0, 0, 1);
+	if (r_runningOnOuya->value)
+		qglOrtho (-OUYA_BORDER, glConfig.vidWidth + OUYA_BORDER, glConfig.vidHeight + OUYA_BORDER, -OUYA_BORDER, 0, 1);
+	else
+		qglOrtho (0, glConfig.vidWidth, glConfig.vidHeight, 0, 0, 1);
 	qglMatrixMode(GL_MODELVIEW);
     qglLoadIdentity ();
 

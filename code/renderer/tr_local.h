@@ -1148,6 +1148,8 @@ extern	cvar_t	*r_saveFontData;
 
 extern cvar_t	*r_marksOnTriangleMeshes;
 
+extern cvar_t	*r_runningOnOuya;
+
 //====================================================================
 
 float R_NoiseGet4f( float x, float y, float z, float t );
