@@ -1056,6 +1056,7 @@ static void IN_ProcessEvents( void )
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect);
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
+							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect);
 							// Do not hide text input, we don't have gamepad key to invoke it
 							rect.w = rect.h = cls.glconfig.vidHeight / 10;
 							rect.x = rect.y = 0;
@@ -1363,6 +1364,23 @@ void IN_Init( void )
 	IN_InitKeyLockStates( );
 
 	IN_InitJoystick( );
+	#ifdef __ANDROID__
+	hideScreenKeys = (getenv("OUYA") != NULL);
+    if (hideScreenKeys)
+    {
+    	// Hide everything
+		SDL_Rect rect;
+		rect.x = rect.y = rect.w = rect.h = 0;
+		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_DPAD, &rect);
+		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_0, &rect);
+		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_1, &rect);
+		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_2, &rect);
+		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
+		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
+		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect);
+		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
+	}
+	#endif
 	Com_DPrintf( "------------------------------------\n" );
 }
 

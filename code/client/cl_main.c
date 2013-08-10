@@ -125,6 +125,8 @@ cvar_t	*cg_weaponBarActiveWeapons;
 cvar_t	*cg_weaponBarAtBottom;
 cvar_t	*cg_holdingUsableItem;
 
+cvar_t	*cl_runningOnOuya;
+
 cvar_t	*cl_serverlistGamename;
 
 cvar_t	*cl_activeAction;
@@ -3553,11 +3555,13 @@ void CL_Init( void ) {
 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);
 	cg_weaponBarActiveWeapons = Cvar_Get ("cg_weaponBarActiveWeapons", "", 0);
 	cg_weaponBarAtBottom = Cvar_Get ("cg_weaponBarAtBottom", "0", CVAR_ARCHIVE);
-	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", "0", CVAR_ARCHIVE);
+	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", (getenv("OUYA") != NULL) ? "2" : "0", CVAR_ARCHIVE);
 	cg_holdingUsableItem = Cvar_Get ("cg_holdingUsableItem", "0", 0);
 	cg_railgunAutoZoom = Cvar_Get ("cg_railgunAutoZoom", "1", CVAR_ARCHIVE);
 	in_swipeFreeCrosshairOffset = Cvar_Get ("in_swipeFreeCrosshairOffset", "1", CVAR_ARCHIVE);
 	in_swipeFreeStickyEdges = Cvar_Get ("in_swipeFreeStickyEdges", "1", CVAR_ARCHIVE);
+
+	cl_runningOnOuya = Cvar_Get ("cl_runningOnOuya", (getenv("OUYA") != NULL) ? "1" : "0", 0);
 
 	cl_serverlistGamename = Cvar_Get ("cl_serverlistGamename", GAMENAME_FOR_MASTER, CVAR_ARCHIVE);
 

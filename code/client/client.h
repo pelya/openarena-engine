@@ -437,6 +437,8 @@ extern	cvar_t	*cg_weaponBarActiveWidth;
 extern	cvar_t	*cg_weaponBarActiveWeapons;
 extern	cvar_t	*cg_weaponBarAtBottom;
 extern	cvar_t	*cg_holdingUsableItem;
+// Stupid Ouya requires a lot of custom code
+extern	cvar_t	*cl_runningOnOuya;
 
 extern	cvar_t	*cl_serverlistGamename;
 
