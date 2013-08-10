@@ -3482,9 +3482,11 @@ void CL_Init( void ) {
 
 	rconAddress = Cvar_Get ("rconAddress", "", 0);
 
+	cl_runningOnOuya = Cvar_Get ("cl_runningOnOuya", (getenv("OUYA") != NULL) ? "1" : "0", 0);
+
 	cl_yawspeed = Cvar_Get ("cl_yawspeed", "140", CVAR_CHEAT);
 	cl_pitchspeed = Cvar_Get ("cl_pitchspeed", "140", CVAR_CHEAT);
-	cl_pitchAutoCenter = Cvar_Get ("cl_pitchAutoCenter", "1", 0);
+	cl_pitchAutoCenter = Cvar_Get ("cl_pitchAutoCenter", (getenv("OUYA") != NULL) ? "0" : "1", 0);
 	cl_anglespeedkey = Cvar_Get ("cl_anglespeedkey", "1.5", 0);
 
 	cl_maxpackets = Cvar_Get ("cl_maxpackets", "30", CVAR_ARCHIVE );
@@ -3560,8 +3562,6 @@ void CL_Init( void ) {
 	cg_railgunAutoZoom = Cvar_Get ("cg_railgunAutoZoom", "1", CVAR_ARCHIVE);
 	in_swipeFreeCrosshairOffset = Cvar_Get ("in_swipeFreeCrosshairOffset", "1", CVAR_ARCHIVE);
 	in_swipeFreeStickyEdges = Cvar_Get ("in_swipeFreeStickyEdges", "1", CVAR_ARCHIVE);
-
-	cl_runningOnOuya = Cvar_Get ("cl_runningOnOuya", (getenv("OUYA") != NULL) ? "1" : "0", 0);
 
 	cl_serverlistGamename = Cvar_Get ("cl_serverlistGamename", GAMENAME_FOR_MASTER, CVAR_ARCHIVE);
 

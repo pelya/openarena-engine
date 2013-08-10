@@ -546,6 +546,9 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 	int border = cls.glconfig.vidHeight / 6;
 	int offset = border / 2 * in_swipeFreeCrosshairOffset->value;
 
+	if ( cl_runningOnOuya->integer )
+		return;
+
 	in_androidCameraYawSpeed = in_androidCameraPitchSpeed = in_androidWeaponSelectionBarActive = 0;
 
 	if ( cg_touchscreenControls->integer != TOUCHSCREEN_SWIPE_FREE_AIMING ) {

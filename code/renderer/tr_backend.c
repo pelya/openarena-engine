@@ -697,8 +697,6 @@ RB_SetGL2D
 ================
 */
 
-#define OUYA_BORDER 50
-
 void	RB_SetGL2D (void) {
 	backEnd.projection2D = qtrue;
 
