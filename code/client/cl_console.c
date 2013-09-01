@@ -293,7 +293,7 @@ static void Con_AndroidTextInputShowLastMessages (void) {
 		f--;
 	buffer[ f ] = 0;
 
-	if( !cl_runningOnOuya->integer )
+	if( cl_runningOnOuya && !cl_runningOnOuya->integer )
 		SDL_ANDROID_SetScreenKeyboardHintMesage( buffer + lastLines[0] ); // Hide console logs on Ouya - you need USB keyboard for console anyway
 }
 #endif
