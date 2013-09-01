@@ -706,7 +706,8 @@ void	RB_SetGL2D (void) {
 	qglMatrixMode(GL_PROJECTION);
     qglLoadIdentity ();
 	if (r_runningOnOuya->value)
-		qglOrtho (-OUYA_BORDER, glConfig.vidWidth + OUYA_BORDER, glConfig.vidHeight + OUYA_BORDER, -OUYA_BORDER, 0, 1);
+		qglOrtho ( - glConfig.vidWidth * OUYA_BORDER / 100, glConfig.vidWidth + glConfig.vidWidth * OUYA_BORDER / 100,
+					glConfig.vidHeight + glConfig.vidHeight * OUYA_BORDER / 100, - glConfig.vidHeight * OUYA_BORDER / 100, 0, 1);
 	else
 		qglOrtho (0, glConfig.vidWidth, glConfig.vidHeight, 0, 0, 1);
 	qglMatrixMode(GL_MODELVIEW);
