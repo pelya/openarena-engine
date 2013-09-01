@@ -470,14 +470,6 @@ static int GLimp_SetMode(int mode, qboolean fullscreen, qboolean noborder)
 	glstring = (char *) qglGetString (GL_RENDERER);
 	ri.Printf( PRINT_ALL, "GL_RENDERER: %s\n", glstring );
 
-	/*
-	if (r_runningOnOuya->integer)
-	{
-		glConfig.vidWidth -= OUYA_BORDER * 2;
-		glConfig.vidHeight -= OUYA_BORDER * 2;
-	}
-	*/
-
 	return RSERR_OK;
 }
 
