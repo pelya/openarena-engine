@@ -484,7 +484,7 @@ void CL_CaptureVoip(void)
 			dontCapture = qtrue;  // single player game.
 		else if (clc.demoplaying)
 			dontCapture = qtrue;  // playing back a demo.
-		else if ( cl_voip->integer != VOIP_ENABLED )
+		else if ( cl_voip->integer == VOIP_DISABLED )
 			dontCapture = qtrue;  // client has VoIP support disabled.
 		else if ( audioMult == 0.0f )
 			dontCapture = qtrue;  // basically silenced incoming audio.
