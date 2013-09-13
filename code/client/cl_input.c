@@ -379,7 +379,7 @@ void IN_CenterViewDown (void) {
 	//in_cameraAngles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
 
 	// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
-	if ( cl.joystickAxis[0] == 0 && cl.joystickAxis[1] == 0 ) {
+	if ( cl.joystickAxis[JOY_AXIS_SCREENJOY_X] == 0 && cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] == 0 ) {
 		in_swipeActivated = 1;
 		in_joystickJumpTriggerTime = 0; // Do not jump if user rotated view and immediately put finger back on joystick
 	}
@@ -768,6 +768,11 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 			cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
 			cmd->rightmove = ClampChar( cmd->rightmove + cos( angle ) * 127.0f );
 			CL_ScaleMovementCmdToMaximiumForStrafeJump( cmd );
+			if( !in_swipeActivated ) {
+				in_swipeAngleRotate = angle + 180.0f;
+				if ( in_swipeAngleRotate > 180.0f )
+					in_swipeAngleRotate -= 360.0f;
+			}
 		}
 	} else {
 		if ( in_joystickJumpTriggerTime > 0 && in_joystickJumpTriggerTime < j_androidJoystickJumpTime->integer ) {
