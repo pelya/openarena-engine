@@ -762,17 +762,17 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		}
 		if ( abs(cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_X]) > 8192 || abs(cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_Y]) > 8192 ) {
 			angle = RAD2DEG( atan2( cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_X], cl.joystickAxis[JOY_AXIS_GAMEPADLEFT_Y] ) );
+			if( !in_swipeActivated ) {
+				in_swipeAngleRotate = angle + 180.0f;
+				if ( in_swipeAngleRotate > 180.0f )
+					in_swipeAngleRotate -= 360.0f;
+			}
 			angle -= 90.0f;
 			angle = DEG2RAD( angle );
 
 			cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
 			cmd->rightmove = ClampChar( cmd->rightmove + cos( angle ) * 127.0f );
 			CL_ScaleMovementCmdToMaximiumForStrafeJump( cmd );
-			if( !in_swipeActivated ) {
-				in_swipeAngleRotate = angle + 180.0f;
-				if ( in_swipeAngleRotate > 180.0f )
-					in_swipeAngleRotate -= 360.0f;
-			}
 		}
 	} else {
 		if ( in_joystickJumpTriggerTime > 0 && in_joystickJumpTriggerTime < j_androidJoystickJumpTime->integer ) {
