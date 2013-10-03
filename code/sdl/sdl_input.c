@@ -1004,7 +1004,7 @@ static void IN_ProcessEvents( void )
 
 			case SDL_MOUSEMOTION:
 #ifdef __ANDROID__
-				Com_Printf("SDL_MOUSEMOTION received, it sohuld never appear on Android\n");
+				Com_DPrintf("SDL_MOUSEMOTION received, it sohuld never appear on Android\n");
 #endif
 				if( mouseActive )
 					Com_QueueEvent( 0, SE_MOUSE, e.motion.x, e.motion.y, 0, NULL );
