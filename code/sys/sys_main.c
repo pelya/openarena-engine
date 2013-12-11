@@ -614,6 +614,8 @@ int main( int argc, char **argv )
 
 	//SDL_Delay(7000); // Wait for debugger
 	remove(".openarena/baseoa/pak7-android.pk3"); // If some server pushed old VM scripts to us - remove them
+	remove(".openarena/ioq3+oa.pid"); // The game will not start if we do not delete this file, lame!
+
 
 	Sys_PlatformInit( );
 
