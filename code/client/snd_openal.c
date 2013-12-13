@@ -1826,7 +1826,7 @@ void S_AL_StreamDie( int stream )
 
 
 #define NUM_MUSIC_BUFFERS	4
-#define	MUSIC_BUFFER_SIZE 4096
+#define	MUSIC_BUFFER_SIZE 65536 // 0.3 seconds
 
 static qboolean musicPlaying = qfalse;
 static srcHandle_t musicSourceHandle = -1;
