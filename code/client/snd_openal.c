@@ -2067,7 +2067,7 @@ void S_AL_StartBackgroundTrack( const char *intro, const char *loop )
 	// Start playing
 	qalSourcePlay(musicSource);
 
-	musicPlaying = qfalse;
+	musicPlaying = qtrue;
 }
 
 /*
