@@ -1003,9 +1003,6 @@ static void IN_ProcessEvents( void )
 				break;
 
 			case SDL_MOUSEMOTION:
-#ifdef __ANDROID__
-				Com_DPrintf("SDL_MOUSEMOTION received, it sohuld never appear on Android\n");
-#endif
 				if( mouseActive )
 					Com_QueueEvent( 0, SE_MOUSE, e.motion.x, e.motion.y, 0, NULL );
 				break;
@@ -1014,9 +1011,6 @@ static void IN_ProcessEvents( void )
 			case SDL_MOUSEBUTTONUP:
 				{
 					unsigned char b;
-#ifdef __ANDROID__
-					Com_Printf("SDL_MOUSEBUTTON received, it sohuld never appear on Android\n");
-#endif
 					switch( e.button.button )
 					{
 						case 1:   b = K_MOUSE1;     break;
