@@ -272,7 +272,7 @@ void IN_Button0Down(void)
 		strncat ( cmd, c, c2 - c );
 		Cbuf_AddText( cmd );
 	} else {
-		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+		if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ) {
 			IN_KeyDown(&in_buttons[0]);
 		} else {
 			// Ignore mouse keypresses, process only keyboard
@@ -286,7 +286,8 @@ void IN_Button0Down(void)
 				in_swipeTime = 0;
 				in_swipeAngleRotate = cl.viewangles[YAW];
 				in_swipeActivated = 0;
-				if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
+				if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ||
+					 cg_touchscreenControls->integer == TOUCHSCREEN_AIM_UNDER_FINGER ) {
 					int tapArea = TOUCHSCREEN_TAP_AREA / 2;
 					if (	cl.touchscreenAttackButtonPos[4] > 0.0f &&
 							in_mouseX > in_tapMouseX - tapArea &&
@@ -306,7 +307,7 @@ void IN_Button0Up(void)
 	cl.touchscreenAttackButtonPos[4] = 0.0f;
 	if ( in_buttons[0].active )
 		in_attackButtonReleased = 1;
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ) {
 		IN_KeyUp(&in_buttons[0]);
 	} else {
 		// Ignore mouse keypresses, process only keyboard
@@ -322,7 +323,8 @@ void IN_Button0Up(void)
 				in_swipeAngleRotate = angleDiff > 0 ? in_swipeAngle->value - angleDiff : -in_swipeAngle->value - angleDiff;
 				in_swipeActivated = 1;
 			}
-			if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ) {
+			if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ||
+				 cg_touchscreenControls->integer == TOUCHSCREEN_AIM_UNDER_FINGER ) {
 				int weaponX = in_mouseX * 640 / cls.glconfig.vidWidth;
 				IN_KeyUp(&in_buttons[0]);
 				in_tapMouseX = in_mouseX;
@@ -412,7 +414,7 @@ void CL_AdjustAngles( void ) {
 	float speed = cls.unscaledFrametime * cl_sensitivity->value * cl.cgameSensitivity * 0.04f;
 	vec3_t angles;
 
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ) {
 		VectorCopy(in_cameraAngles, angles);
 	} else {
 		VectorCopy(cl.viewangles, angles);
@@ -484,7 +486,7 @@ void CL_AdjustAngles( void ) {
 	}
 	in_swipeTime += cls.unscaledFrametime;
 
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ) {
 		VectorCopy(angles, in_cameraAngles);
 	} else {
 		VectorCopy(angles, cl.viewangles);
@@ -551,7 +553,8 @@ static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy ) {
 
 	in_androidCameraYawSpeed = in_androidCameraPitchSpeed = in_androidWeaponSelectionBarActive = 0;
 
-	if ( cg_touchscreenControls->integer != TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+	if ( cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR &&
+		 cg_touchscreenControls->integer != TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
 		if ( !cg_weaponBarAtBottom->integer ) {
 			if ( y < border )
 				in_androidWeaponSelectionBarActive = 1;
@@ -635,7 +638,7 @@ CL_Mouse2Event
 =================
 */
 void CL_Mouse2Event( int x, int y, int time ) {
-	if ( (cg_touchscreenControls->integer != TOUCHSCREEN_SWIPE_FREE_AIMING) && in_multitouchActive ) {
+	if ( (cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR) && in_multitouchActive ) {
 		int dx = x - in_multitouchX;
 		int dy = y - in_multitouchY;
 		cl.viewangles[YAW] -= (float)dx * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
@@ -646,7 +649,7 @@ void CL_Mouse2Event( int x, int y, int time ) {
 }
 
 void IN_MultitouchDown(void) {
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ) {
 		int dx = in_multitouchX - in_mouseX;
 		int dy = in_multitouchY - in_mouseY;
 		if ( abs( dx ) > abs( dy ) ) {
@@ -660,7 +663,7 @@ void IN_MultitouchDown(void) {
 }
 
 void IN_MultitouchUp(void) {
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ) {
 		in_androidCameraMultitouchYawSpeed = 0;
 		Com_QueueEvent( 0, SE_KEY, '/', qfalse, 0, NULL );
 		Com_QueueEvent( 0, SE_KEY, K_BACKSPACE, qfalse, 0, NULL );
@@ -782,13 +785,16 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		in_joystickJumpTriggerTime = j_androidJoystickJumpTime->integer;
 
 		angle = RAD2DEG( atan2( cl.joystickAxis[JOY_AXIS_SCREENJOY_X], cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] ) );
-		if( !in_swipeActivated && cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+		if( !in_swipeActivated && (
+			cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ||
+			cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ) ) {
 			in_swipeAngleRotate = angle + 180.0f;
 			if ( in_swipeAngleRotate > 180.0f )
 				in_swipeAngleRotate -= 360.0f;
 		}
 		angle -= 90.0f;
-		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING )
+		if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ||
+			 cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER )
 			angle += in_cameraAngles[YAW] - SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) - cl.viewangles[YAW];
 		angle = DEG2RAD( angle );
 
@@ -856,7 +862,8 @@ void CL_MouseMove(usercmd_t *cmd)
 	if ( !cgvm )
 		return;
 
-	if ( cg_touchscreenControls->integer != TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+	if ( cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR &&
+		 cg_touchscreenControls->integer != TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
 		static int oldMouseX, oldMouseY;
 		int dx = in_mouseX - oldMouseX;
 		int dy = in_mouseY - oldMouseY;
@@ -974,7 +981,8 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 	if ( cg_railgunAutoZoom->integer ) {
 		if ( cl.cgameUserCmdValue == WP_RAILGUN && (cmd->buttons & BUTTON_ATTACK) ) {
 			if ( !in_railgunZoomActive &&
-				( cg_touchscreenControls->integer != TOUCHSCREEN_SWIPE_FREE_AIMING || // Prevent zooming in if we're rotating view
+				( ( cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR &&
+					cg_touchscreenControls->integer != TOUCHSCREEN_SHOOT_UNDER_FINGER ) || // Prevent zooming in if we're rotating view
 				! ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed ||
 					in_androidCameraMultitouchYawSpeed || in_androidWeaponSelectionBarActive ))) {
 				in_railgunZoomActive = qtrue;
@@ -993,7 +1001,8 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		in_attackButtonReleased = 0;
 	}
 
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ||
+		 cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
 		if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed ||
 				in_androidCameraMultitouchYawSpeed || in_androidWeaponSelectionBarActive )
 			cmd->buttons &= ~BUTTON_ATTACK; // Stop firing when we are rotating camera
@@ -1066,7 +1075,7 @@ usercmd_t CL_CreateCmd( void ) {
 		cl.viewangles[PITCH] = oldAngles[PITCH] - 90;
 	} 
 
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING && cgvm ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR && cgvm ) {
 		if ( in_cameraAngles[YAW] > 180.0f )
 			in_cameraAngles[YAW] -= 360.0f;
 		else if ( in_cameraAngles[YAW] < -180.0f )

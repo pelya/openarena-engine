@@ -1199,7 +1199,7 @@ static void IN_ShowHideScreenButtons( void )
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect2);
 
-			if ( cg_touchscreenControls->integer == TOUCHSCREEN_SWIPE_FREE_AIMING )
+			if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR )
 			{
 				// Centerview
 				rect.y += rect.h;
