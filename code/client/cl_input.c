@@ -298,6 +298,14 @@ void IN_Button0Down(void)
 					}
 					cl.touchscreenAttackButtonPos[4] = 0.0f;
 				}
+				if ( !in_buttons[0].active && (
+					 cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ||
+					 cg_touchscreenControls->integer == TOUCHSCREEN_AIM_UNDER_FINGER ) ) {
+					cl.viewangles[YAW] += (in_mouseX - cls.glconfig.vidWidth/2) * cl.cgameSensitivity * 90.0f / cls.glconfig.vidWidth;
+					cl.viewangles[PITCH] -= (in_mouseY - cls.glconfig.vidHeight/2) * cl.cgameSensitivity * 90.0f / cls.glconfig.vidHeight;
+					if ( cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER )
+						IN_KeyDown(&in_buttons[0]);
+				}
 			}
 		}
 	}
@@ -307,7 +315,8 @@ void IN_Button0Up(void)
 	cl.touchscreenAttackButtonPos[4] = 0.0f;
 	if ( in_buttons[0].active )
 		in_attackButtonReleased = 1;
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ||
+		 cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
 		IN_KeyUp(&in_buttons[0]);
 	} else {
 		// Ignore mouse keypresses, process only keyboard
@@ -862,8 +871,7 @@ void CL_MouseMove(usercmd_t *cmd)
 	if ( !cgvm )
 		return;
 
-	if ( cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR &&
-		 cg_touchscreenControls->integer != TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
+	if ( cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR ) {
 		static int oldMouseX, oldMouseY;
 		int dx = in_mouseX - oldMouseX;
 		int dy = in_mouseY - oldMouseY;
@@ -1080,10 +1088,10 @@ usercmd_t CL_CreateCmd( void ) {
 			in_cameraAngles[YAW] -= 360.0f;
 		else if ( in_cameraAngles[YAW] < -180.0f )
 			in_cameraAngles[YAW] += 360.0f;
-		if ( in_cameraAngles[PITCH] > 180 )
-			in_cameraAngles[PITCH] = 180;
-		else if ( in_cameraAngles[PITCH] < -90 )
-			in_cameraAngles[PITCH] = -90;
+		if ( in_cameraAngles[PITCH] > 180.0f )
+			in_cameraAngles[PITCH] = 180.0f;
+		else if ( in_cameraAngles[PITCH] < -90.0f )
+			in_cameraAngles[PITCH] = -90.0f;
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
 	}
 
