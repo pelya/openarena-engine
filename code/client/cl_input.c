@@ -301,8 +301,8 @@ void IN_Button0Down(void)
 				if ( !in_buttons[0].active && (
 					 cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ||
 					 cg_touchscreenControls->integer == TOUCHSCREEN_AIM_UNDER_FINGER ) ) {
-					cl.viewangles[YAW] += (in_mouseX - cls.glconfig.vidWidth/2) * cl.cgameSensitivity * 90.0f / cls.glconfig.vidWidth;
-					cl.viewangles[PITCH] -= (in_mouseY - cls.glconfig.vidHeight/2) * cl.cgameSensitivity * 90.0f / cls.glconfig.vidHeight;
+					cl.viewangles[YAW] -= (in_mouseX - cls.glconfig.vidWidth/2) * cl.cgameSensitivity * 90.0f / cls.glconfig.vidWidth;
+					cl.viewangles[PITCH] += (in_mouseY - cls.glconfig.vidHeight/2) * cl.cgameSensitivity * 90.0f / cls.glconfig.vidHeight;
 					if ( cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER )
 						IN_KeyDown(&in_buttons[0]);
 				}
