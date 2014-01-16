@@ -55,6 +55,7 @@ static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCam
 static short in_swipeActivated, in_joystickJumpTriggerTime, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY, in_tapMouseX, in_tapMouseY, in_swipeTime;
 static float in_swipeAngleRotate;
+static vec3_t in_tapAdjustAngles;
 static qboolean in_railgunZoomActive;
 static const float in_swipeSpeed = 0.2f;
 #define TOUCHSCREEN_TAP_AREA (cls.glconfig.vidHeight / 6)
@@ -301,8 +302,17 @@ void IN_Button0Down(void)
 				if ( !in_buttons[0].active && (
 					 cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ||
 					 cg_touchscreenControls->integer == TOUCHSCREEN_AIM_UNDER_FINGER ) ) {
-					cl.viewangles[YAW] -= (in_mouseX - cls.glconfig.vidWidth/2) * cl.cgameSensitivity * 90.0f / cls.glconfig.vidWidth;
-					cl.viewangles[PITCH] += (in_mouseY - cls.glconfig.vidHeight/2) * cl.cgameSensitivity * 90.0f / cls.glconfig.vidHeight;
+
+					in_tapAdjustAngles[YAW] -= RAD2DEG( atanf((in_mouseX - cls.glconfig.vidWidth/2) * 2.0f / cls.glconfig.vidWidth) ) * cl.cgameSensitivity;
+					in_tapAdjustAngles[PITCH] += RAD2DEG( atanf((in_mouseY - cls.glconfig.vidHeight/2) * 2.0f / cls.glconfig.vidHeight) ) * cl.cgameSensitivity;
+
+					Com_Printf( "Mouse %f %f angles diff %f %f result %f %f cl.cgameSensitivity %f\n",
+						((in_mouseX - cls.glconfig.vidWidth/2) * 2.0f / cls.glconfig.vidWidth),
+						((in_mouseY - cls.glconfig.vidHeight/2) * 2.0f / cls.glconfig.vidHeight),
+						RAD2DEG( atanf((in_mouseX - cls.glconfig.vidWidth/2) * 2.0f / cls.glconfig.vidWidth) ),
+						RAD2DEG( atanf((in_mouseY - cls.glconfig.vidHeight/2) * 2.0f / cls.glconfig.vidHeight) ),
+						in_tapAdjustAngles[YAW], in_tapAdjustAngles[PITCH], cl.cgameSensitivity );
+
 					if ( cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER )
 						IN_KeyDown(&in_buttons[0]);
 				}
@@ -494,6 +504,14 @@ void CL_AdjustAngles( void ) {
 		angles[YAW] += diff;
 	}
 	in_swipeTime += cls.unscaledFrametime;
+
+	// TOUCHSCREEN_SHOOT_UNDER_FINGER / TOUCHSCREEN_AIM_UNDER_FINGER
+	if( in_tapAdjustAngles[YAW] != 0.0f || in_tapAdjustAngles[PITCH] != 0.0f ) {
+		angles[YAW] += in_tapAdjustAngles[YAW];
+		angles[PITCH] += in_tapAdjustAngles[PITCH];
+		in_tapAdjustAngles[YAW] = 0.0f;
+		in_tapAdjustAngles[PITCH] = 0.0f;
+	}
 
 	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ) {
 		VectorCopy(angles, in_cameraAngles);
