@@ -310,6 +310,7 @@ void IN_Button0Down(void)
 						IN_KeyDown(&in_buttons[0]);
 						CL_AdjustCrosshairPosNearEdges( &in_mouseX, &in_mouseY );
 						if ( !( in_androidCameraYawSpeed || in_androidCameraPitchSpeed ) ) {
+							// Do not adjust angles instantly if we touched near the edge, rotate camera instead
 							cl.viewangles[YAW] += yaw;
 							cl.viewangles[PITCH] += pitch;
 						}
@@ -913,9 +914,9 @@ void CL_MouseMove(usercmd_t *cmd)
 		}
 		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
 			if ( ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ) && in_buttons[0].active ) {
-				float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.unscaledFrametime * 0.15f;
+				float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.unscaledFrametime * 0.15f * cl.cgameSensitivity;
 				float pitchSpeed = ( cl.viewangles[PITCH] < -20 ) ? 0.0015f : ( cl.viewangles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
-				float pitch = in_androidCameraPitchSpeed * cls.unscaledFrametime * cl_pitchspeed->value * pitchSpeed;
+				float pitch = in_androidCameraPitchSpeed * cls.unscaledFrametime * cl_pitchspeed->value * pitchSpeed * cl.cgameSensitivity;
 
 				cl.viewangles[YAW] += yaw;
 				cl.viewangles[PITCH] += pitch;
@@ -925,9 +926,9 @@ void CL_MouseMove(usercmd_t *cmd)
 	}
 
 	if ( ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ) && in_buttons[0].active ) {
-		float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.unscaledFrametime * 0.15f;
+		float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.unscaledFrametime * 0.15f * cl.cgameSensitivity;
 		float pitchSpeed = ( in_cameraAngles[PITCH] < -20 ) ? 0.0015f : ( in_cameraAngles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
-		float pitch = in_androidCameraPitchSpeed * cls.unscaledFrametime * cl_pitchspeed->value * pitchSpeed;
+		float pitch = in_androidCameraPitchSpeed * cls.unscaledFrametime * cl_pitchspeed->value * pitchSpeed * cl.cgameSensitivity;
 
 		in_cameraAngles[YAW] += yaw;
 		in_cameraAngles[PITCH] += pitch;
