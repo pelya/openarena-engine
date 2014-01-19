@@ -63,7 +63,7 @@ kbutton_t	in_voiprecord;
 #endif
 kbutton_t	in_buttons[16];
 qboolean	in_mlooking;
-vec3_t		in_cameraAngles;
+vec3_t		in_cameraAngles; // TODO: replace this with cl.viewangles
 enum		{ GYRO_AXES_SWAP_X = 1, GYRO_AXES_SWAP_Y = 2, GYRO_AXES_SWAP_XY = 4 };
 
 static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy );
@@ -827,7 +827,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		}
 		angle -= 90.0f;
 		if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR )
-			angle += in_cameraAngles[YAW] - SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) - cl.viewangles[YAW];
+			angle += in_cameraAngles[YAW] - SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) - cl.aimingangles[YAW];
 		angle = DEG2RAD( angle );
 
 		cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
@@ -943,7 +943,7 @@ void CL_MouseMove(usercmd_t *cmd)
 
 void CL_SetAimingAngles( const vec3_t angles )
 {
-	VectorCopy( angles, cl.viewangles );
+	VectorCopy( angles, cl.aimingangles );
 }
 
 void CL_SetCameraAngles( const vec3_t angles )
@@ -1042,7 +1042,7 @@ void CL_FinishMove( usercmd_t *cmd ) {
 	cmd->serverTime = cl.serverTime;
 
 	for (i=0 ; i<3 ; i++) {
-		cmd->angles[i] = ANGLE2SHORT(cl.viewangles[i]);
+		cmd->angles[i] = ANGLE2SHORT(cl.aimingangles[i]);
 	}
 }
 
@@ -1102,6 +1102,11 @@ usercmd_t CL_CreateCmd( void ) {
 			cl.viewangles[PITCH] = 180.0f;
 		else if ( cl.viewangles[PITCH] < -180.0f )
 			cl.viewangles[PITCH] = -180.0f;
+	}
+	if ( cg_cameraSideShift->value == 0.0f && cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR ) {
+		VectorCopy( cl.viewangles, cl.aimingangles );
+	} else if ( cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR && cgvm ) {
+		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000) );
 	}
 
 	// store out the final values

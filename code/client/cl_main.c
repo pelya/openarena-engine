@@ -124,6 +124,7 @@ cvar_t	*cg_weaponBarActiveWidth;
 cvar_t	*cg_weaponBarActiveWeapons;
 cvar_t	*cg_weaponBarAtBottom;
 cvar_t	*cg_holdingUsableItem;
+cvar_t	*cg_cameraSideShift;
 
 cvar_t	*cl_runningOnOuya;
 
@@ -3562,6 +3563,7 @@ void CL_Init( void ) {
 	cg_railgunAutoZoom = Cvar_Get ("cg_railgunAutoZoom", "1", CVAR_ARCHIVE);
 	in_swipeFreeCrosshairOffset = Cvar_Get ("in_swipeFreeCrosshairOffset", "1", CVAR_ARCHIVE);
 	in_swipeFreeStickyEdges = Cvar_Get ("in_swipeFreeStickyEdges", "1", CVAR_ARCHIVE);
+	cg_cameraSideShift = Cvar_Get ("cg_cameraSideShift", "-30", CVAR_ARCHIVE);
 
 	cl_serverlistGamename = Cvar_Get ("cl_serverlistGamename", GAMENAME_FOR_MASTER, CVAR_ARCHIVE);
 

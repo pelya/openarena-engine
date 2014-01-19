@@ -137,6 +137,8 @@ typedef struct {
 	// tracked view angles to account for standing on rotating objects,
 	// and teleport direction changes
 	vec3_t		viewangles;
+	// On Android we have complex 3rd person camera, so camera angles and player aiming angles are not the same
+	vec3_t		aimingangles;
 
 	int			serverId;			// included in each client message so the server
 												// can tell if it is for a prior map_restart
@@ -437,8 +439,10 @@ extern	cvar_t	*cg_weaponBarActiveWidth;
 extern	cvar_t	*cg_weaponBarActiveWeapons;
 extern	cvar_t	*cg_weaponBarAtBottom;
 extern	cvar_t	*cg_holdingUsableItem;
+extern	cvar_t	*cg_cameraSideShift;
 // Stupid Ouya requires a lot of custom code
 extern	cvar_t	*cl_runningOnOuya;
+
 
 extern	cvar_t	*cl_serverlistGamename;
 
