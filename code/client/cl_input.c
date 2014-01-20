@@ -63,7 +63,6 @@ kbutton_t	in_voiprecord;
 #endif
 kbutton_t	in_buttons[16];
 qboolean	in_mlooking;
-vec3_t		in_cameraAngles; // TODO: replace this with cl.viewangles
 enum		{ GYRO_AXES_SWAP_X = 1, GYRO_AXES_SWAP_Y = 2, GYRO_AXES_SWAP_XY = 4 };
 
 static void CL_AdjustCrosshairPosNearEdges( int * dx, int * dy );
@@ -408,7 +407,7 @@ void IN_Button14Up(void) {IN_KeyUp(&in_buttons[14]);}
 void IN_Gesture(void) {in_buttons[3].wasPressed = qtrue;}
 
 void IN_CenterViewDown (void) {
-	//in_cameraAngles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
+	//cl.viewangles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
 
 	// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
 	if ( cl.joystickAxis[JOY_AXIS_SCREENJOY_X] == 0 && cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] == 0 ) {
@@ -442,19 +441,12 @@ void CL_AdjustAngles( void ) {
 	float right = CL_KeyState (&in_right), left = CL_KeyState (&in_left);
 	float up = CL_KeyState (&in_lookup), down = CL_KeyState (&in_lookdown);
 	float speed = cls.unscaledFrametime * cl_sensitivity->value * cl.cgameSensitivity * 0.04f;
-	vec3_t angles;
-
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ) {
-		VectorCopy(in_cameraAngles, angles);
-	} else {
-		VectorCopy(cl.viewangles, angles);
-	}
 
 	if ( left > 0 || right > 0 || up > 0 || down > 0 ) {
-		angles[YAW] -= speed * right;
-		angles[YAW] += speed * left;
-		angles[PITCH] -= speed * up;
-		angles[PITCH] += speed * down;
+		cl.viewangles[YAW] -= speed * right;
+		cl.viewangles[YAW] += speed * left;
+		cl.viewangles[PITCH] -= speed * up;
+		cl.viewangles[PITCH] += speed * down;
 	}
 
 	speed /= 32767.0f;
@@ -462,14 +454,14 @@ void CL_AdjustAngles( void ) {
 	if ( abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X]) > 4096 ) {
 		int rescaled = (abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X]) - 4096) *
 						(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_X] > 0 ? 1 : -1);
-		angles[YAW] -= speed * rescaled;
+		cl.viewangles[YAW] -= speed * rescaled;
 	}
 	// Slower vertical movement
 	if ( abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y]) > 12288 ) {
 		int rescaled = (abs(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y]) - 12288) *
 						(cl.joystickAxis[JOY_AXIS_GAMEPADRIGHT_Y] > 0 ? 1 : -1) *
 						(m_pitch->value < 0 ? -1 : 1);
-		angles[PITCH] += speed * rescaled;
+		cl.viewangles[PITCH] += speed * rescaled;
 	}
 
 	// Gyroscope
@@ -487,19 +479,19 @@ void CL_AdjustAngles( void ) {
 			y = xy;
 		}
 		if ( x != 0 || y != 0 || cl.gyroscope[2] != 0 ) {
-			angles[YAW] += x * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
-			angles[PITCH] += y * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
-			angles[ROLL] -= cl.gyroscope[2] * (1.0f / 16384.0f);
+			cl.viewangles[YAW] += x * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
+			cl.viewangles[PITCH] += y * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
+			cl.viewangles[ROLL] -= cl.gyroscope[2] * (1.0f / 16384.0f);
 		}
-		if( fabs(angles[ROLL]) > speed * 2000.0f ) {
-			angles[ROLL] -= ( angles[ROLL] > 0 ) ? speed * 2000.0f : speed * -2000.0f;
-			if( fabs(angles[ROLL]) > 8.0f )
-				angles[ROLL] = ( angles[ROLL] > 0 ) ? 8.0f :  -8.0f;
+		if( fabs(cl.viewangles[ROLL]) > speed * 2000.0f ) {
+			cl.viewangles[ROLL] -= ( cl.viewangles[ROLL] > 0 ) ? speed * 2000.0f : speed * -2000.0f;
+			if( fabs(cl.viewangles[ROLL]) > 8.0f )
+				cl.viewangles[ROLL] = ( cl.viewangles[ROLL] > 0 ) ? 8.0f :  -8.0f;
 		}
 		// Clear it
 		cl.gyroscope[0] = cl.gyroscope[1] = cl.gyroscope[2] = 0;
 	} else {
-		angles[ROLL] = 0;
+		cl.viewangles[ROLL] = 0;
 	}
 
 	// Swipe touchscreen gesture
@@ -512,15 +504,9 @@ void CL_AdjustAngles( void ) {
 		} else {
 			in_swipeAngleRotate -= diff;
 		}
-		angles[YAW] += diff;
+		cl.viewangles[YAW] += diff;
 	}
 	in_swipeTime += cls.unscaledFrametime;
-
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ) {
-		VectorCopy(angles, in_cameraAngles);
-	} else {
-		VectorCopy(angles, cl.viewangles);
-	}
 }
 
 /*
@@ -835,8 +821,9 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 				in_swipeAngleRotate -= 360.0f;
 		}
 		angle -= 90.0f;
-		if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR )
-			angle += in_cameraAngles[YAW] - SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) - cl.aimingangles[YAW];
+		if ( cls.touchscreenVmCallbacks &&
+			 (cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR || cg_cameraSideShift->value != 0.0f) )
+			angle += cl.viewangles[YAW] - SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) - cl.aimingangles[YAW];
 		angle = DEG2RAD( angle );
 
 		cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
@@ -921,32 +908,26 @@ void CL_MouseMove(usercmd_t *cmd)
 			if( cl.touchscreenAttackButtonPos[4] < 0.10f )
 				cl.touchscreenAttackButtonPos[4] = 0.0f;
 		}
-		if ( cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
-			if ( ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ) && in_buttons[0].active ) {
-				float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.unscaledFrametime * 0.15f * cl.cgameSensitivity;
-				float pitchSpeed = ( cl.viewangles[PITCH] < -20 ) ? 0.0015f : ( cl.viewangles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
-				float pitch = in_androidCameraPitchSpeed * cls.unscaledFrametime * cl_pitchspeed->value * pitchSpeed * cl.cgameSensitivity;
-
-				cl.viewangles[YAW] += yaw;
-				cl.viewangles[PITCH] += pitch;
-			}
-		}
-		return;
+		if ( cg_touchscreenControls->integer != TOUCHSCREEN_SHOOT_UNDER_FINGER )
+			return;
 	}
 
 	if ( ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ) && in_buttons[0].active ) {
 		float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.unscaledFrametime * 0.15f * cl.cgameSensitivity;
-		float pitchSpeed = ( in_cameraAngles[PITCH] < -20 ) ? 0.0015f : ( in_cameraAngles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
+		float pitchSpeed = ( cl.viewangles[PITCH] < -20 ) ? 0.0015f : ( cl.viewangles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
 		float pitch = in_androidCameraPitchSpeed * cls.unscaledFrametime * cl_pitchspeed->value * pitchSpeed * cl.cgameSensitivity;
 
-		in_cameraAngles[YAW] += yaw;
-		in_cameraAngles[PITCH] += pitch;
+		cl.viewangles[YAW] += yaw;
+		cl.viewangles[PITCH] += pitch;
 	}
 
-	if ( in_cameraAngles[PITCH] != 0 && cl_pitchAutoCenter->integer ) {
-		in_cameraAngles[PITCH] += j_androidAutoCenterViewSpeed->value * cls.unscaledFrametime * ( ( in_cameraAngles[PITCH] > 0 ) ? -1 : 1 );
-		if ( fabs( in_cameraAngles[PITCH] ) < j_androidAutoCenterViewSpeed->value * cls.unscaledFrametime * 2.0f )
-			in_cameraAngles[PITCH] = 0;
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER )
+		return;
+
+	if ( cl.viewangles[PITCH] != 0 && cl_pitchAutoCenter->integer ) {
+		cl.viewangles[PITCH] += j_androidAutoCenterViewSpeed->value * cls.unscaledFrametime * ( ( cl.viewangles[PITCH] > 0 ) ? -1 : 1 );
+		if ( fabs( cl.viewangles[PITCH] ) < j_androidAutoCenterViewSpeed->value * cls.unscaledFrametime * 2.0f )
+			cl.viewangles[PITCH] = 0;
 	}
 }
 
@@ -957,8 +938,8 @@ void CL_SetAimingAngles( const vec3_t angles )
 
 void CL_SetCameraAngles( const vec3_t angles )
 {
-	//Com_Printf ("CL_SetCameraAngles %f %f -> %f %f\n", in_cameraAngles[YAW], in_cameraAngles[PITCH], angles[YAW], angles[PITCH]);
-	VectorCopy( angles, in_cameraAngles );
+	//Com_Printf ("CL_SetCameraAngles %f %f -> %f %f\n", cl.viewangles[YAW], cl.viewangles[PITCH], angles[YAW], angles[PITCH]);
+	VectorCopy( angles, cl.viewangles );
 }
 
 /*
@@ -1092,30 +1073,23 @@ usercmd_t CL_CreateCmd( void ) {
 		cl.viewangles[PITCH] = oldAngles[PITCH] - 90;
 	}
 
+	if ( cl.viewangles[YAW] > 180.0f )
+		cl.viewangles[YAW] -= 360.0f;
+	else if ( cl.viewangles[YAW] < -180.0f )
+		cl.viewangles[YAW] += 360.0f;
+	if ( cl.viewangles[PITCH] > 180.0f )
+		cl.viewangles[PITCH] = 180.0f;
+	else if ( cl.viewangles[PITCH] < -180.0f )
+		cl.viewangles[PITCH] = -180.0f;
+
 	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR && cgvm && cls.touchscreenVmCallbacks ) {
-		if ( in_cameraAngles[YAW] > 180.0f )
-			in_cameraAngles[YAW] -= 360.0f;
-		else if ( in_cameraAngles[YAW] < -180.0f )
-			in_cameraAngles[YAW] += 360.0f;
-		if ( in_cameraAngles[PITCH] > 180.0f )
-			in_cameraAngles[PITCH] = 180.0f;
-		else if ( in_cameraAngles[PITCH] < -90.0f )
-			in_cameraAngles[PITCH] = -90.0f;
-		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (in_cameraAngles[YAW] * 1000), (int) (in_cameraAngles[PITCH] * 1000) );
-	} else {
-		if ( cl.viewangles[YAW] > 180.0f )
-			cl.viewangles[YAW] -= 360.0f;
-		else if ( cl.viewangles[YAW] < -180.0f )
-			cl.viewangles[YAW] += 360.0f;
-		if ( cl.viewangles[PITCH] > 180.0f )
-			cl.viewangles[PITCH] = 180.0f;
-		else if ( cl.viewangles[PITCH] < -180.0f )
-			cl.viewangles[PITCH] = -180.0f;
+		if ( cl.viewangles[PITCH] < -90.0f )
+			cl.viewangles[PITCH] = -90.0f;
+		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000) );
 	}
 
-	//if ( g_arenaservers.platform.curvalue != 0 ) {
-
-	if ( cg_cameraSideShift->value == 0.0f && cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR ) {
+	if ( !cls.touchscreenVmCallbacks ||
+		 (cg_cameraSideShift->value != 0.0f && cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR) ) {
 		VectorCopy( cl.viewangles, cl.aimingangles );
 	} else if ( cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR && cgvm && cls.touchscreenVmCallbacks ) {
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000) );
