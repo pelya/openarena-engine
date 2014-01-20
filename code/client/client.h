@@ -360,6 +360,7 @@ typedef struct {
 	qhandle_t	whiteShader;
 	qhandle_t	consoleShader;
 	qhandle_t	touchscreenAttackButton;
+	qboolean	touchscreenVmCallbacks;
 } clientStatic_t;
 
 extern	clientStatic_t		cls;
@@ -434,6 +435,7 @@ extern	cvar_t	*in_swipeFreeCrosshairOffset;
 extern	cvar_t	*in_swipeFreeStickyEdges;
 extern	cvar_t	*cg_railgunAutoZoom;
 extern	cvar_t	*cg_touchscreenControls;
+extern	cvar_t	*in_swapGamepadSticks;
 // Some part of game state needed for touchscreen input handling
 extern	cvar_t	*cg_weaponBarActiveWidth;
 extern	cvar_t	*cg_weaponBarActiveWeapons;

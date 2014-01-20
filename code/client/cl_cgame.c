@@ -750,6 +750,8 @@ void CL_InitCGame( void ) {
 			interpret = VMI_COMPILED;
 	}
 
+	cls.touchscreenVmCallbacks = !strcmp( cl_serverlistGamename->string, GAMENAME_FOR_MASTER );
+
 	cgvm = VM_Create( "cgame", CL_CgameSystemCalls, interpret );
 	if ( !cgvm ) {
 		Com_Error( ERR_DROP, "VM_Create on cgame failed" );

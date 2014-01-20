@@ -716,6 +716,15 @@ void CL_JoystickEvent( int axis, int value, int time ) {
 	if ( axis < 0 || axis >= MAX_JOYSTICK_AXIS ) {
 		Com_Error( ERR_DROP, "CL_JoystickEvent: bad axis %i", axis );
 	}
+	if( in_swapGamepadSticks->integer ) {
+		switch ( axis ) {
+			case JOY_AXIS_GAMEPADRIGHT_X: axis = JOY_AXIS_GAMEPADLEFT_X; break;
+			case JOY_AXIS_GAMEPADRIGHT_Y: axis = JOY_AXIS_GAMEPADLEFT_Y; break;
+			case JOY_AXIS_GAMEPADLEFT_X:  axis = JOY_AXIS_GAMEPADRIGHT_X; break;
+			case JOY_AXIS_GAMEPADLEFT_Y:  axis = JOY_AXIS_GAMEPADRIGHT_Y; break;
+			default: break;
+		}
+	}
 	cl.joystickAxis[axis] = value;
 }
 
@@ -1083,7 +1092,7 @@ usercmd_t CL_CreateCmd( void ) {
 		cl.viewangles[PITCH] = oldAngles[PITCH] - 90;
 	}
 
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR && cgvm ) {
+	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR && cgvm && cls.touchscreenVmCallbacks ) {
 		if ( in_cameraAngles[YAW] > 180.0f )
 			in_cameraAngles[YAW] -= 360.0f;
 		else if ( in_cameraAngles[YAW] < -180.0f )
@@ -1103,9 +1112,12 @@ usercmd_t CL_CreateCmd( void ) {
 		else if ( cl.viewangles[PITCH] < -180.0f )
 			cl.viewangles[PITCH] = -180.0f;
 	}
+
+	//if ( g_arenaservers.platform.curvalue != 0 ) {
+
 	if ( cg_cameraSideShift->value == 0.0f && cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR ) {
 		VectorCopy( cl.viewangles, cl.aimingangles );
-	} else if ( cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR && cgvm ) {
+	} else if ( cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR && cgvm && cls.touchscreenVmCallbacks ) {
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000) );
 	}
 

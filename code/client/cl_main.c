@@ -119,6 +119,7 @@ cvar_t	*in_swipeFreeCrosshairOffset;
 cvar_t	*in_swipeFreeStickyEdges;
 cvar_t	*cg_railgunAutoZoom;
 cvar_t	*cg_touchscreenControls;
+cvar_t	*in_swapGamepadSticks;
 
 cvar_t	*cg_weaponBarActiveWidth;
 cvar_t	*cg_weaponBarActiveWeapons;
@@ -3564,6 +3565,7 @@ void CL_Init( void ) {
 	in_swipeFreeCrosshairOffset = Cvar_Get ("in_swipeFreeCrosshairOffset", "1", CVAR_ARCHIVE);
 	in_swipeFreeStickyEdges = Cvar_Get ("in_swipeFreeStickyEdges", "1", CVAR_ARCHIVE);
 	cg_cameraSideShift = Cvar_Get ("cg_cameraSideShift", "-30", CVAR_ARCHIVE);
+	in_swapGamepadSticks = Cvar_Get ("in_swapGamepadSticks", "0", CVAR_ARCHIVE);
 
 	cl_serverlistGamename = Cvar_Get ("cl_serverlistGamename", GAMENAME_FOR_MASTER, CVAR_ARCHIVE);
 
