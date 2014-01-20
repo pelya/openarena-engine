@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#{ cd ../vm ; ./make.sh || exit 1; cd ../engine ; }
+{ cd ../vm ; ./make.sh || exit 1; cd ../engine ; }
 
 #rm -rf build/debug-linux-`uname -m`/openarena.* build/debug-linux-`uname -m`/renderer build/debug-linux-`uname -m`/client
 
