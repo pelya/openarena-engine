@@ -56,6 +56,7 @@ static short in_swipeActivated, in_joystickJumpTriggerTime, in_attackButtonRelea
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY, in_tapMouseX, in_tapMouseY, in_swipeTime;
 static float in_swipeAngleRotate;
 static qboolean in_railgunZoomActive;
+static qboolean in_deferShooting;
 static const float in_swipeSpeed = 0.2f;
 #define TOUCHSCREEN_TAP_AREA (cls.glconfig.vidHeight / 6)
 #ifdef USE_VOIP
@@ -307,6 +308,7 @@ void IN_Button0Down(void)
 
 					if ( cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
 						IN_KeyDown(&in_buttons[0]);
+						in_deferShooting = qtrue; // Because cgame needs to process touch event before starting to shoot
 						CL_AdjustCrosshairPosNearEdges( &in_mouseX, &in_mouseY );
 						if ( !( in_androidCameraYawSpeed || in_androidCameraPitchSpeed ) ) {
 							// Do not adjust angles instantly if we touched near the edge, rotate camera instead
@@ -1000,8 +1002,11 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ||
 		 cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
 		if ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed ||
-				in_androidCameraMultitouchYawSpeed || in_androidWeaponSelectionBarActive )
+				in_androidCameraMultitouchYawSpeed || in_androidWeaponSelectionBarActive ||
+				in_deferShooting ) {
 			cmd->buttons &= ~BUTTON_ATTACK; // Stop firing when we are rotating camera
+			in_deferShooting = qfalse;
+		}
 	}
 
 	if ( Key_GetCatcher( ) ) {
@@ -1082,17 +1087,13 @@ usercmd_t CL_CreateCmd( void ) {
 	else if ( cl.viewangles[PITCH] < -180.0f )
 		cl.viewangles[PITCH] = -180.0f;
 
-	if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR && cgvm && cls.touchscreenVmCallbacks ) {
-		if ( cl.viewangles[PITCH] < -90.0f )
+	if ( ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR || cg_cameraSideShift->value != 0.0f ) &&
+		 cgvm && cls.touchscreenVmCallbacks ) {
+		if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR && cl.viewangles[PITCH] < -90.0f )
 			cl.viewangles[PITCH] = -90.0f;
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000) );
-	}
-
-	if ( !cls.touchscreenVmCallbacks ||
-		 (cg_cameraSideShift->value != 0.0f && cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR) ) {
+	} else {
 		VectorCopy( cl.viewangles, cl.aimingangles );
-	} else if ( cg_touchscreenControls->integer != TOUCHSCREEN_FLOATING_CROSSHAIR && cgvm && cls.touchscreenVmCallbacks ) {
-		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000) );
 	}
 
 	// store out the final values
