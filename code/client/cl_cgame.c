@@ -750,8 +750,7 @@ void CL_InitCGame( void ) {
 			interpret = VMI_COMPILED;
 	}
 
-	cls.touchscreenVmCallbacks = !strcmp( cl_serverlistGamename->string, GAMENAME_FOR_MASTER ) || !Q_stricmp( clc.servername, "localhost" );
-	Com_Printf( "CL_InitCGame: touchscreenVmCallbacks %d gamename %s address %s\n", cls.touchscreenVmCallbacks, cl_serverlistGamename->string, clc.servername );
+	Cvar_Set("cl_touchscreenVmCallbacks", "0");
 
 	cgvm = VM_Create( "cgame", CL_CgameSystemCalls, interpret );
 	if ( !cgvm ) {

@@ -823,8 +823,8 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 				in_swipeAngleRotate -= 360.0f;
 		}
 		angle -= 90.0f;
-		if ( cls.touchscreenVmCallbacks &&
-			 (cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR || cg_cameraSideShift->value != 0.0f) )
+		if ( cl_touchscreenVmCallbacks->integer && (
+			 cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR || cg_thirdPerson->integer ) )
 			angle += cl.viewangles[YAW] - SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) - cl.aimingangles[YAW];
 		angle = DEG2RAD( angle );
 
@@ -1087,8 +1087,8 @@ usercmd_t CL_CreateCmd( void ) {
 	else if ( cl.viewangles[PITCH] < -180.0f )
 		cl.viewangles[PITCH] = -180.0f;
 
-	if ( ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR || cg_cameraSideShift->value != 0.0f ) &&
-		 cgvm && cls.touchscreenVmCallbacks ) {
+	if ( ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR || cg_thirdPerson->integer ) &&
+		 cgvm && cl_touchscreenVmCallbacks->integer ) {
 		if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR && cl.viewangles[PITCH] < -90.0f )
 			cl.viewangles[PITCH] = -90.0f;
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000) );

@@ -121,11 +121,12 @@ cvar_t	*cg_railgunAutoZoom;
 cvar_t	*cg_touchscreenControls;
 cvar_t	*in_swapGamepadSticks;
 
+cvar_t	*cl_touchscreenVmCallbacks;
 cvar_t	*cg_weaponBarActiveWidth;
 cvar_t	*cg_weaponBarActiveWeapons;
 cvar_t	*cg_weaponBarAtBottom;
 cvar_t	*cg_holdingUsableItem;
-cvar_t	*cg_cameraSideShift;
+cvar_t	*cg_thirdPerson;
 
 cvar_t	*cl_runningOnOuya;
 
@@ -3556,6 +3557,7 @@ void CL_Init( void ) {
 	in_swipeAngle = Cvar_Get ("in_swipeAngle", "180", CVAR_ARCHIVE);
 	in_swipeSensitivity = Cvar_Get ("in_swipeSensitivity", "25", CVAR_ARCHIVE);
 
+	cl_touchscreenVmCallbacks = Cvar_Get ("cl_touchscreenVmCallbacks", "0", 0);
 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);
 	cg_weaponBarActiveWeapons = Cvar_Get ("cg_weaponBarActiveWeapons", "", 0);
 	cg_weaponBarAtBottom = Cvar_Get ("cg_weaponBarAtBottom", "0", CVAR_ARCHIVE);
@@ -3564,8 +3566,8 @@ void CL_Init( void ) {
 	cg_railgunAutoZoom = Cvar_Get ("cg_railgunAutoZoom", "1", CVAR_ARCHIVE);
 	in_swipeFreeCrosshairOffset = Cvar_Get ("in_swipeFreeCrosshairOffset", "1", CVAR_ARCHIVE);
 	in_swipeFreeStickyEdges = Cvar_Get ("in_swipeFreeStickyEdges", "1", CVAR_ARCHIVE);
-	cg_cameraSideShift = Cvar_Get ("cg_cameraSideShift", "-30", CVAR_ARCHIVE);
 	in_swapGamepadSticks = Cvar_Get ("in_swapGamepadSticks", "0", CVAR_ARCHIVE);
+	cg_thirdPerson = Cvar_Get ("cg_thirdPerson", "1", 0);
 
 	cl_serverlistGamename = Cvar_Get ("cl_serverlistGamename", GAMENAME_FOR_MASTER, CVAR_ARCHIVE);
 
