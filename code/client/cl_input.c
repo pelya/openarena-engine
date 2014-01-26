@@ -1101,6 +1101,7 @@ usercmd_t CL_CreateCmd( void ) {
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000) );
 	} else {
 		VectorCopy( cl.viewangles, cl.aimingangles );
+		cl.aimingangles[PITCH] -= SHORT2ANGLE( cl.snap.ps.delta_angles[PITCH] );
 	}
 
 	// store out the final values
