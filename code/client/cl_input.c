@@ -916,7 +916,8 @@ void CL_MouseMove(usercmd_t *cmd)
 
 	if ( ( in_androidCameraYawSpeed || in_androidCameraPitchSpeed || in_androidCameraMultitouchYawSpeed ) && in_buttons[0].active ) {
 		float yaw = ( in_androidCameraYawSpeed + in_androidCameraMultitouchYawSpeed ) * cls.unscaledFrametime * 0.15f * cl.cgameSensitivity;
-		float pitchSpeed = ( cl.viewangles[PITCH] < -20 ) ? 0.0015f : ( cl.viewangles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
+		float pitchSpeed = !cg_thirdPerson->integer ? 0.001f :
+							( cl.viewangles[PITCH] < -20 ) ? 0.0015f : ( cl.viewangles[PITCH] < 45 ) ? 0.001f : 0.003f; // More sensitivity near the edges
 		float pitch = in_androidCameraPitchSpeed * cls.unscaledFrametime * cl_pitchspeed->value * pitchSpeed * cl.cgameSensitivity;
 
 		cl.viewangles[YAW] += yaw;
@@ -1086,6 +1087,12 @@ usercmd_t CL_CreateCmd( void ) {
 		cl.viewangles[PITCH] = 180.0f;
 	else if ( cl.viewangles[PITCH] < -180.0f )
 		cl.viewangles[PITCH] = -180.0f;
+	if ( !cg_thirdPerson->integer ) {
+		if (  cl.viewangles[PITCH] < -90.0f )
+			cl.viewangles[PITCH] = -90.0f;
+		if (  cl.viewangles[PITCH] > 90.0f )
+			cl.viewangles[PITCH] = 90.0f;
+	}
 
 	if ( ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR || cg_thirdPerson->integer ) &&
 		 cgvm && cl_touchscreenVmCallbacks->integer ) {
