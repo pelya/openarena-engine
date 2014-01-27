@@ -177,6 +177,7 @@ void R_ImageList_f( void ) {
 		case 4:
 			ri.Printf( PRINT_ALL, "RGBA " );
 			break;
+#ifndef GL_VERSION_ES_CM_1_0
 		case GL_RGBA8:
 			ri.Printf( PRINT_ALL, "RGBA8" );
 			break;
@@ -193,6 +194,7 @@ void R_ImageList_f( void ) {
 		case GL_RGB5:
 			ri.Printf( PRINT_ALL, "RGB5 " );
 			break;
+#endif
 		default:
 			ri.Printf( PRINT_ALL, "???? " );
 		}
@@ -478,6 +480,39 @@ byte	mipBlendColors[16][4] = {
 	{0,0,255,128},
 };
 
+static unsigned * ConvertPixels_RGBA_RGB( unsigned *src, unsigned size )
+{
+	unsigned i;
+	unsigned char * dst = (unsigned char *) malloc( size * 3 );
+	for( i = 0; i < size; i++ )
+	{
+		unsigned c = src[i];
+		dst[ i * 3 + 0 ] = (c & 0xff);
+		dst[ i * 3 + 1 ] = (c & 0xff00) / 0x100;
+		dst[ i * 3 + 2 ] = (c & 0xff0000) / 0x10000;
+	}
+	return (unsigned *)dst;
+}
+
+static void R_qglTexImage2D( GLint miplevel, GLint internalFormat,
+								GLsizei width, GLsizei height,
+								unsigned *pixels )
+{
+#ifndef GL_VERSION_ES_CM_1_0
+	qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, width, height, 0, depthimage ? GL_DEPTH_COMPONENT : GL_RGBA, depthimage ? GL_FLOAT : GL_UNSIGNED_BYTE, pixels);
+#else
+	qglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	if( internalFormat == GL_RGBA )
+		qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	else if( internalFormat == GL_RGB ) {
+		unsigned *converted = ConvertPixels_RGBA_RGB( pixels, width * height );
+		qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, converted);
+		free(converted);
+	} else
+		Com_Printf("R_qglTexImage2D: texture format %d (0x%x) not supported in GLES\n", internalFormat, internalFormat);
+#endif
+}
+
 
 /*
 ===============
@@ -490,7 +525,7 @@ static void Upload32( unsigned *data,
 						  int width, int height, 
 						  qboolean mipmap, 
 						  qboolean picmip, 
-							qboolean lightMap,
+						  qboolean lightMap,
 						  int *format, 
 						  int *pUploadWidth, int *pUploadHeight )
 {
@@ -553,7 +588,6 @@ static void Upload32( unsigned *data,
 		scaled_width >>= 1;
 		scaled_height >>= 1;
 	}
-
 	scaledBuffer = ri.Hunk_AllocateTempMemory( sizeof( unsigned ) * scaled_width * scaled_height );
 
 	//
@@ -621,15 +655,18 @@ static void Upload32( unsigned *data,
 		{
 			if(r_greyscale->integer)
 			{
+#ifndef GL_VERSION_ES_CM_1_0
 				if(r_texturebits->integer == 16)
 					internalFormat = GL_LUMINANCE8;
 				else if(r_texturebits->integer == 32)
 					internalFormat = GL_LUMINANCE16;
 				else
+#endif
 					internalFormat = GL_LUMINANCE;
 			}
 			else
 			{
+#ifndef GL_VERSION_ES_CM_1_0
 				if ( glConfig.textureCompression == TC_S3TC_ARB )
 				{
 					internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
@@ -659,6 +696,7 @@ static void Upload32( unsigned *data,
 					internalFormat = GL_RGB8;
 				}
 				else
+#endif
 				{
 					internalFormat = GL_RGB;
 				}
@@ -668,15 +706,18 @@ static void Upload32( unsigned *data,
 		{
 			if(r_greyscale->integer)
 			{
+#ifndef GL_VERSION_ES_CM_1_0
 				if(r_texturebits->integer == 16)
 					internalFormat = GL_LUMINANCE8_ALPHA8;
 				else if(r_texturebits->integer == 32)
 					internalFormat = GL_LUMINANCE16_ALPHA16;
 				else
+#endif
 					internalFormat = GL_LUMINANCE_ALPHA;
 			}
 			else
 			{
+#ifndef GL_VERSION_ES_CM_1_0
 /*
 // leilei - This was commented out, because bloom strictly needs GL_RGBA 
 				if ( glConfig.textureCompression == TC_S3TC_ARB )
@@ -705,6 +746,7 @@ static void Upload32( unsigned *data,
 					internalFormat = GL_RGBA8;
 				}
 				else
+#endif
 				{
 					internalFormat = GL_RGBA;
 				}
@@ -712,17 +754,20 @@ static void Upload32( unsigned *data,
 		}
 	}
 
+#ifndef GL_VERSION_ES_CM_1_0
 	if (depthimage) 
 		{ mipmap=0; internalFormat = GL_DEPTH_COMPONENT; temp_GLformat=GL_DEPTH_COMPONENT; temp_GLtype=GL_FLOAT; } 
 			else 
 		{ temp_GLformat=GL_RGBA; temp_GLtype=GL_UNSIGNED_BYTE; }
+#endif
 
 	// copy or resample data as appropriate for first MIP level
 	if ( ( scaled_width == width ) && 
 		( scaled_height == height ) ) {
 		if (!mipmap)
 		{
-			qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, temp_GLformat, temp_GLtype, data);
+			//qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, temp_GLformat, temp_GLtype, data);
+			R_qglTexImage2D (0, internalFormat, scaled_width, scaled_height, data);
 			*pUploadWidth = scaled_width;
 			*pUploadHeight = scaled_height;
 			*format = internalFormat;
@@ -754,7 +799,8 @@ static void Upload32( unsigned *data,
 	*pUploadHeight = scaled_height;
 	*format = internalFormat;
 
-	qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, temp_GLformat, temp_GLtype, scaledBuffer );
+	//qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, temp_GLformat, temp_GLtype, scaledBuffer );
+	R_qglTexImage2D (0, internalFormat, scaled_width, scaled_height, scaledBuffer);
 
 	if (mipmap)
 	{
@@ -776,7 +822,8 @@ static void Upload32( unsigned *data,
 				R_BlendOverTexture( (byte *)scaledBuffer, scaled_width * scaled_height, mipBlendColors[miplevel] );
 			}
 
-			qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height, 0, temp_GLformat, temp_GLtype, scaledBuffer );
+			//qglTexImage2D (GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height, 0, temp_GLformat, temp_GLtype, scaledBuffer );
+			R_qglTexImage2D (miplevel, internalFormat, scaled_width, scaled_height, scaledBuffer);
 		}
 	}
 done:
@@ -799,6 +846,7 @@ done:
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	}
 
+#ifndef GL_VERSION_ES_CM_1_0
 	if (depthimage) {
 		glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
@@ -807,6 +855,7 @@ done:
 		glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 		glTexParameteri (GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_ALPHA);
 	}
+#endif
 	GL_CheckErrors();
 
 	if ( scaledBuffer != 0 )
@@ -1175,7 +1224,9 @@ static void R_CreateFogImage( void ) {
 	borderColor[2] = 1.0;
 	borderColor[3] = 1;
 
+#ifndef GL_VERSION_ES_CM_1_0
 	qglTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
+#endif
 }
 
 /*

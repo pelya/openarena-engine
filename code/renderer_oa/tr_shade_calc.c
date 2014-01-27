@@ -985,12 +985,16 @@ void RB_CalcEnvironmentTexCoordsNew( float *st )
 */
 void RB_CalcEnvironmentTexCoordsHW() 
 {
+#ifndef GL_VERSION_ES_CM_1_0
 	qglTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
 	qglTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
 	qglTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
 	qglEnable(GL_TEXTURE_GEN_S);
 	qglEnable(GL_TEXTURE_GEN_T);
 	qglEnable(GL_TEXTURE_GEN_R);
+#else
+	Com_Printf("RB_CalcEnvironmentTexCoordsHW: qglTexGeni not supported in GLES\n");
+#endif
 }
 
 /*

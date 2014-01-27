@@ -268,6 +268,10 @@ static void R_GLSL_ParseProgram(glslProgram_t *program, char *_text) {
  * Load, compile and link program
  */
 static qboolean R_GLSL_LoadProgram(glslProgram_t *program, const char *name, const char *programVertexObjects, int numVertexObjects, const char *programFragmentObjects, int numFragmentObjects) {
+#ifdef GL_VERSION_ES_CM_1_0
+	Com_Printf("R_GLSL_LoadProgram: Shaders are not supported in GLES 1.X\n");
+	return qfalse;
+#else
 	GLcharARB		*buffer_vp[MAX_PROGRAM_OBJECTS];
 	GLcharARB		*buffer_fp[MAX_PROGRAM_OBJECTS];
 	GLcharARB		*buffer;
@@ -405,6 +409,7 @@ static qboolean R_GLSL_LoadProgram(glslProgram_t *program, const char *name, con
 		ri.FS_FreeFile(buffer_vp[i]);
 
 	return qtrue;
+#endif
 }
 
 /*

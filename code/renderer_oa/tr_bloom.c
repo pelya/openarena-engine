@@ -134,25 +134,25 @@ static void ID_INLINE R_Bloom_Quad( int width, int height, float texX, float tex
 	texWidth += texX;
 	texHeight += texY;
 
-	qglBegin( GL_QUADS );							
-	qglTexCoord2f(	texX,						texHeight	);	
-	qglVertex2f(	x,							y	);
-
-	qglTexCoord2f(	texX,						texY	);				
-	qglVertex2f(	x,							height	);	
-
-	qglTexCoord2f(	texWidth,					texY	);				
-	qglVertex2f(	width,						height	);	
-
-	qglTexCoord2f(	texWidth,					texHeight	);	
-	qglVertex2f(	width,						y	);				
-	qglEnd ();
+	GLfloat texcoords[] = {	texX,						texHeight,
+							texX,						texY,
+							texWidth,					texY,
+							texWidth,					texHeight };
+	GLshort vertices [] = {	x,							y,
+							x,							height,
+							width,						height,
+							width,						y };
+	qglEnableClientState (GL_VERTEX_ARRAY);
+	qglEnableClientState (GL_TEXTURE_COORD_ARRAY);
+	qglTexCoordPointer ( 2, GL_FLOAT, 0, texcoords );
+	qglVertexPointer ( 2, GL_SHORT, 0, vertices );
+	qglDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
 }
 
 // LEILEI - Bloom Reflection
 
 
-static void ID_INLINE R_Bloom_Quad_Lens(float offsert, int width, int height, float texX, float texY, float texWidth, float texHeight) {
+static void ID_INLINE R_Bloom_Quad_Lens(int offsert, int width, int height, float texX, float texY, float texWidth, float texHeight) {
 	int x = 0;
 	int y = 0;
 	x = 0;
@@ -163,19 +163,19 @@ static void ID_INLINE R_Bloom_Quad_Lens(float offsert, int width, int height, fl
 	texWidth -= texX;
 	texHeight -= texY;
 
-	qglBegin( GL_QUADS );							
-	qglTexCoord2f(	texX,						texHeight	);	
-	qglVertex2f(	width + offsert,							height + offsert	);
-
-	qglTexCoord2f(	texX,						texY	);				
-	qglVertex2f(	width + offsert,							y	- offsert);	
-
-	qglTexCoord2f(	texWidth,					texY	);				
-	qglVertex2f(	x - offsert,						y	- offsert);	
-
-	qglTexCoord2f(	texWidth,					texHeight	);	
-	qglVertex2f(	x - offsert,						height	+ offsert);			
-	qglEnd ();
+	GLfloat texcoords[] = {	texX,						texHeight,
+							texX,						texY,
+							texWidth,					texY,
+							texWidth,					texHeight };
+	GLshort vertices [] = {	width + offsert,			height + offsert,
+							width + offsert,			y - offsert,
+							x - offsert,				y - offsert,
+							x - offsert,				height + offsert };
+	qglEnableClientState (GL_VERTEX_ARRAY);
+	qglEnableClientState (GL_TEXTURE_COORD_ARRAY);
+	qglTexCoordPointer ( 2, GL_FLOAT, 0, texcoords );
+	qglVertexPointer ( 2, GL_SHORT, 0, vertices );
+	qglDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
 }
 
 

@@ -186,6 +186,8 @@ cvar_t	*r_envMode;
 cvar_t	*r_flaresDlight;
 //cvar_t	*r_flaresSurfradii;
 
+cvar_t	*r_runningOnOuya;
+
 /*
 ** InitOpenGL
 **
@@ -283,7 +285,7 @@ void GL_CheckErrors( void ) {
 	ri.Error( ERR_FATAL, "GL_CheckErrors: %s", s );
 }
 
-
+#define R_MODE_FALLBACK 3
 /*
 ** R_GetModeInfo
 */
@@ -299,7 +301,7 @@ vidmode_t r_vidModes[] =
 	{ "Mode  0: 320x240",		320,	240,	1 },
 	{ "Mode  1: 400x300",		400,	300,	1 },
 	{ "Mode  2: 512x384",		512,	384,	1 },
-	{ "Mode  3: 640x480",		640,	480,	1 },
+	{ "Mode  3: device native",	800,	480,	1 },
 	{ "Mode  4: 800x600",		800,	600,	1 },
 	{ "Mode  5: 960x720",		960,	720,	1 },
 	{ "Mode  6: 1024x768",		1024,	768,	1 },
@@ -337,6 +339,11 @@ qboolean R_GetModeInfo( int *width, int *height, float *windowAspect, int mode )
 	*windowAspect = (float)*width / ( *height * pixelAspect );
 
 	return qtrue;
+}
+
+void R_SetNativeModeInfo( int width, int height ) {
+	r_vidModes[R_MODE_FALLBACK].width = width;
+	r_vidModes[R_MODE_FALLBACK].height = height;
 }
 
 /*
@@ -861,7 +868,7 @@ const void *RB_TakeVideoFrameCmd( const void *data )
 */
 void GL_SetDefaultState( void )
 {
-	qglClearDepth( 1.0f );
+	//qglClearDepth( 1.0f );
 
 	qglCullFace(GL_FRONT);
 
@@ -893,7 +900,7 @@ void GL_SetDefaultState( void )
 	//
 	glState.glStateBits = GLS_DEPTHTEST_DISABLE | GLS_DEPTHMASK_TRUE;
 
-	qglPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+	//qglPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 	qglDepthMask( GL_TRUE );
 	qglDisable( GL_DEPTH_TEST );
 	qglEnable( GL_SCISSOR_TEST );
@@ -1162,6 +1169,8 @@ void R_Register( void )
 	r_lensReflection1 = ri.Cvar_Get( "r_lensReflection1", "1" , CVAR_ARCHIVE);	// sharp reflection
 	r_lensReflection2 = ri.Cvar_Get( "r_lensReflection2", "0" , CVAR_ARCHIVE); // fuzzy reflection
 	r_lensReflectionBrightness = ri.Cvar_Get( "r_lensReflectionBrightness", "0.5" , CVAR_ARCHIVE);
+
+	r_runningOnOuya = ri.Cvar_Get( "cl_runningOnOuya", "0", 0);
 
 	// make sure all the commands added here are also
 	// removed in R_Shutdown

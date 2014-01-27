@@ -1821,11 +1821,7 @@ $(B)/renderer_openarena1_smp_$(SHLIBNAME): $(Q3ROAOBJ) $(Q3POBJ_SMP) $(JPGOBJ)
 		$(THREAD_LIBS) $(LIBSDLMAIN) $(RENDERER_LIBS) $(LIBS)
 
 else
-ifeq ($(USE_GLES),1)
-RENDERER_OBJ := $(Q3ROBJ)
-else
 RENDERER_OBJ := $(Q3ROAOBJ)
-endif
 
 $(B)/$(CLIENTBIN)$(FULLBINEXT): $(Q3OBJ) $(RENDERER_OBJ) $(Q3POBJ) $(JPGOBJ) $(LIBSDLMAIN)
 	$(echo_cmd) "LD $@"

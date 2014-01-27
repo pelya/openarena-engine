@@ -1287,6 +1287,8 @@ extern	cvar_t	*r_specMode;
 extern	cvar_t	*r_flaresDlight;
 //extern	cvar_t	*r_flaresSurfradii;
 
+extern cvar_t	*r_runningOnOuya;
+
 //====================================================================
 
 float R_NoiseGet4f( float x, float y, float z, float t );
@@ -1390,6 +1392,7 @@ image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicm
 image_t		*R_CreateImage( const char *name, const byte *pic, int width, int height, qboolean mipmap
 					, qboolean allowPicmip, int wrapClampMode );
 qboolean	R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
+void		R_SetNativeModeInfo( int width, int height );
 
 void		R_SetColorMappings( void );
 void		R_GammaCorrect( byte *buffer, int bufSize );

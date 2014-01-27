@@ -263,6 +263,8 @@ RB_TestFlare
 ==================
 */
 void RB_TestFlare( flare_t *f ) {
+// No flares on GLES
+#ifndef GL_VERSION_ES_CM_1_0
 	float			depth;
 	qboolean		visible;
 	float			fade;
@@ -310,6 +312,9 @@ void RB_TestFlare( flare_t *f ) {
 	}
 
 	f->drawIntensity = fade;
+#else
+	f->drawIntensity = 0;
+#endif
 }
 
 

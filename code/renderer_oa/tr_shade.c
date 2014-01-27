@@ -88,8 +88,10 @@ R_ArrayElementDiscrete
 This is just for OpenGL conformance testing, it should never be the fastest
 ================
 */
+#ifndef GL_VERSION_ES_CM_1_0
 static void APIENTRY R_ArrayElementDiscrete( GLint index ) {
-	qglColor4ubv( tess.svars.colors[ index ] );
+	qglColor4ub( tess.svars.colors[ index ][0], tess.svars.colors[ index ][1],
+					tess.svars.colors[ index ][2], tess.svars.colors[ index ][3] );
 	if ( glState.currenttmu ) {
 		qglMultiTexCoord2fARB( 0, tess.svars.texcoords[ 0 ][ index ][0], tess.svars.texcoords[ 0 ][ index ][1] );
 		qglMultiTexCoord2fARB( 1, tess.svars.texcoords[ 1 ][ index ][0], tess.svars.texcoords[ 1 ][ index ][1] );
@@ -98,7 +100,6 @@ static void APIENTRY R_ArrayElementDiscrete( GLint index ) {
 	}
 	qglVertex3fv( tess.xyz[ index ] );
 }
-
 /*
 ===================
 R_DrawStripElements
@@ -199,8 +200,7 @@ static void R_DrawStripElements( int numIndexes, const glIndex_t *indexes, void 
 
 	qglEnd();
 }
-
-
+#endif
 
 /*
 ==================
@@ -211,9 +211,22 @@ instead of using the single glDrawElements call that may be inefficient
 without compiled vertex arrays.
 ==================
 */
+static GLushort indexes_short[SHADER_MAX_INDEXES];
 static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
+#ifdef GL_VERSION_ES_CM_1_0
+	int i;
+	//Com_Printf("R_DrawElements(): r_primitives %d numIndexes %d\n", r_primitives->integer, numIndexes);
+	if ( r_primitives->integer != 2 && r_primitives->integer != 0 ) {
+		Com_Printf("Error: R_DrawElements() not implemented on GLES for r_primitives != 2 (r_primitives %d)\n", r_primitives->integer);
+		return;
+	}
+	
+	// GLES does not support GL_UNSIGNED_INT for glDrawElements, so we'll convert values on the fly - this is SLOW, as you may imagine.
+	for (i = 0; i < numIndexes; i++)
+		indexes_short[i] = indexes[i];
+	qglDrawElements(GL_TRIANGLES, numIndexes, GL_UNSIGNED_SHORT, indexes_short);
+#else
 	int		primitives;
-
 	primitives = r_primitives->integer;
 
 	// default is to use triangles if compiled vertex arrays are present
@@ -243,7 +256,7 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 		R_DrawStripElements( numIndexes,  indexes, R_ArrayElementDiscrete );
 		return;
 	}
-
+#endif
 	// anything else will cause no drawing
 }
 
@@ -337,6 +350,9 @@ static void DrawNormals (shaderCommands_t *input) {
 	int		i;
 	vec3_t	temp;
 
+#ifdef GL_VERSION_ES_CM_1_0
+	Com_Printf("Error: DrawNormals() not implemented on GLES\n");
+#else
 	GL_Bind( tr.whiteImage );
 	qglColor3f (1,1,1);
 	qglDepthRange( 0, 0 );	// never occluded
@@ -351,6 +367,7 @@ static void DrawNormals (shaderCommands_t *input) {
 	qglEnd ();
 
 	qglDepthRange( 0, 1 );
+#endif
 }
 
 /*
@@ -402,9 +419,11 @@ static void DrawMultitextured( shaderCommands_t *input, int stage ) {
 
 	// this is an ugly hack to work around a GeForce driver
 	// bug with multitexture and clip planes
+#ifndef GL_VERSION_ES_CM_1_0
 	if ( backEnd.viewParms.isPortal ) {
 		qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 	}
+#endif
 
 	//
 	// base
@@ -1475,11 +1494,13 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 
 		// odin's patch adapted
 		if ( r_envMode->integer == 2) {
+#ifndef GL_VERSION_ES_CM_1_0
 			if ( pStage->bundle[0].tcGen == TCGEN_ENVIRONMENT_MAPPED ) {
 				qglDisable(GL_TEXTURE_GEN_S);
 				qglDisable(GL_TEXTURE_GEN_T);
 				qglDisable(GL_TEXTURE_GEN_R);
 			}
+#endif
 		}
 		}
 
@@ -1577,12 +1598,16 @@ void RB_StageIteratorGeneric( void )
 	// 
 	// now do any dynamic lighting needed
 	//
+#ifndef GL_VERSION_ES_CM_1_0
 	if (vertexShaders) qglPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+#endif
 	if ( tess.dlightBits && tess.shader->sort <= SS_OPAQUE
 		&& !(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY) ) ) {
 		ProjectDlightTexture();
 	}
+#ifndef GL_VERSION_ES_CM_1_0
 	if (vertexShaders) qglPopClientAttrib();
+#endif
 
 	//
 	// now do fog
