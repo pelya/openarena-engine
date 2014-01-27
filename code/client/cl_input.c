@@ -54,7 +54,7 @@ kbutton_t	in_up, in_down;
 static short in_androidCameraYawSpeed, in_androidCameraPitchSpeed, in_androidCameraMultitouchYawSpeed, in_androidWeaponSelectionBarActive;
 static short in_swipeActivated, in_joystickJumpTriggerTime, in_attackButtonReleased, in_mouseSwipingActive, in_multitouchActive;
 static int in_mouseX, in_mouseY, in_multitouchX, in_multitouchY, in_tapMouseX, in_tapMouseY, in_swipeTime;
-static float in_swipeAngleRotate;
+static float in_swipeAngleRotate, in_swipeAngleRotatePitch;
 static qboolean in_railgunZoomActive;
 static qboolean in_deferShooting;
 static const float in_swipeSpeed = 0.2f;
@@ -284,6 +284,12 @@ void IN_Button0Down(void)
 			if ( k != K_MOUSE1 )
 				IN_KeyDown(&in_buttons[0]);
 			else {
+				in_mouseSwipingActive = 1;
+				if ( cg_touchscreenControls->integer != TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
+					in_swipeTime = 0;
+					in_swipeAngleRotate = cl.viewangles[YAW];
+					in_swipeActivated = 0;
+				}
 				if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ||
 					 cg_touchscreenControls->integer == TOUCHSCREEN_AIM_UNDER_FINGER ) {
 					int tapArea = TOUCHSCREEN_TAP_AREA / 2;
@@ -316,15 +322,12 @@ void IN_Button0Down(void)
 							cl.viewangles[PITCH] += pitch;
 						}
 					} else {
-						cl.viewangles[YAW] += yaw;
-						cl.viewangles[PITCH] += pitch;
+						//cl.viewangles[YAW] += yaw;
+						//cl.viewangles[PITCH] += pitch;
+						in_swipeActivated = 1;
+						in_swipeAngleRotate = yaw;
+						in_swipeAngleRotatePitch = pitch;
 					}
-				}
-				in_mouseSwipingActive = 1;
-				if ( cg_touchscreenControls->integer != TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
-					in_swipeTime = 0;
-					in_swipeAngleRotate = cl.viewangles[YAW];
-					in_swipeActivated = 0;
 				}
 			}
 		}
@@ -348,10 +351,12 @@ void IN_Button0Up(void)
 			float angleDiff = AngleSubtract( cl.viewangles[YAW], in_swipeAngleRotate ); // It will normalize the resulting angle
 			in_mouseSwipingActive = 0;
 			if ( in_swipeTime < 300 && fabs(angleDiff) > in_swipeSensitivity->value && in_swipeAngle->value &&
-				 cg_touchscreenControls->integer != TOUCHSCREEN_SHOOT_UNDER_FINGER ) {
+				 cg_touchscreenControls->integer != TOUCHSCREEN_SHOOT_UNDER_FINGER &&
+				 cg_touchscreenControls->integer != TOUCHSCREEN_AIM_UNDER_FINGER ) {
 				in_swipeAngleRotate = angleDiff > 0 ? in_swipeAngle->value - angleDiff : -in_swipeAngle->value - angleDiff;
 				in_swipeActivated = 1;
 			}
+
 			if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ||
 				 cg_touchscreenControls->integer == TOUCHSCREEN_AIM_UNDER_FINGER ) {
 				int weaponX = in_mouseX * 640 / cls.glconfig.vidWidth;
@@ -499,14 +504,27 @@ void CL_AdjustAngles( void ) {
 	// Swipe touchscreen gesture
 	if ( in_swipeActivated ) {
 		float diff = cls.unscaledFrametime * in_swipeSpeed * ( ( in_swipeAngleRotate > 0 ) ? 1 : -1 );
+		float diffPitch = cls.unscaledFrametime * in_swipeSpeed * ( ( in_swipeAngleRotatePitch > 0 ) ? 1 : -1 );
+
 		if ( fabs( in_swipeAngleRotate ) <= fabs( diff ) ) {
 			diff = in_swipeAngleRotate;
-			in_swipeActivated = 0;
 			in_swipeAngleRotate = 0;
 		} else {
 			in_swipeAngleRotate -= diff;
 		}
+
+		if ( fabs( in_swipeAngleRotatePitch ) <= fabs( diffPitch ) ) {
+			diffPitch = in_swipeAngleRotatePitch;
+			in_swipeAngleRotatePitch = 0;
+		} else {
+			in_swipeAngleRotatePitch -= diffPitch;
+		}
+
+		if ( in_swipeAngleRotate == 0 && in_swipeAngleRotatePitch == 0 )
+			in_swipeActivated = 0;
+
 		cl.viewangles[YAW] += diff;
+		cl.viewangles[PITCH] += diffPitch;
 	}
 	in_swipeTime += cls.unscaledFrametime;
 }
