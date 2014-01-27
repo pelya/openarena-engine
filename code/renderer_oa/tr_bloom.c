@@ -229,11 +229,13 @@ static void R_Bloom_InitTextures( void )
 	// LEILEI
 	// Disable bloom if we can't get a 32-bit texture
 	// disable blooms if we can't handle a texture of that size
+#ifndef GL_VERSION_ES_CM_1_0
 	if( r_texturebits->integer < 32	) {
 		ri.Cvar_Set( "r_bloom", "0" );
 		Com_Printf( S_COLOR_YELLOW"WARNING: 'R_InitBloomTextures' no support for 32-bit textures, effect disabled\n" );
 		return;
 	}
+#endif
 
 	data = ri.Hunk_AllocateTempMemory( bloom.screen.width * bloom.screen.height * 4 );
 	Com_Memset( data, 0, bloom.screen.width * bloom.screen.height * 4 );

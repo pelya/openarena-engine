@@ -592,6 +592,9 @@ static void GLimp_InitExtensions( void )
 
 
 	// GL_EXT_texture_env_add
+#ifdef GL_VERSION_ES_CM_1_0
+	glConfig.textureEnvAddAvailable = qtrue;
+#else
 	glConfig.textureEnvAddAvailable = qfalse;
 	if ( GLimp_HaveExtension( "EXT_texture_env_add" ) )
 	{
@@ -610,6 +613,7 @@ static void GLimp_InitExtensions( void )
 	{
 		ri.Printf( PRINT_ALL, "...GL_EXT_texture_env_add not found\n" );
 	}
+#endif
 
 	// GL_ARB_multitexture
 #ifndef GL_VERSION_ES_CM_1_0
