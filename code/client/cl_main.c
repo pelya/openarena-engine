@@ -3567,7 +3567,7 @@ void CL_Init( void ) {
 	in_swipeFreeCrosshairOffset = Cvar_Get ("in_swipeFreeCrosshairOffset", "1", CVAR_ARCHIVE);
 	in_swipeFreeStickyEdges = Cvar_Get ("in_swipeFreeStickyEdges", "1", CVAR_ARCHIVE);
 	in_swapGamepadSticks = Cvar_Get ("in_swapGamepadSticks", "0", CVAR_ARCHIVE);
-	cg_thirdPerson = Cvar_Get ("cg_thirdPerson", "1", 0);
+	cg_thirdPerson = Cvar_Get ("cg_thirdPerson", "0", 0);
 
 	cl_serverlistGamename = Cvar_Get ("cl_serverlistGamename", GAMENAME_FOR_MASTER, CVAR_ARCHIVE);
 
