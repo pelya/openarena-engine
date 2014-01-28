@@ -1114,7 +1114,7 @@ usercmd_t CL_CreateCmd( void ) {
 
 	if ( ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR || cg_thirdPerson->integer ) &&
 		 cgvm && cl_touchscreenVmCallbacks->integer ) {
-		if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR && cl.viewangles[PITCH] < -90.0f )
+		if ( cg_thirdPerson->integer && cl.viewangles[PITCH] < -90.0f )
 			cl.viewangles[PITCH] = -90.0f;
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000) );
 	} else {
