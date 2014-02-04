@@ -819,6 +819,9 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 					in_swipeAngleRotate -= 360.0f;
 			}
 			angle -= 90.0f;
+			if ( cl_touchscreenVmCallbacks->integer && (
+				 cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR || cg_thirdPerson->integer ) )
+				angle += cl.viewangles[YAW] - SHORT2ANGLE( cl.snap.ps.delta_angles[YAW] ) - cl.aimingangles[YAW];
 			angle = DEG2RAD( angle );
 
 			cmd->forwardmove = ClampChar( cmd->forwardmove + sin( angle ) * 127.0f );
