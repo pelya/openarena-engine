@@ -263,6 +263,10 @@ static int GLimp_SetMode(int mode, qboolean fullscreen, qboolean noborder)
 
 	ri.Printf (PRINT_ALL, "...setting mode %d:", mode );
 
+#ifdef __ANDROID__
+	mode = -2; // Always use desktop resolution on Android
+#endif
+
 	if (mode == -2)
 	{
 		// use desktop video resolution
