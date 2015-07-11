@@ -731,22 +731,20 @@ void Message_Key( int key ) {
 
 	if ( key == K_ENTER || key == K_KP_ENTER )
 	{
-		if ( chatField.buffer[0] && clc.state == CA_ACTIVE ) {
+		if ( chatField.buffer[0] == '/' || chatField.buffer[0] == '\\' ) {
+			// Console command
+			Cbuf_AddText(chatField.buffer + 1);
+			//Cbuf_AddText("\n");
+		} else if ( chatField.buffer[0] && clc.state == CA_ACTIVE ) {
 			if (chat_playerNum != -1 )
-
 				Com_sprintf( buffer, sizeof( buffer ), "tell %i \"%s\"\n", chat_playerNum, chatField.buffer );
-
 			else if (chat_team)
-
 				Com_sprintf( buffer, sizeof( buffer ), "say_team \"%s\"\n", chatField.buffer );
 			else
 				Com_sprintf( buffer, sizeof( buffer ), "say \"%s\"\n", chatField.buffer );
 
-
-
 			CL_AddReliableCommand(buffer, qfalse);
-		}
-		if ( !chatField.buffer[0] && clc.state == CA_ACTIVE ) {
+		} else if ( !chatField.buffer[0] && clc.state == CA_ACTIVE ) {
 			Cbuf_AddText("gesture\n");
 		}
 		Key_SetCatcher( Key_GetCatcher( ) & ~KEYCATCH_MESSAGE );
