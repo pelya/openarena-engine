@@ -734,7 +734,7 @@ void Message_Key( int key ) {
 		if ( chatField.buffer[0] == '/' || chatField.buffer[0] == '\\' ) {
 			// Console command
 			Cbuf_AddText(chatField.buffer + 1);
-			//Cbuf_AddText("\n");
+			Cbuf_AddText("\n");
 		} else if ( chatField.buffer[0] && clc.state == CA_ACTIVE ) {
 			if (chat_playerNum != -1 )
 				Com_sprintf( buffer, sizeof( buffer ), "tell %i \"%s\"\n", chat_playerNum, chatField.buffer );
