@@ -799,7 +799,7 @@ CL_JoystickMove
 void CL_JoystickMove( usercmd_t *cmd ) {
 #ifdef __ANDROID__
 
-	static int oldRightMove = 0, oldForwardMove = 0, oldJump = 0;
+	static int oldRightMove = 0, oldForwardMove = 0, oldJump = 0, jumpFadeout = 0;
 	float angle;
 
 	if ( cl.joystickAxis[JOY_AXIS_SCREENJOY_X] == 0 && cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] == 0 ) {
@@ -831,9 +831,15 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 	} else {
 		if ( in_joystickJumpTriggerTime > 0 && in_joystickJumpTriggerTime < j_androidJoystickJumpTime->integer ) {
 			oldJump = 127;
+			jumpFadeout = j_androidJoystickJumpTime->integer;
 		}
 		cmd->upmove = ClampChar( cmd->upmove + oldJump );
 		in_joystickJumpTriggerTime = j_androidJoystickJumpTime->integer;
+		if ( oldJump ) {
+			jumpFadeout -= cls.unscaledFrametime;
+			if (jumpFadeout < 0)
+				oldJump = 0;
+		}
 
 		angle = RAD2DEG( atan2( cl.joystickAxis[JOY_AXIS_SCREENJOY_X], cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] ) );
 		if( !in_swipeActivated && (
