@@ -120,6 +120,7 @@ cvar_t	*in_swipeFreeStickyEdges;
 cvar_t	*cg_railgunAutoZoom;
 cvar_t	*cg_touchscreenControls;
 cvar_t	*in_swapGamepadSticks;
+cvar_t	*r_cardboardStereo;
 
 cvar_t	*cl_touchscreenVmCallbacks;
 cvar_t	*cg_weaponBarActiveWidth;
@@ -3556,6 +3557,7 @@ void CL_Init( void ) {
 	in_gyroscopeAxesSwap = Cvar_Get ("in_gyroscopeAxesSwap", "0", CVAR_ARCHIVE);
 	in_swipeAngle = Cvar_Get ("in_swipeAngle", "180", CVAR_ARCHIVE);
 	in_swipeSensitivity = Cvar_Get ("in_swipeSensitivity", "25", CVAR_ARCHIVE);
+	r_cardboardStereo = Cvar_Get ("r_cardboardStereo", "0", CVAR_ARCHIVE);
 
 	cl_touchscreenVmCallbacks = Cvar_Get ("cl_touchscreenVmCallbacks", "0", 0);
 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);

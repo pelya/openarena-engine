@@ -492,8 +492,8 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 		}
 		else
 		{
-			if(stereoFrame != STEREO_CENTER)
-				ri.Error( ERR_FATAL, "RE_BeginFrame: Stereo is disabled, but stereoFrame was %i", stereoFrame );
+			//if(stereoFrame != STEREO_CENTER)
+			//	ri.Error( ERR_FATAL, "RE_BeginFrame: Stereo is disabled, but stereoFrame was %i", stereoFrame );
 
 			if( !(cmd = R_GetCommandBuffer(sizeof(*cmd))) )
 				return;

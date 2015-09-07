@@ -470,6 +470,8 @@ extern cvar_t *cl_consoleColor[4];
 
 extern cvar_t *cl_consoleHeight;
 
+extern cvar_t *r_cardboardStereo;
+
 #ifdef USE_MUMBLE
 extern	cvar_t	*cl_useMumble;
 extern	cvar_t	*cl_mumbleScale;
