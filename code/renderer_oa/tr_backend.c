@@ -1213,7 +1213,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 
 	GLimp_EndFrame();
 
-	if (r_runningOnOuya->integer) { // || r_cardboardStereo->integer
+	if (r_runningOnOuya->integer || r_cardboardStereo->integer) {
 		qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		qglClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		qglClear(GL_COLOR_BUFFER_BIT);
