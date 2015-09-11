@@ -612,6 +612,9 @@ void SCR_UpdateScreen( void ) {
 		} else {
 			re.EndFrame( NULL, NULL );
 		}
+		if ( r_cardboardStereo->integer || cl_runningOnOuya->integer ) {
+			re.EndFrame( NULL, NULL );
+		}
 	}
 	
 	recursive = 0;

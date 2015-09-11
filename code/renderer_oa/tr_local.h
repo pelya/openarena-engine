@@ -1288,6 +1288,7 @@ extern	cvar_t	*r_flaresDlight;
 //extern	cvar_t	*r_flaresSurfradii;
 
 extern cvar_t	*r_runningOnOuya;
+extern cvar_t	*r_cardboardStereo;
 
 //====================================================================
 

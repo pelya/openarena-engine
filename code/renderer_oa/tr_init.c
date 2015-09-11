@@ -187,6 +187,7 @@ cvar_t	*r_flaresDlight;
 //cvar_t	*r_flaresSurfradii;
 
 cvar_t	*r_runningOnOuya;
+cvar_t	*r_cardboardStereo;
 
 /*
 ** InitOpenGL
@@ -1171,6 +1172,7 @@ void R_Register( void )
 	r_lensReflectionBrightness = ri.Cvar_Get( "r_lensReflectionBrightness", "0.5" , CVAR_ARCHIVE);
 
 	r_runningOnOuya = ri.Cvar_Get( "cl_runningOnOuya", "0", 0);
+	r_cardboardStereo = ri.Cvar_Get( "r_cardboardStereo", "0", 0);
 
 	// make sure all the commands added here are also
 	// removed in R_Shutdown

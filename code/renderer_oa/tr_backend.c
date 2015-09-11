@@ -776,7 +776,7 @@ void	RB_SetGL2D (void) {
 	qglScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
 	qglMatrixMode(GL_PROJECTION);
     qglLoadIdentity ();
-	if (r_runningOnOuya->value)
+	if (r_runningOnOuya->integer || r_cardboardStereo->integer)
 		qglOrtho ( - glConfig.vidWidth * OUYA_BORDER / 100, glConfig.vidWidth + glConfig.vidWidth * OUYA_BORDER / 100,
 					glConfig.vidHeight + glConfig.vidHeight * OUYA_BORDER / 100, - glConfig.vidHeight * OUYA_BORDER / 100, 0, 1);
 	else
@@ -1212,7 +1212,8 @@ const void	*RB_SwapBuffers( const void *data ) {
 	GLimp_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
 
 	GLimp_EndFrame();
-	if (r_runningOnOuya->value) {
+
+	if (r_runningOnOuya->integer) { // || r_cardboardStereo->integer
 		qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		qglClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		qglClear(GL_COLOR_BUFFER_BIT);
