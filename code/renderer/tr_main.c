@@ -483,7 +483,7 @@ void R_SetupFrustum (viewParms_t *dest, float xmin, float xmax, float ymax, floa
 		VectorScale(dest->or.axis[0], oppleg / length, dest->frustum[0].normal);
 		VectorMA(dest->frustum[0].normal, zProj / length, dest->or.axis[1], dest->frustum[0].normal);
 
-		oppleg = xmin + stereoSep;
+		oppleg = xmin - stereoSep;
 		length = sqrt(oppleg * oppleg + zProj * zProj);
 		VectorScale(dest->or.axis[0], -oppleg / length, dest->frustum[1].normal);
 		VectorMA(dest->frustum[1].normal, -zProj / length, dest->or.axis[1], dest->frustum[1].normal);
@@ -542,8 +542,8 @@ void R_SetupProjection(viewParms_t *dest, float zProj, qboolean computeFrustum)
 	
 	dest->projectionMatrix[0] = 2 * zProj / width;
 	dest->projectionMatrix[4] = 0;
-	dest->projectionMatrix[8] = (xmax + xmin + 2 * stereoSep) / width;
-	dest->projectionMatrix[12] = 2 * zProj * stereoSep / width;
+	dest->projectionMatrix[8] = (xmax + xmin /* + 2 * stereoSep */ ) / width;
+	dest->projectionMatrix[12] = 0; //2 * zProj * stereoSep / width;
 
 	dest->projectionMatrix[1] = 0;
 	dest->projectionMatrix[5] = 2 * zProj / height;
