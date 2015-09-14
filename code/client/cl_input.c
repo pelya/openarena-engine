@@ -490,10 +490,10 @@ void CL_AdjustAngles( void ) {
 			cl.viewangles[PITCH] += y * (1.0f / 16384.0f) * cl.cgameSensitivity * in_gyroscopeSensitivity->value;
 			cl.viewangles[ROLL] -= cl.gyroscope[2] * (1.0f / 16384.0f);
 		}
-		if( fabs(cl.viewangles[ROLL]) > speed * 2000.0f ) {
-			cl.viewangles[ROLL] -= ( cl.viewangles[ROLL] > 0 ) ? speed * 2000.0f : speed * -2000.0f;
-			if( fabs(cl.viewangles[ROLL]) > 8.0f )
-				cl.viewangles[ROLL] = ( cl.viewangles[ROLL] > 0 ) ? 8.0f :  -8.0f;
+		if( fabs(cl.viewangles[ROLL]) > speed * 500.0f ) {
+			cl.viewangles[ROLL] -= ( cl.viewangles[ROLL] > 0 ) ? speed * 500.0f : speed * -500.0f;
+			if( fabs(cl.viewangles[ROLL]) > 15.0f )
+				cl.viewangles[ROLL] = ( cl.viewangles[ROLL] > 0 ) ? 15.0f :  -15.0f;
 		}
 		// Clear it
 		cl.gyroscope[0] = cl.gyroscope[1] = cl.gyroscope[2] = 0;
@@ -1125,7 +1125,7 @@ usercmd_t CL_CreateCmd( void ) {
 		 cgvm && cl_touchscreenVmCallbacks->integer ) {
 		if ( cg_thirdPerson->integer && cl.viewangles[PITCH] < -90.0f )
 			cl.viewangles[PITCH] = -90.0f;
-		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000) );
+		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000), (int) (cl.viewangles[ROLL] * 1000) );
 	} else {
 		VectorCopy( cl.viewangles, cl.aimingangles );
 		cl.aimingangles[PITCH] -= SHORT2ANGLE( cl.snap.ps.delta_angles[PITCH] );
