@@ -516,6 +516,8 @@ void R_SetupProjection(viewParms_t *dest, float zProj, qboolean computeFrustum)
 	float	xmin, xmax, ymin, ymax;
 	float	width, height, stereoSep = r_stereoSeparation->value;
 
+	stereoSep = 0; // Stereo in renderer is broken, stereo functinonality is now moved to cgame.
+
 	/*
 	 * offset the view origin of the viewer for stereo rendering 
 	 * by setting the projection matrix appropriately.
