@@ -776,7 +776,12 @@ void	RB_SetGL2D (void) {
 	qglScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
 	qglMatrixMode(GL_PROJECTION);
     qglLoadIdentity ();
-	qglOrtho (0, glConfig.vidWidth, glConfig.vidHeight, 0, 0, 1);
+	if (r_cardboardStereo->integer) {
+		qglOrtho ( - glConfig.vidWidth * OUYA_BORDER / 100, glConfig.vidWidth + glConfig.vidWidth * OUYA_BORDER / 100,
+					glConfig.vidHeight + glConfig.vidHeight * OUYA_BORDER / 100, - glConfig.vidHeight * OUYA_BORDER / 100, 0, 1);
+	} else {
+		qglOrtho (0, glConfig.vidWidth, glConfig.vidHeight, 0, 0, 1);
+	}
 	qglMatrixMode(GL_MODELVIEW);
     qglLoadIdentity ();
 
@@ -1159,6 +1164,8 @@ const void *RB_ClearDepth(const void *data)
 	return (const void *)(cmd + 1);
 }
 
+extern int Key_GetCatcher( void );
+
 /*
 =============
 RB_SwapBuffers
@@ -1209,13 +1216,11 @@ const void	*RB_SwapBuffers( const void *data ) {
 
 	GLimp_EndFrame();
 
-	/*
-	if (r_cardboardStereo->integer) {
+	if (r_cardboardStereo->integer && Key_GetCatcher( ) & (KEYCATCH_UI | KEYCATCH_CONSOLE)) {
 		qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		qglClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		qglClear(GL_COLOR_BUFFER_BIT);
 	}
-	*/
 
 #ifdef __ANDROID__
 	// On-screen keyboard messes up GL state a bit
