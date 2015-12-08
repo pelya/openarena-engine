@@ -1078,12 +1078,10 @@ static void IN_ProcessEvents( void )
 						int i;
 						touchPointers[e.jball.ball].x = e.jball.xrel;
 						touchPointers[e.jball.ball].y = e.jball.yrel;
-						if (cl_runningOnOuya->integer || r_cardboardStereo->integer)
+						if (r_cardboardStereo->integer)
 						{
-							touchPointers[e.jball.ball].x = touchPointers[e.jball.ball].x * cls.glconfig.vidWidth / (cls.glconfig.vidWidth - cls.glconfig.vidWidth * OUYA_BORDER / 100 * 3 / 2) - cls.glconfig.vidWidth * OUYA_BORDER / 100;
 							if (r_cardboardStereo->integer)
 								touchPointers[e.jball.ball].x *= 2;
-							touchPointers[e.jball.ball].y = touchPointers[e.jball.ball].y * cls.glconfig.vidHeight / (cls.glconfig.vidHeight - cls.glconfig.vidHeight * OUYA_BORDER / 100 * 3 / 2) - cls.glconfig.vidHeight * OUYA_BORDER / 100;
 						}
 						if( e.jball.ball == filteredTouch[0].idx )
 							Com_QueueEvent( 0, SE_MOUSE, touchPointers[e.jball.ball].x, touchPointers[e.jball.ball].y, 0, NULL );
