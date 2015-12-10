@@ -327,6 +327,9 @@ void Con_CheckResize (void)
 	short	tbuf[CON_TEXTSIZE];
 
 	width = (SCREEN_WIDTH / BIGCHAR_WIDTH) - 2;
+	if (r_cardboardStereo && r_cardboardStereo->integer) {
+		width /= 2;
+	}
 
 	if (width == con.linewidth)
 		return;
@@ -337,7 +340,6 @@ void Con_CheckResize (void)
 		con.linewidth = width;
 		con.totallines = CON_TEXTSIZE / con.linewidth;
 		for(i=0; i<CON_TEXTSIZE; i++)
-
 			con.text[i] = (ColorIndex(COLOR_WHITE)<<8) | ' ';
 	}
 	else
@@ -358,9 +360,7 @@ void Con_CheckResize (void)
 
 		Com_Memcpy (tbuf, con.text, CON_TEXTSIZE * sizeof(short));
 		for(i=0; i<CON_TEXTSIZE; i++)
-
 			con.text[i] = (ColorIndex(COLOR_WHITE)<<8) | ' ';
-
 
 		for (i=0 ; i<numlines ; i++)
 		{
@@ -615,71 +615,78 @@ void Con_DrawNotify (void)
 	int		skip;
 	int		currentColor;
 	int		count;
+	int		xOffset = 20;
+	int		screenSide;
 
-	currentColor = 7;
-	re.SetColor( g_color_table[currentColor] );
+	for (screenSide = 0; screenSide <= r_cardboardStereo->integer; screenSide++, xOffset = SCREEN_WIDTH / 2) {
+		currentColor = 7;
+		re.SetColor( g_color_table[currentColor] );
 
-	v = cg_weaponBarActiveWidth->integer ? 60 : 0;
-	count = cg_weaponBarActiveWidth->integer ? NUM_CON_TIMES - 2 : NUM_CON_TIMES; // Actual amount of lines to print
-	for (i= con.current-NUM_CON_TIMES+1 ; i<=con.current ; i++)
-	{
-		if (i < 0)
-			continue;
-		time = con.times[i % NUM_CON_TIMES];
-		if (time == 0)
-			continue;
-		time = cls.realtime - time;
-		if (time > con_notifytime->value*1000)
-			continue;
-		text = con.text + (i % con.totallines)*con.linewidth;
-		if( i < con.current-count+1 )
-			continue;
-
-		if (cl.snap.ps.pm_type != PM_INTERMISSION && Key_GetCatcher( ) & (KEYCATCH_UI | KEYCATCH_CGAME) ) {
-			continue;
+		v = cg_weaponBarActiveWidth->integer ? 60 : 0;
+		if (r_cardboardStereo && r_cardboardStereo->integer) {
+			v += 20;
 		}
+		count = cg_weaponBarActiveWidth->integer ? NUM_CON_TIMES - 2 : NUM_CON_TIMES; // Actual amount of lines to print
+		for (i= con.current-NUM_CON_TIMES+1 ; i<=con.current ; i++)
+		{
+			if (i < 0)
+				continue;
+			time = con.times[i % NUM_CON_TIMES];
+			if (time == 0)
+				continue;
+			time = cls.realtime - time;
+			if (time > con_notifytime->value*1000)
+				continue;
+			text = con.text + (i % con.totallines)*con.linewidth;
+			if( i < con.current-count+1 )
+				continue;
 
-		for (x = 0 ; x < con.linewidth ; x++) {
-			char buf[2];
-			if ( ( text[x] & 0xff ) == ' ' ) {
+			if (cl.snap.ps.pm_type != PM_INTERMISSION && Key_GetCatcher( ) & (KEYCATCH_UI | KEYCATCH_CGAME) ) {
 				continue;
 			}
-			if ( ( (text[x]>>8) % NUMBER_OF_COLORS ) != currentColor ) {
-				currentColor = (text[x]>>8) % NUMBER_OF_COLORS;
-				re.SetColor( g_color_table[currentColor] );
+
+			for (x = 0 ; x < con.linewidth ; x++) {
+				char buf[2];
+				if ( ( text[x] & 0xff ) == ' ' ) {
+					continue;
+				}
+				if ( ( (text[x]>>8) % NUMBER_OF_COLORS ) != currentColor ) {
+					currentColor = (text[x]>>8) % NUMBER_OF_COLORS;
+					re.SetColor( g_color_table[currentColor] );
+				}
+				buf[0] = text[x] & 0xff;
+				buf[1] = 0;
+				SCR_DrawBigStringColor( xOffset + con.xadjust + (x+1)*BIGCHAR_WIDTH, v, buf, g_color_table[currentColor], qtrue );
 			}
-			buf[0] = text[x] & 0xff;
-			buf[1] = 0;
-			SCR_DrawBigStringColor( 20 /*cl_conXOffset->integer*/ + con.xadjust + (x+1)*BIGCHAR_WIDTH, v, buf, g_color_table[currentColor], qtrue );
+
+			v += BIGCHAR_HEIGHT;
 		}
 
-		v += BIGCHAR_HEIGHT;
-	}
+		re.SetColor( NULL );
 
-	re.SetColor( NULL );
+		if (Key_GetCatcher( ) & (KEYCATCH_UI | KEYCATCH_CGAME) ) {
+			return;
+		}
 
-	if (Key_GetCatcher( ) & (KEYCATCH_UI | KEYCATCH_CGAME) ) {
-		return;
-	}
-
-	// draw the chat line
-	if ( Key_GetCatcher( ) & KEYCATCH_MESSAGE )
-	{
-		if (chat_team)
+		// draw the chat line
+		if ( Key_GetCatcher( ) & KEYCATCH_MESSAGE )
 		{
-			SCR_DrawBigString (8, v, "say_team:", 1.0f, qfalse );
-			skip = 10;
-		}
-		else
-		{
-			SCR_DrawBigString (8, v, "say:", 1.0f, qfalse );
-			skip = 5;
-		}
+			if (chat_team)
+			{
+				SCR_DrawBigString (8, v, "say_team:", 1.0f, qfalse );
+				skip = 10;
+			}
+			else
+			{
+				SCR_DrawBigString (8, v, "say:", 1.0f, qfalse );
+				skip = 5;
+			}
 
-		Field_BigDraw( &chatField, skip * BIGCHAR_WIDTH, v,
-			SCREEN_WIDTH - ( skip + 1 ) * BIGCHAR_WIDTH, qtrue, qtrue );
+			Field_BigDraw( &chatField, skip * BIGCHAR_WIDTH, v,
+				SCREEN_WIDTH - ( skip + 1 ) * BIGCHAR_WIDTH, qtrue, qtrue );
 
-		v += BIGCHAR_HEIGHT;
+			v += BIGCHAR_HEIGHT;
+		}
 	}
 
 }
