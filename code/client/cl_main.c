@@ -3557,7 +3557,7 @@ void CL_Init( void ) {
 	in_gyroscopeAxesSwap = Cvar_Get ("in_gyroscopeAxesSwap", "0", CVAR_ARCHIVE);
 	in_swipeAngle = Cvar_Get ("in_swipeAngle", "180", CVAR_ARCHIVE);
 	in_swipeSensitivity = Cvar_Get ("in_swipeSensitivity", "25", CVAR_ARCHIVE);
-	r_cardboardStereo = Cvar_Get ("r_cardboardStereo", "0", CVAR_ARCHIVE);
+	r_cardboardStereo = Cvar_Get ("r_cardboardStereo", getenv("CARDBOARD_VR") ? "1" : "0", 0);
 
 	cl_touchscreenVmCallbacks = Cvar_Get ("cl_touchscreenVmCallbacks", "0", 0);
 	cg_weaponBarActiveWidth = Cvar_Get ("cg_weaponBarActiveWidth", "0", 0);
