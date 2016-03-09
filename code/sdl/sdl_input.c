@@ -1080,8 +1080,14 @@ static void IN_ProcessEvents( void )
 						touchPointers[e.jball.ball].y = e.jball.yrel;
 						if (r_cardboardStereo->integer)
 						{
-							if (r_cardboardStereo->integer)
-								touchPointers[e.jball.ball].x *= 2;
+							if( touchPointers[e.jball.ball].x < cls.glconfig.vidWidth / 2 )
+								touchPointers[e.jball.ball].x =
+									(touchPointers[e.jball.ball].x - cls.glconfig.vidWidth * 0.1f) / 0.4f;
+							else
+								touchPointers[e.jball.ball].x =
+									(touchPointers[e.jball.ball].x - cls.glconfig.vidWidth * 0.5f) / 0.4f;
+							touchPointers[e.jball.ball].y =
+								(touchPointers[e.jball.ball].y - cls.glconfig.vidHeight * 0.13f) / 0.74f;
 						}
 						if( e.jball.ball == filteredTouch[0].idx )
 							Com_QueueEvent( 0, SE_MOUSE, touchPointers[e.jball.ball].x, touchPointers[e.jball.ball].y, 0, NULL );
