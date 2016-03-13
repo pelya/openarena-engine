@@ -310,7 +310,7 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
   endif
 
   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes \
-    -pipe -DUSE_ICON
+    -pipe -DUSE_ICON -DC_ONLY=1
   CLIENT_CFLAGS += $(SDL_CFLAGS)
 
   OPTIMIZEVM = -O3 -funroll-loops -fomit-frame-pointer
@@ -1631,6 +1631,8 @@ ifneq ($(USE_INTERNAL_JPEG),0)
     $(B)/renderer/jutils.o
 endif
 
+# ASM code disabled, it generates non-PIC text relocations
+ifneq (,)
 ifeq ($(ARCH),i386)
   Q3OBJ += \
     $(B)/client/snd_mixa.o \
@@ -1659,6 +1661,7 @@ ifeq ($(ARCH),x64)
   Q3OBJ += \
     $(B)/client/snapvector.o \
     $(B)/client/ftola.o
+endif
 endif
 
 ifeq ($(USE_VOIP),1)
