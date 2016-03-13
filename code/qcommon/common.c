@@ -94,9 +94,9 @@ cvar_t	*com_basegame;
 cvar_t  *com_homepath;
 cvar_t	*com_busyWait;
 
-#if idx64 && !C_ONLY
+#if idx64
 	int (*Q_VMftol)(void);
-#elif id386 && !C_ONLY
+#elif id386
 	long (QDECL *Q_ftol)(float f);
 	int (QDECL *Q_VMftol)(void);
 	void (QDECL *Q_SnapVector)(vec3_t vec);
@@ -2585,7 +2585,7 @@ Find out whether we have SSE support for Q_ftol function
 =================
 */
 
-#if (id386 || idx64) && !C_ONLY
+#if id386 || idx64
 
 static void Com_DetectSSE(void)
 {

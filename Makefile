@@ -310,7 +310,7 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
   endif
 
   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes \
-    -pipe -DUSE_ICON -DC_ONLY=1
+    -pipe -DUSE_ICON
   CLIENT_CFLAGS += $(SDL_CFLAGS)
 
   OPTIMIZEVM = -O3 -funroll-loops -fomit-frame-pointer
@@ -834,7 +834,7 @@ else # ifeq sunos
 #############################################################################
 # SETUP AND BUILD -- GENERIC
 #############################################################################
-  BASE_CFLAGS=
+  BASE_CFLAGS=-DC_ONLY=1
   OPTIMIZE = -O3
 
   SHLIBEXT=so
@@ -1631,8 +1631,7 @@ ifneq ($(USE_INTERNAL_JPEG),0)
     $(B)/renderer/jutils.o
 endif
 
-# ASM code disabled, it generates non-PIC text relocations
-ifneq (,)
+ifeq ($(C_ONLY),)
 ifeq ($(ARCH),i386)
   Q3OBJ += \
     $(B)/client/snd_mixa.o \

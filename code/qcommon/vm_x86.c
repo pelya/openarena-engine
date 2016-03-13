@@ -1589,7 +1589,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 #else // FTOL_PTR
 			// call the library conversion function
 			EmitRexString(0x48, "BA");			// mov edx, Q_VMftol
-			EmitPtr(Q_ftol); //EmitPtr(Q_VMftol);
+			EmitPtr(Q_VMftol);
 			EmitRexString(0x48, "FF D2");			// call edx
 			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);	// mov dword ptr [edi + ebx * 4], eax
 #endif

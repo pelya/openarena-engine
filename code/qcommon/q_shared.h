@@ -432,7 +432,7 @@ extern	vec3_t	axisDefault[3];
 
 int Q_isnan(float x);
 
-#if idx64 && !C_ONLY
+#if idx64
   extern long qftolsse(float f);
   extern int qvmftolsse(void);
   extern void qsnapvectorsse(vec3_t vec);
@@ -441,7 +441,7 @@ int Q_isnan(float x);
   #define Q_SnapVector qsnapvectorsse
 
   extern int (*Q_VMftol)(void);
-#elif id386 && !C_ONLY
+#elif id386
   extern long QDECL qftolx87(float f);
   extern long QDECL qftolsse(float f);
   extern int QDECL qvmftolx87(void);
