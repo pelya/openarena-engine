@@ -565,11 +565,9 @@ Skips until a matching close brace is found.
 Internal brace depths are properly skipped.
 =================
 */
-void SkipBracedSection (char **program) {
+qboolean SkipBracedSection (char **program, int depth) {
 	char			*token;
-	int				depth;
 
-	depth = 0;
 	do {
 		token = COM_ParseExt( program, qtrue );
 		if( token[1] == 0 ) {
@@ -581,6 +579,8 @@ void SkipBracedSection (char **program) {
 			}
 		}
 	} while( depth && *program );
+
+	return ( depth == 0 );
 }
 
 /*

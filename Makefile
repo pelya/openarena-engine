@@ -1022,6 +1022,14 @@ $(echo_cmd) "REF_CC $<"
 $(Q)$(CC) $(SHLIBCFLAGS) $(CFLAGS) $(CLIENT_CFLAGS) $(OPTIMIZE)  -DTR_CONFIG_H=\"../renderer/tr_config.h\" -o $@ -c $<
 endef
 
+define DO_REF_STR
+$(echo_cmd) "REF_STR $<"
+$(Q)rm -f $@
+$(Q)echo "const char *fallbackShader_$(notdir $(basename $<)) =" >> $@
+$(Q)cat $< | sed 's/^/\"/;s/$$/\\n\"/' >> $@
+$(Q)echo ";" >> $@
+endef
+
 define DO_SMP_CC
 $(echo_cmd) "SMP_CC $<"
 $(Q)$(CC) $(SHLIBCFLAGS) $(CFLAGS) $(CLIENT_CFLAGS) $(OPTIMIZE) -DSMP -o $@ -c $<
@@ -1184,6 +1192,7 @@ makedirs:
 	@if [ ! -d $(B) ];then $(MKDIR) $(B);fi
 	@if [ ! -d $(B)/client ];then $(MKDIR) $(B)/client;fi
 	@if [ ! -d $(B)/renderer ];then $(MKDIR) $(B)/renderer;fi
+	@if [ ! -d $(B)/renderer/glsl ];then $(MKDIR) $(B)/renderer/glsl;fi
 	@if [ ! -d $(B)/renderersmp ];then $(MKDIR) $(B)/renderersmp;fi
 	@if [ ! -d $(B)/ded ];then $(MKDIR) $(B)/ded;fi
 	@if [ ! -d $(B)/$(BASEGAME) ];then $(MKDIR) $(B)/$(BASEGAME);fi
@@ -1529,7 +1538,6 @@ Q3ROBJ = \
   $(B)/renderer/tr_world.o \
   \
   $(B)/renderer/sdl_gamma.o \
-  $(B)/renderer/sdl_glimp.o \
   \
   $(B)/renderer/glsl/bokeh_fp.o \
   $(B)/renderer/glsl/bokeh_vp.o \
@@ -2343,7 +2351,7 @@ $(B)/renderer/%.o: $(JPDIR)/%.c
 $(B)/renderer/%.o: $(RDIR)/%.c
 	$(DO_REF_CC)
 
-$(B)/renderer/glsl/%.c: $(RGL2DIR)/glsl/%.glsl
+$(B)/renderer/glsl/%.c: $(RDIR)/glsl/%.glsl
 	$(DO_REF_STR)
 
 $(B)/renderer/glsl/%.o: $(B)/renderergl2/glsl/%.c
