@@ -83,7 +83,6 @@ GLvoid APIENTRY GLDSA_BindMultiTexture(GLenum texunit, GLenum target, GLuint tex
 		qglActiveTextureARB(texunit);
 		glDsaState.texunit = texunit;
 	}
-
 	qglBindTexture(target, texture);
 }
 

@@ -948,11 +948,12 @@ const void *RB_TakeVideoFrameCmd( const void *data )
 */
 void GL_SetDefaultState( void )
 {
+#ifndef USE_GLES
 	qglClearDepth( 1.0f );
+	qglColor4f (1,1,1,1);
+#endif
 
 	qglCullFace(GL_FRONT);
-
-	qglColor4f (1,1,1,1);
 
 	GL_BindNullTextures();
 	GL_BindNullFramebuffers();
@@ -981,7 +982,9 @@ void GL_SetDefaultState( void )
 	glState.currentVao = NULL;
 	glState.vertexAttribsEnabled = 0;
 
+#ifndef USE_GLES
 	qglPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+#endif
 	qglDepthMask( GL_TRUE );
 	qglDisable( GL_DEPTH_TEST );
 	qglEnable( GL_SCISSOR_TEST );

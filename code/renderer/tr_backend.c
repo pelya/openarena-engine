@@ -236,6 +236,7 @@ void GL_State( unsigned long stateBits )
 	//
 	// fill/line mode
 	//
+#ifndef USE_GLES
 	if ( diff & GLS_POLYMODE_LINE )
 	{
 		if ( stateBits & GLS_POLYMODE_LINE )
@@ -247,6 +248,7 @@ void GL_State( unsigned long stateBits )
 			qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 		}
 	}
+#endif
 
 	//
 	// depthtest
@@ -286,6 +288,7 @@ void GL_State( unsigned long stateBits )
 			glState.storedGlState &= ~GLS_ATEST_BITS;
 			glState.storedGlState |= newState;
 
+#ifndef USE_GLES
 			switch ( newState )
 			{
 			case GLS_ATEST_GT_0:
@@ -298,6 +301,7 @@ void GL_State( unsigned long stateBits )
 				qglAlphaFunc( GL_GEQUAL, 0.5f );
 				break;
 			}
+#endif
 		}
 	}
 
@@ -1245,9 +1249,9 @@ const void	*RB_DrawBuffer( const void *data ) {
 
 	if (glRefConfig.framebufferObject)
 		FBO_Bind(NULL);
-
+#ifndef USE_GLES
 	qglDrawBuffer( cmd->buffer );
-
+#endif
 	// clear screen for debugging
 	if ( r_clear->integer ) {
 		qglClearColor( 1, 0, 0.5, 1 );

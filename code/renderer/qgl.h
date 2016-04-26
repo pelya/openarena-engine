@@ -26,9 +26,35 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef __QGL_H__
 #define __QGL_H__
 
-#	include "SDL_opengl.h"
+#include "SDL_opengl.h"
 
+#ifdef USE_GLES
+extern void glDepthRangef (GLfloat n, GLfloat f);
+#define glDepthRange glDepthRangef
+#define qglActiveTextureARB glActiveTexture
+/*
+#define APIENTRYP GL_APIENTRYP
+#define APIENTRY GL_APIENTRY
+#define qglClientActiveTextureARB glClientActiveTexture
+#define GL_TEXTURE0_ARB GL_TEXTURE0
+#define GL_TEXTURE1_ARB GL_TEXTURE1
+#define GL_TEXTURE2_ARB GL_TEXTURE2
+#define GL_TEXTURE3_ARB GL_TEXTURE3
+#define GL_TEXTURE4_ARB GL_TEXTURE4
+#define GL_TEXTURE5_ARB GL_TEXTURE5
+#define GL_TEXTURE6_ARB GL_TEXTURE6
+#define GL_TEXTURE7_ARB GL_TEXTURE7
+#define glOrtho glOrthof
+#define glClipPlane glClipPlanef
+#define glColor3f(r, g, b) glColor4f(r, g, b, 1.0f)
+//#define qglMultiTexCoord2fARB(TGT, S, T) glMultiTexCoord4f(GL_TEXTURE ## TGT, S, T, 0.0f, 1.0f)
+*/
+#endif
+
+
+#ifndef USE_GLES
 extern void (APIENTRYP qglActiveTextureARB) (GLenum texture);
+#endif
 extern void (APIENTRYP qglClientActiveTextureARB) (GLenum texture);
 extern void (APIENTRYP qglMultiTexCoord2fARB) (GLenum target, GLfloat s, GLfloat t);
 
