@@ -19,8 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ===========================================================================
 */
 
-#include TR_CONFIG_H
-#include TR_LOCAL_H
+#include "tr_common.h"
 
 #include "../qcommon/puff.h"
 
@@ -541,7 +540,6 @@ static uint32_t DecompressIDATs(struct BufferedFile *BF, uint8_t **Buffer)
 	 */
 
 	DecompressedData = NULL;
-	DecompressedDataLength = 0;
 	*Buffer = DecompressedData;
 
 	CompressedData = NULL;
@@ -2276,7 +2274,7 @@ void R_LoadPNG(const char *name, byte **pic, int *width, int *height)
 		{
 			case PNG_ColourType_Grey :
 			{
-				if(!ChunkHeaderLength == 2)
+				if(ChunkHeaderLength != 2)
 				{
 					CloseBufferedFile(ThePNG);
 
@@ -2298,7 +2296,7 @@ void R_LoadPNG(const char *name, byte **pic, int *width, int *height)
 
 			case PNG_ColourType_True :
 			{
-				if(!ChunkHeaderLength == 6)
+				if(ChunkHeaderLength != 6)
 				{
 					CloseBufferedFile(ThePNG);
 

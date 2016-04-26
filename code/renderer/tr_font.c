@@ -67,16 +67,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // defined out. To pre-render new fonts you need enable the define ( BUILD_FREETYPE ) and 
 // uncheck the exclude from build check box in the FreeType2 area of the Renderer project. 
 
-#include TR_CONFIG_H
-#include TR_LOCAL_H
+
+#include "tr_common.h"
 #include "../qcommon/qcommon.h"
 
 #ifdef BUILD_FREETYPE
 #include <ft2build.h>
+#include FT_FREETYPE_H
 #include FT_ERRORS_H
 #include FT_SYSTEM_H
 #include FT_IMAGE_H
-#include FT_FREETYPE_H
 #include FT_OUTLINE_H
 
 #define _FLOOR(x)  ((x) & -64)
@@ -356,8 +356,7 @@ void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font) {
 		pointSize = 12;
 	}
 
-	// make sure the render thread is stopped
-	R_SyncRenderThread();
+	R_IssuePendingRenderCommands();
 
 	if (registeredFontCount >= MAX_FONTS) {
 		ri.Printf(PRINT_WARNING, "RE_RegisterFont: Too many fonts registered already.\n");
@@ -398,10 +397,11 @@ void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font) {
 
 //		Com_Memcpy(font, faceData, sizeof(fontInfo_t));
 		Q_strncpyz(font->name, name, sizeof(font->name));
-		for (i = GLYPH_START; i < GLYPH_END; i++) {
+		for (i = GLYPH_START; i <= GLYPH_END; i++) {
 			font->glyphs[i].glyph = RE_RegisterShaderNoMip(font->glyphs[i].shaderName);
 		}
 		Com_Memcpy(&registeredFont[registeredFontCount++], font, sizeof(fontInfo_t));
+		ri.FS_FreeFile(faceData);
 		return;
 	}
 
@@ -436,16 +436,16 @@ void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font) {
 	// make a 256x256 image buffer, once it is full, register it, clean it and keep going 
 	// until all glyphs are rendered
 
-	out = ri.Malloc(1024*1024);
+	out = ri.Malloc(256*256);
 	if (out == NULL) {
 		ri.Printf(PRINT_WARNING, "RE_RegisterFont: ri.Malloc failure during output image creation.\n");
 		return;
 	}
-	Com_Memset(out, 0, 1024*1024);
+	Com_Memset(out, 0, 256*256);
 
 	maxHeight = 0;
 
-	for (i = GLYPH_START; i < GLYPH_END; i++) {
+	for (i = GLYPH_START; i <= GLYPH_END; i++) {
 		RE_ConstructGlyphInfo(out, &xOut, &yOut, &maxHeight, face, (unsigned char)i, qtrue);
 	}
 
@@ -455,11 +455,16 @@ void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font) {
 	lastStart = i;
 	imageNumber = 0;
 
-	while ( i <= GLYPH_END ) {
+	while ( i <= GLYPH_END + 1 ) {
 
-		glyph = RE_ConstructGlyphInfo(out, &xOut, &yOut, &maxHeight, face, (unsigned char)i, qfalse);
+		if ( i == GLYPH_END + 1 ) {
+			// upload/save current image buffer
+			xOut = yOut = -1;
+		} else {
+			glyph = RE_ConstructGlyphInfo(out, &xOut, &yOut, &maxHeight, face, (unsigned char)i, qfalse);
+		}
 
-		if (xOut == -1 || yOut == -1 || i == GLYPH_END)  {
+		if (xOut == -1 || yOut == -1)  {
 			// ran out of room
 			// we need to create an image from the bitmap, set all the handles in the glyphs to this point
 			// 
@@ -493,18 +498,19 @@ void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font) {
 			}
 
 			//Com_sprintf (name, sizeof(name), "fonts/fontImage_%i_%i", imageNumber++, pointSize);
-			image = R_CreateImage(name, imageBuff, 256, 256, qfalse, qfalse, GL_CLAMP_TO_EDGE);
+			image = R_CreateImage(name, imageBuff, 256, 256, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE, 0 );
 			h = RE_RegisterShaderFromImage(name, LIGHTMAP_2D, image, qfalse);
 			for (j = lastStart; j < i; j++) {
 				font->glyphs[j].glyph = h;
 				Q_strncpyz(font->glyphs[j].shaderName, name, sizeof(font->glyphs[j].shaderName));
 			}
 			lastStart = i;
-			Com_Memset(out, 0, 1024*1024);
+			Com_Memset(out, 0, 256*256);
 			xOut = 0;
 			yOut = 0;
 			ri.Free(imageBuff);
-			i++;
+			if ( i == GLYPH_END + 1 )
+				i++;
 		} else {
 			Com_Memcpy(&font->glyphs[i], glyph, sizeof(glyphInfo_t));
 			i++;

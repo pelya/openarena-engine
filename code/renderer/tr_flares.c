@@ -21,8 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 // tr_flares.c
 
-#include TR_CONFIG_H
-#include TR_LOCAL_H
+#include "tr_local.h"
 
 /*
 =============================================================================
@@ -30,7 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 LIGHT FLARES
 
 A light flare is an effect that takes place inside the eye when bright light
-sources are visible.  The size of the flare relative to the screen is nearly
+sources are visible.  The size of the flare reletive to the screen is nearly
 constant, irrespective of distance, but the intensity should be proportional to the
 projected area of the light source.
 
@@ -89,6 +88,19 @@ int flareCoeff;
 
 /*
 ==================
+R_SetFlareCoeff
+==================
+*/
+static void R_SetFlareCoeff( void ) {
+
+	if(r_flareCoeff->value == 0.0f)
+		flareCoeff = atof(FLARE_STDCOEFF);
+	else
+		flareCoeff = r_flareCoeff->value;
+}
+
+/*
+==================
 R_ClearFlares
 ==================
 */
@@ -103,6 +115,8 @@ void R_ClearFlares( void ) {
 		r_flareStructs[i].next = r_inactiveFlares;
 		r_inactiveFlares = &r_flareStructs[i];
 	}
+
+	R_SetFlareCoeff();
 }
 
 
@@ -259,12 +273,11 @@ RB_TestFlare
 ==================
 */
 void RB_TestFlare( flare_t *f ) {
-// No flares on GLES
-#ifndef GL_VERSION_ES_CM_1_0
 	float			depth;
 	qboolean		visible;
 	float			fade;
 	float			screenZ;
+	FBO_t           *oldFbo;
 
 	backEnd.pc.c_flareTests++;
 
@@ -272,8 +285,21 @@ void RB_TestFlare( flare_t *f ) {
 	// don't bother with another sync
 	glState.finishCalled = qfalse;
 
+	// if we're doing multisample rendering, read from the correct FBO
+	oldFbo = glState.currentFBO;
+	if (tr.msaaResolveFbo)
+	{
+		FBO_Bind(tr.msaaResolveFbo);
+	}
+
 	// read back the z buffer contents
 	qglReadPixels( f->windowX, f->windowY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth );
+
+	// if we're doing multisample rendering, switch to the old FBO
+	if (tr.msaaResolveFbo)
+	{
+		FBO_Bind(oldFbo);
+	}
 
 	screenZ = backEnd.viewParms.projectionMatrix[14] / 
 		( ( 2*depth - 1 ) * backEnd.viewParms.projectionMatrix[11] - backEnd.viewParms.projectionMatrix[10] );
@@ -302,9 +328,6 @@ void RB_TestFlare( flare_t *f ) {
 	}
 
 	f->drawIntensity = fade;
-#else
-	f->drawIntensity = 0;
-#endif
 }
 
 
@@ -358,8 +381,8 @@ void RB_RenderFlare( flare_t *f ) {
 
 	VectorScale(f->color, f->drawIntensity * intensity, color);
 
-// Calculations for fogging
-	if(tr.world && f->fogNum < tr.world->numfogs)
+	// Calculations for fogging
+	if(tr.world && f->fogNum > 0 && f->fogNum < tr.world->numfogs)
 	{
 		tess.numVertexes = 1;
 		VectorCopy(f->origin, tess.xyz[0]);
@@ -376,47 +399,47 @@ void RB_RenderFlare( flare_t *f ) {
 	iColor[1] = color[1] * fogFactors[1];
 	iColor[2] = color[2] * fogFactors[2];
 	
-	RB_BeginSurface( tr.flareShader, f->fogNum );
+	RB_BeginSurface( tr.flareShader, f->fogNum, 0 );
 
 	// FIXME: use quadstamp?
 	tess.xyz[tess.numVertexes][0] = f->windowX - size;
 	tess.xyz[tess.numVertexes][1] = f->windowY - size;
 	tess.texCoords[tess.numVertexes][0][0] = 0;
 	tess.texCoords[tess.numVertexes][0][1] = 0;
-	tess.vertexColors[tess.numVertexes][0] = iColor[0];
-	tess.vertexColors[tess.numVertexes][1] = iColor[1];
-	tess.vertexColors[tess.numVertexes][2] = iColor[2];
-	tess.vertexColors[tess.numVertexes][3] = 255;
+	tess.vertexColors[tess.numVertexes][0] = iColor[0] / 255.0f;
+	tess.vertexColors[tess.numVertexes][1] = iColor[1] / 255.0f;
+	tess.vertexColors[tess.numVertexes][2] = iColor[2] / 255.0f;
+	tess.vertexColors[tess.numVertexes][3] = 1.0f;
 	tess.numVertexes++;
 
 	tess.xyz[tess.numVertexes][0] = f->windowX - size;
 	tess.xyz[tess.numVertexes][1] = f->windowY + size;
 	tess.texCoords[tess.numVertexes][0][0] = 0;
 	tess.texCoords[tess.numVertexes][0][1] = 1;
-	tess.vertexColors[tess.numVertexes][0] = iColor[0];
-	tess.vertexColors[tess.numVertexes][1] = iColor[1];
-	tess.vertexColors[tess.numVertexes][2] = iColor[2];
-	tess.vertexColors[tess.numVertexes][3] = 255;
+	tess.vertexColors[tess.numVertexes][0] = iColor[0] / 255.0f;
+	tess.vertexColors[tess.numVertexes][1] = iColor[1] / 255.0f;
+	tess.vertexColors[tess.numVertexes][2] = iColor[2] / 255.0f;
+	tess.vertexColors[tess.numVertexes][3] = 1.0f;
 	tess.numVertexes++;
 
 	tess.xyz[tess.numVertexes][0] = f->windowX + size;
 	tess.xyz[tess.numVertexes][1] = f->windowY + size;
 	tess.texCoords[tess.numVertexes][0][0] = 1;
 	tess.texCoords[tess.numVertexes][0][1] = 1;
-	tess.vertexColors[tess.numVertexes][0] = iColor[0];
-	tess.vertexColors[tess.numVertexes][1] = iColor[1];
-	tess.vertexColors[tess.numVertexes][2] = iColor[2];
-	tess.vertexColors[tess.numVertexes][3] = 255;
+	tess.vertexColors[tess.numVertexes][0] = iColor[0] / 255.0f;
+	tess.vertexColors[tess.numVertexes][1] = iColor[1] / 255.0f;
+	tess.vertexColors[tess.numVertexes][2] = iColor[2] / 255.0f;
+	tess.vertexColors[tess.numVertexes][3] = 1.0f;
 	tess.numVertexes++;
 
 	tess.xyz[tess.numVertexes][0] = f->windowX + size;
 	tess.xyz[tess.numVertexes][1] = f->windowY - size;
 	tess.texCoords[tess.numVertexes][0][0] = 1;
 	tess.texCoords[tess.numVertexes][0][1] = 0;
-	tess.vertexColors[tess.numVertexes][0] = iColor[0];
-	tess.vertexColors[tess.numVertexes][1] = iColor[1];
-	tess.vertexColors[tess.numVertexes][2] = iColor[2];
-	tess.vertexColors[tess.numVertexes][3] = 255;
+	tess.vertexColors[tess.numVertexes][0] = iColor[0] / 255.0f;
+	tess.vertexColors[tess.numVertexes][1] = iColor[1] / 255.0f;
+	tess.vertexColors[tess.numVertexes][2] = iColor[2] / 255.0f;
+	tess.vertexColors[tess.numVertexes][3] = 1.0f;
 	tess.numVertexes++;
 
 	tess.indexes[tess.numIndexes++] = 0;
@@ -449,6 +472,7 @@ void RB_RenderFlares (void) {
 	flare_t		*f;
 	flare_t		**prev;
 	qboolean	draw;
+	mat4_t    oldmodelview, oldprojection, matrix;
 
 	if ( !r_flares->integer ) {
 		return;
@@ -456,11 +480,7 @@ void RB_RenderFlares (void) {
 
 	if(r_flareCoeff->modified)
 	{
-		if(r_flareCoeff->value == 0.0f)
-			flareCoeff = atof(FLARE_STDCOEFF);
-		else
-			flareCoeff = r_flareCoeff->value;
-			
+		R_SetFlareCoeff();
 		r_flareCoeff->modified = qfalse;
 	}
 
@@ -510,14 +530,14 @@ void RB_RenderFlares (void) {
 		qglDisable (GL_CLIP_PLANE0);
 	}
 
-	qglPushMatrix();
-    qglLoadIdentity();
-	qglMatrixMode( GL_PROJECTION );
-	qglPushMatrix();
-    qglLoadIdentity();
-	qglOrtho( backEnd.viewParms.viewportX, backEnd.viewParms.viewportX + backEnd.viewParms.viewportWidth,
-			  backEnd.viewParms.viewportY, backEnd.viewParms.viewportY + backEnd.viewParms.viewportHeight,
-			  -99999, 99999 );
+	Mat4Copy(glState.projection, oldprojection);
+	Mat4Copy(glState.modelview, oldmodelview);
+	Mat4Identity(matrix);
+	GL_SetModelviewMatrix(matrix);
+	Mat4Ortho( backEnd.viewParms.viewportX, backEnd.viewParms.viewportX + backEnd.viewParms.viewportWidth,
+	               backEnd.viewParms.viewportY, backEnd.viewParms.viewportY + backEnd.viewParms.viewportHeight,
+	               -99999, 99999, matrix );
+	GL_SetProjectionMatrix(matrix);
 
 	for ( f = r_activeFlares ; f ; f = f->next ) {
 		if ( f->frameSceneNum == backEnd.viewParms.frameSceneNum
@@ -527,8 +547,11 @@ void RB_RenderFlares (void) {
 		}
 	}
 
-	qglPopMatrix();
-	qglMatrixMode( GL_MODELVIEW );
-	qglPopMatrix();
+	GL_SetProjectionMatrix(oldprojection);
+	GL_SetModelviewMatrix(oldmodelview);
 }
+
+
+
+
 

@@ -216,7 +216,6 @@ BR=$(BUILD_DIR)/release-$(PLATFORM)-$(ARCH)
 CDIR=$(MOUNT_DIR)/client
 SDIR=$(MOUNT_DIR)/server
 RDIR=$(MOUNT_DIR)/renderer
-ROADIR=$(MOUNT_DIR)/renderer_oa
 CMDIR=$(MOUNT_DIR)/qcommon
 SDLDIR=$(MOUNT_DIR)/sdl
 ASMDIR=$(MOUNT_DIR)/asm
@@ -361,7 +360,7 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
   CLIENT_LIBS=$(SDL_LIBS)
   RENDERER_LIBS = $(SDL_LIBS)
 ifeq ($(USE_GLES),1)
-  RENDERER_LIBS +=  -lGLESv1_CM
+  RENDERER_LIBS +=  -lGLESv2
 else
   RENDERER_LIBS +=  -lGL
 endif
@@ -872,10 +871,8 @@ endif
 ifneq ($(BUILD_CLIENT),0)
   ifneq ($(USE_RENDERER_DLOPEN),0)
     TARGETS += $(B)/$(CLIENTBIN)$(FULLBINEXT) $(B)/renderer_opengl1_$(SHLIBNAME)
-    TARGETS += $(B)/renderer_openarena1_$(SHLIBNAME)
     ifneq ($(BUILD_CLIENT_SMP),0)
       TARGETS += $(B)/renderer_opengl1_smp_$(SHLIBNAME)
-      TARGETS += $(B)/renderer_openarena1_smp_$(SHLIBNAME)
     endif
   else
     TARGETS += $(B)/$(CLIENTBIN)$(FULLBINEXT)
@@ -1023,11 +1020,6 @@ endef
 define DO_REF_CC
 $(echo_cmd) "REF_CC $<"
 $(Q)$(CC) $(SHLIBCFLAGS) $(CFLAGS) $(CLIENT_CFLAGS) $(OPTIMIZE)  -DTR_CONFIG_H=\"../renderer/tr_config.h\" -o $@ -c $<
-endef
-
-define DO_REF_OA_CC
-$(echo_cmd) "REF_OA_CC $<"
-$(Q)$(CC) $(SHLIBCFLAGS) $(CFLAGS) $(CLIENT_CFLAGS) $(OPTIMIZE) -DTR_CONFIG_H=\"../renderer_oa/tr_config.h\" -o $@ -c $<
 endef
 
 define DO_SMP_CC
@@ -1192,7 +1184,6 @@ makedirs:
 	@if [ ! -d $(B) ];then $(MKDIR) $(B);fi
 	@if [ ! -d $(B)/client ];then $(MKDIR) $(B)/client;fi
 	@if [ ! -d $(B)/renderer ];then $(MKDIR) $(B)/renderer;fi
-	@if [ ! -d $(B)/renderer_oa ];then $(MKDIR) $(B)/renderer_oa;fi
 	@if [ ! -d $(B)/renderersmp ];then $(MKDIR) $(B)/renderersmp;fi
 	@if [ ! -d $(B)/ded ];then $(MKDIR) $(B)/ded;fi
 	@if [ ! -d $(B)/$(BASEGAME) ];then $(MKDIR) $(B)/$(BASEGAME);fi
@@ -1498,56 +1489,26 @@ else
 	$(B)/client/con_tty.o
 endif
 
-Q3ROAOBJ = \
-  $(B)/renderer_oa/tr_animation.o \
-  $(B)/renderer_oa/tr_backend.o \
-  $(B)/renderer_oa/tr_bsp.o \
-  $(B)/renderer_oa/tr_cmds.o \
-  $(B)/renderer_oa/tr_curve.o \
-  $(B)/renderer_oa/tr_flares.o \
-  $(B)/renderer_oa/tr_font.o \
-  $(B)/renderer_oa/tr_image.o \
-  $(B)/renderer_oa/tr_image_png.o \
-  $(B)/renderer_oa/tr_image_jpg.o \
-  $(B)/renderer_oa/tr_image_bmp.o \
-  $(B)/renderer_oa/tr_image_tga.o \
-  $(B)/renderer_oa/tr_image_pcx.o \
-  $(B)/renderer_oa/tr_init.o \
-  $(B)/renderer_oa/tr_light.o \
-  $(B)/renderer_oa/tr_main.o \
-  $(B)/renderer_oa/tr_marks.o \
-  $(B)/renderer_oa/tr_mesh.o \
-  $(B)/renderer_oa/tr_model.o \
-  $(B)/renderer_oa/tr_model_iqm.o \
-  $(B)/renderer_oa/tr_noise.o \
-  $(B)/renderer_oa/tr_scene.o \
-  $(B)/renderer_oa/tr_shade.o \
-  $(B)/renderer_oa/tr_shade_calc.o \
-  $(B)/renderer_oa/tr_shader.o \
-  $(B)/renderer_oa/tr_shadows.o \
-  $(B)/renderer_oa/tr_sky.o \
-  $(B)/renderer_oa/tr_surface.o \
-  $(B)/renderer_oa/tr_world.o \
-  \
-  $(B)/renderer_oa/tr_bloom.o \
-  $(B)/renderer_oa/tr_extensions.o \
-  \
-  $(B)/renderer/sdl_gamma.o
-
 Q3ROBJ = \
   $(B)/renderer/tr_animation.o \
   $(B)/renderer/tr_backend.o \
   $(B)/renderer/tr_bsp.o \
   $(B)/renderer/tr_cmds.o \
   $(B)/renderer/tr_curve.o \
+  $(B)/renderer/tr_dsa.o \
+  $(B)/renderer/tr_extramath.o \
+  $(B)/renderer/tr_extensions.o \
+  $(B)/renderer/tr_fbo.o \
   $(B)/renderer/tr_flares.o \
   $(B)/renderer/tr_font.o \
+  $(B)/renderer/tr_glsl.o \
   $(B)/renderer/tr_image.o \
-  $(B)/renderer/tr_image_png.o \
-  $(B)/renderer/tr_image_jpg.o \
   $(B)/renderer/tr_image_bmp.o \
-  $(B)/renderer/tr_image_tga.o \
+  $(B)/renderer/tr_image_jpg.o \
   $(B)/renderer/tr_image_pcx.o \
+  $(B)/renderer/tr_image_png.o \
+  $(B)/renderer/tr_image_tga.o \
+  $(B)/renderer/tr_image_dds.o \
   $(B)/renderer/tr_init.o \
   $(B)/renderer/tr_light.o \
   $(B)/renderer/tr_main.o \
@@ -1556,6 +1517,7 @@ Q3ROBJ = \
   $(B)/renderer/tr_model.o \
   $(B)/renderer/tr_model_iqm.o \
   $(B)/renderer/tr_noise.o \
+  $(B)/renderer/tr_postprocess.o \
   $(B)/renderer/tr_scene.o \
   $(B)/renderer/tr_shade.o \
   $(B)/renderer/tr_shade_calc.o \
@@ -1563,23 +1525,40 @@ Q3ROBJ = \
   $(B)/renderer/tr_shadows.o \
   $(B)/renderer/tr_sky.o \
   $(B)/renderer/tr_surface.o \
+  $(B)/renderer/tr_vbo.o \
   $(B)/renderer/tr_world.o \
   \
-  $(B)/renderer/sdl_gamma.o
-  
-ifneq ($(USE_RENDERER_DLOPEN), 0)
-  Q3ROBJ += \
-    $(B)/renderer/q_shared.o \
-    $(B)/renderer/puff.o \
-    $(B)/renderer/q_math.o \
-    $(B)/renderer/tr_subs.o
-
-  Q3ROAOBJ += \
-    $(B)/renderer/q_shared.o \
-    $(B)/renderer/puff.o \
-    $(B)/renderer/q_math.o \
-    $(B)/renderer/tr_subs.o
-endif
+  $(B)/renderer/sdl_gamma.o \
+  $(B)/renderer/sdl_glimp.o \
+  \
+  $(B)/renderer/glsl/bokeh_fp.o \
+  $(B)/renderer/glsl/bokeh_vp.o \
+  $(B)/renderer/glsl/calclevels4x_fp.o \
+  $(B)/renderer/glsl/calclevels4x_vp.o \
+  $(B)/renderer/glsl/depthblur_fp.o \
+  $(B)/renderer/glsl/depthblur_vp.o \
+  $(B)/renderer/glsl/dlight_fp.o \
+  $(B)/renderer/glsl/dlight_vp.o \
+  $(B)/renderer/glsl/down4x_fp.o \
+  $(B)/renderer/glsl/down4x_vp.o \
+  $(B)/renderer/glsl/fogpass_fp.o \
+  $(B)/renderer/glsl/fogpass_vp.o \
+  $(B)/renderer/glsl/generic_fp.o \
+  $(B)/renderer/glsl/generic_vp.o \
+  $(B)/renderer/glsl/lightall_fp.o \
+  $(B)/renderer/glsl/lightall_vp.o \
+  $(B)/renderer/glsl/pshadow_fp.o \
+  $(B)/renderer/glsl/pshadow_vp.o \
+  $(B)/renderer/glsl/shadowfill_fp.o \
+  $(B)/renderer/glsl/shadowfill_vp.o \
+  $(B)/renderer/glsl/shadowmask_fp.o \
+  $(B)/renderer/glsl/shadowmask_vp.o \
+  $(B)/renderer/glsl/ssao_fp.o \
+  $(B)/renderer/glsl/ssao_vp.o \
+  $(B)/renderer/glsl/texturecolor_fp.o \
+  $(B)/renderer/glsl/texturecolor_vp.o \
+  $(B)/renderer/glsl/tonemap_fp.o \
+  $(B)/renderer/glsl/tonemap_vp.o
 
 ifneq ($(USE_INTERNAL_JPEG),0)
   JPGOBJ += \
@@ -1812,18 +1791,8 @@ $(B)/renderer_opengl1_smp_$(SHLIBNAME): $(Q3ROBJ) $(Q3POBJ_SMP) $(JPGOBJ)
 	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3ROBJ) $(Q3POBJ_SMP) $(JPGOBJ) \
 		$(THREAD_LIBS) $(LIBSDLMAIN) $(RENDERER_LIBS) $(LIBS)
 
-$(B)/renderer_openarena1_$(SHLIBNAME): $(Q3ROAOBJ) $(Q3POBJ) $(JPGOBJ)
-	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3ROAOBJ) $(Q3POBJ) $(JPGOBJ) \
-		$(THREAD_LIBS) $(LIBSDLMAIN) $(RENDERER_LIBS) $(LIBS)
-
-$(B)/renderer_openarena1_smp_$(SHLIBNAME): $(Q3ROAOBJ) $(Q3POBJ_SMP) $(JPGOBJ)
-	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3ROAOBJ) $(Q3POBJ_SMP) $(JPGOBJ) \
-		$(THREAD_LIBS) $(LIBSDLMAIN) $(RENDERER_LIBS) $(LIBS)
-
 else
-RENDERER_OBJ := $(Q3ROAOBJ)
+RENDERER_OBJ := $(Q3ROBJ)
 
 $(B)/$(CLIENTBIN)$(FULLBINEXT): $(Q3OBJ) $(RENDERER_OBJ) $(Q3POBJ) $(JPGOBJ) $(LIBSDLMAIN)
 	$(echo_cmd) "LD $@"
@@ -2374,14 +2343,11 @@ $(B)/renderer/%.o: $(JPDIR)/%.c
 $(B)/renderer/%.o: $(RDIR)/%.c
 	$(DO_REF_CC)
 
+$(B)/renderer/glsl/%.c: $(RGL2DIR)/glsl/%.glsl
+	$(DO_REF_STR)
 
-# Make sure you list the OA version before Q3.
-# If it exists, the OA version will be used instead of Q3.
-$(B)/renderer_oa/%.o: $(ROADIR)/%.c
-	$(DO_REF_OA_CC)
-
-$(B)/renderer_oa/%.o: $(RDIR)/%.c
-	$(DO_REF_OA_CC)
+$(B)/renderer/glsl/%.o: $(B)/renderergl2/glsl/%.c
+	$(DO_REF_CC)
 
 
 $(B)/ded/%.o: $(ASMDIR)/%.s
@@ -2507,7 +2473,7 @@ $(B)/$(MISSIONPACK)/qcommon/%.asm: $(CMDIR)/%.c $(Q3LCC)
 # MISC
 #############################################################################
 
-OBJ = $(Q3OBJ) $(Q3POBJ) $(Q3POBJ_SMP) $(Q3ROBJ) $(Q3ROAOBJ) $(Q3DOBJ) $(JPGOBJ) \
+OBJ = $(Q3OBJ) $(Q3POBJ) $(Q3POBJ_SMP) $(Q3ROBJ) $(Q3DOBJ) $(JPGOBJ) \
   $(MPGOBJ) $(Q3GOBJ) $(Q3CGOBJ) $(MPCGOBJ) $(Q3UIOBJ) $(MPUIOBJ) \
   $(MPGVMOBJ) $(Q3GVMOBJ) $(Q3CGVMOBJ) $(MPCGVMOBJ) $(Q3UIVMOBJ) $(MPUIVMOBJ)
 TOOLSOBJ = $(LBURGOBJ) $(Q3CPPOBJ) $(Q3RCCOBJ) $(Q3LCCOBJ) $(Q3ASMOBJ)
@@ -2528,7 +2494,6 @@ ifneq ($(BUILD_CLIENT),0)
 	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/$(CLIENTBIN)$(FULLBINEXT) $(COPYBINDIR)/$(CLIENTBIN)$(FULLBINEXT)
   ifneq ($(USE_RENDERER_DLOPEN),0)
 	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/renderer_opengl1_$(SHLIBNAME) $(COPYBINDIR)/renderer_opengl1_$(SHLIBNAME)
-	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/renderer_openarena1_$(SHLIBNAME) $(COPYBINDIR)/renderer_openarena1_$(SHLIBNAME)
   endif
 endif
 
@@ -2536,7 +2501,6 @@ endif
 ifneq ($(BUILD_CLIENT_SMP),0)
   ifneq ($(USE_RENDERER_DLOPEN),0)
 	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/renderer_opengl1_smp_$(SHLIBNAME) $(COPYBINDIR)/renderer_opengl1_smp_$(SHLIBNAME)
-	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/renderer_openarena1_smp_$(SHLIBNAME) $(COPYBINDIR)/renderer_openarena1_smp_$(SHLIBNAME)
   else
 	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/$(CLIENTBIN)-smp$(FULLBINEXT) $(COPYBINDIR)/$(CLIENTBIN)-smp$(FULLBINEXT)
   endif

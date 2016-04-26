@@ -21,9 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 // tr_marks.c -- polygon projection on the world polygons
 
-#include TR_CONFIG_H
-#include TR_LOCAL_H
-
+#include "tr_local.h"
 //#include "assert.h"
 
 #define MAX_VERTS_ON_POLY		64
@@ -43,8 +41,8 @@ Out must have space for two more vertexes than in
 static void R_ChopPolyBehindPlane( int numInPoints, vec3_t inPoints[MAX_VERTS_ON_POLY],
 								   int *numOutPoints, vec3_t outPoints[MAX_VERTS_ON_POLY], 
 							vec3_t normal, vec_t dist, vec_t epsilon) {
-	float		dists[MAX_VERTS_ON_POLY+4];
-	int			sides[MAX_VERTS_ON_POLY+4];
+	float		dists[MAX_VERTS_ON_POLY+4] = { 0 };
+	int			sides[MAX_VERTS_ON_POLY+4] = { 0 };
 	int			counts[3];
 	float		dot;
 	int			i, j;
@@ -136,7 +134,8 @@ R_BoxSurfaces_r
 void R_BoxSurfaces_r(mnode_t *node, vec3_t mins, vec3_t maxs, surfaceType_t **list, int listsize, int *listlength, vec3_t dir) {
 
 	int			s, c;
-	msurface_t	*surf, **mark;
+	msurface_t	*surf;
+	int *mark;
 
 	// do the tail recursion in a loop
 	while ( node->contents == -1 ) {
@@ -152,37 +151,39 @@ void R_BoxSurfaces_r(mnode_t *node, vec3_t mins, vec3_t maxs, surfaceType_t **li
 	}
 
 	// add the individual surfaces
-	mark = node->firstmarksurface;
+	mark = tr.world->marksurfaces + node->firstmarksurface;
 	c = node->nummarksurfaces;
 	while (c--) {
+		int *surfViewCount;
 		//
 		if (*listlength >= listsize) break;
 		//
-		surf = *mark;
+		surfViewCount = &tr.world->surfacesViewCount[*mark];
+		surf = tr.world->surfaces + *mark;
 		// check if the surface has NOIMPACT or NOMARKS set
 		if ( ( surf->shader->surfaceFlags & ( SURF_NOIMPACT | SURF_NOMARKS ) )
 			|| ( surf->shader->contentFlags & CONTENTS_FOG ) ) {
-			surf->viewCount = tr.viewCount;
+			*surfViewCount = tr.viewCount;
 		}
 		// extra check for surfaces to avoid list overflows
 		else if (*(surf->data) == SF_FACE) {
 			// the face plane should go through the box
-			s = BoxOnPlaneSide( mins, maxs, &(( srfSurfaceFace_t * ) surf->data)->plane );
+			s = BoxOnPlaneSide( mins, maxs, &surf->cullinfo.plane );
 			if (s == 1 || s == 2) {
-				surf->viewCount = tr.viewCount;
-			} else if (DotProduct((( srfSurfaceFace_t * ) surf->data)->plane.normal, dir) > -0.5) {
+				*surfViewCount = tr.viewCount;
+			} else if (DotProduct(surf->cullinfo.plane.normal, dir) > -0.5) {
 			// don't add faces that make sharp angles with the projection direction
-				surf->viewCount = tr.viewCount;
+				*surfViewCount = tr.viewCount;
 			}
 		}
-		else if (*(surfaceType_t *) (surf->data) != SF_GRID &&
-			 *(surfaceType_t *) (surf->data) != SF_TRIANGLES)
-			surf->viewCount = tr.viewCount;
+		else if (*(surf->data) != SF_GRID &&
+			 *(surf->data) != SF_TRIANGLES)
+			*surfViewCount = tr.viewCount;
 		// check the viewCount because the surface may have
 		// already been added if it spans multiple leafs
-		if (surf->viewCount != tr.viewCount) {
-			surf->viewCount = tr.viewCount;
-			list[*listlength] = (surfaceType_t *) surf->data;
+		if (*surfViewCount != tr.viewCount) {
+			*surfViewCount = tr.viewCount;
+			list[*listlength] = surf->data;
 			(*listlength)++;
 		}
 		mark++;
@@ -267,12 +268,12 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 	vec3_t			clipPoints[2][MAX_VERTS_ON_POLY];
 	int				numClipPoints;
 	float			*v;
-	srfGridMesh_t	*cv;
-	drawVert_t		*dv;
+	srfBspSurface_t	*cv;
+	glIndex_t		*tri;
+	srfVert_t		*dv;
 	vec3_t			normal;
 	vec3_t			projectionDir;
 	vec3_t			v1, v2;
-	int				*indexes;
 
 	if (numPoints <= 0) {
 		return 0;
@@ -326,7 +327,7 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 
 		if (*surfaces[i] == SF_GRID) {
 
-			cv = (srfGridMesh_t *) surfaces[i];
+			cv = (srfBspSurface_t *) surfaces[i];
 			for ( m = 0 ; m < cv->height - 1 ; m++ ) {
 				for ( n = 0 ; n < cv->width - 1 ; n++ ) {
 					// We triangulate the grid and chop all triangles within
@@ -406,18 +407,19 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 		}
 		else if (*surfaces[i] == SF_FACE) {
 
-			srfSurfaceFace_t *surf = ( srfSurfaceFace_t * ) surfaces[i];
+			srfBspSurface_t *surf = ( srfBspSurface_t * ) surfaces[i];
 
 			// check the normal of this face
-			if (DotProduct(surf->plane.normal, projectionDir) > -0.5) {
+			if (DotProduct(surf->cullPlane.normal, projectionDir) > -0.5) {
 				continue;
 			}
 
-			indexes = (int *)( (byte *)surf + surf->ofsIndices );
-			for ( k = 0 ; k < surf->numIndices ; k += 3 ) {
-				for ( j = 0 ; j < 3 ; j++ ) {
-					v = surf->points[0] + VERTEXSIZE * indexes[k+j];;
-					VectorMA( v, MARKER_OFFSET, surf->plane.normal, clipPoints[0][j] );
+			for(k = 0, tri = surf->indexes; k < surf->numIndexes; k += 3, tri += 3)
+			{
+				for(j = 0; j < 3; j++)
+				{
+					v = surf->verts[tri[j]].xyz;
+					VectorMA(v, MARKER_OFFSET, surf->cullPlane.normal, clipPoints[0][j]);
 				}
 
 				// add the fragments of this face
@@ -433,14 +435,14 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 		}
 		else if(*surfaces[i] == SF_TRIANGLES && r_marksOnTriangleMeshes->integer) {
 
-			srfTriangles_t *surf = (srfTriangles_t *) surfaces[i];
+			srfBspSurface_t *surf = (srfBspSurface_t *) surfaces[i];
 
-			for (k = 0; k < surf->numIndexes; k += 3)
+			for(k = 0, tri = surf->indexes; k < surf->numIndexes; k += 3, tri += 3)
 			{
 				for(j = 0; j < 3; j++)
 				{
-					v = surf->verts[surf->indexes[k + j]].xyz;
-					VectorMA(v, MARKER_OFFSET, surf->verts[surf->indexes[k + j]].normal, clipPoints[0][j]);
+					v = surf->verts[tri[j]].xyz;
+					VectorMA(v, MARKER_OFFSET, surf->verts[tri[j]].normal, clipPoints[0][j]);
 				}
 
 				// add the fragments of this face
@@ -457,4 +459,8 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 	}
 	return returnedFragments;
 }
+
+
+
+
 

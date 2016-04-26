@@ -30,8 +30,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdio.h>
 #include <stdlib.h>
 
-#include TR_CONFIG_H
-#include TR_LOCAL_H
+//#include TR_CONFIG_H
+//#include TR_LOCAL_H
 #include "../client/client.h"
 #include "../sys/sys_local.h"
 
@@ -1328,7 +1328,7 @@ void IN_InitKeyLockStates( void )
 IN_Init
 ===============
 */
-void IN_Init( void )
+void IN_Init( void *windowData )
 {
 	int appState;
 
@@ -1411,5 +1411,5 @@ IN_Restart
 void IN_Restart( void )
 {
 	IN_ShutdownJoystick( );
-	IN_Init( );
+	IN_Init( NULL );
 }

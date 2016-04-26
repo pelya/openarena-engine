@@ -20,8 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include TR_CONFIG_H
-#include TR_LOCAL_H
+#include "tr_local.h"
 
 int			r_firstSceneDrawSurf;
 
@@ -39,20 +38,12 @@ int			r_numpolyverts;
 
 /*
 ====================
-R_ToggleSmpFrame
+R_InitNextFrame
 
 ====================
 */
-void R_ToggleSmpFrame( void ) {
-	if ( r_smp->integer ) {
-		// use the other buffers next frame, because another CPU
-		// may still be rendering into the current ones
-		tr.smpFrame ^= 1;
-	} else {
-		tr.smpFrame = 0;
-	}
-
-	backEndData[tr.smpFrame]->commands.used = 0;
+void R_InitNextFrame( void ) {
+	backEndData->commands.used = 0;
 
 	r_firstSceneDrawSurf = 0;
 
@@ -100,13 +91,15 @@ void R_AddPolygonSurfaces( void ) {
 	int			i;
 	shader_t	*sh;
 	srfPoly_t	*poly;
+	int		fogMask;
 
 	tr.currentEntityNum = REFENTITYNUM_WORLD;
 	tr.shiftedEntityNum = tr.currentEntityNum << QSORT_REFENTITYNUM_SHIFT;
+	fogMask = -((tr.refdef.rdflags & RDF_NOFOG) == 0);
 
 	for ( i = 0, poly = tr.refdef.polys; i < tr.refdef.numPolys ; i++, poly++ ) {
 		sh = R_GetShaderByHandle( poly->hShader );
-		R_AddDrawSurf( ( void * )poly, sh, poly->fogIndex, qfalse );
+		R_AddDrawSurf( ( void * )poly, sh, poly->fogIndex & fogMask, qfalse, qfalse, 0 /*cubeMap*/  );
 	}
 }
 
@@ -128,8 +121,10 @@ void RE_AddPolyToScene( qhandle_t hShader, int numVerts, const polyVert_t *verts
 	}
 
 	if ( !hShader ) {
-		ri.Printf( PRINT_WARNING, "WARNING: RE_AddPolyToScene: NULL poly shader\n");
-		return;
+		// This isn't a useful warning, and an hShader of zero isn't a null shader, it's
+		// the default shader.
+		//ri.Printf( PRINT_WARNING, "WARNING: RE_AddPolyToScene: NULL poly shader\n");
+		//return;
 	}
 
 	for ( j = 0; j < numPolys; j++ ) {
@@ -144,11 +139,11 @@ void RE_AddPolyToScene( qhandle_t hShader, int numVerts, const polyVert_t *verts
 			return;
 		}
 
-		poly = &backEndData[tr.smpFrame]->polys[r_numpolys];
+		poly = &backEndData->polys[r_numpolys];
 		poly->surfaceType = SF_POLY;
 		poly->hShader = hShader;
 		poly->numVerts = numVerts;
-		poly->verts = &backEndData[tr.smpFrame]->polyVerts[r_numpolyverts];
+		poly->verts = &backEndData->polyVerts[r_numpolyverts];
 		
 		Com_Memcpy( poly->verts, &verts[numVerts*j], numVerts * sizeof( *verts ) );
 
@@ -206,6 +201,8 @@ RE_AddRefEntityToScene
 =====================
 */
 void RE_AddRefEntityToScene( const refEntity_t *ent ) {
+	vec3_t cross;
+
 	if ( !tr.registered ) {
 		return;
 	}
@@ -225,8 +222,11 @@ void RE_AddRefEntityToScene( const refEntity_t *ent ) {
 		ri.Error( ERR_DROP, "RE_AddRefEntityToScene: bad reType %i", ent->reType );
 	}
 
-	backEndData[tr.smpFrame]->entities[r_numentities].e = *ent;
-	backEndData[tr.smpFrame]->entities[r_numentities].lightingCalculated = qfalse;
+	backEndData->entities[r_numentities].e = *ent;
+	backEndData->entities[r_numentities].lightingCalculated = qfalse;
+
+	CrossProduct(ent->axis[0], ent->axis[1], cross);
+	backEndData->entities[r_numentities].mirrored = (DotProduct(ent->axis[2], cross) < 0.f);
 
 	r_numentities++;
 }
@@ -254,7 +254,7 @@ void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, floa
 	if ( glConfig.hardwareType == GLHW_RIVA128 || glConfig.hardwareType == GLHW_PERMEDIA2 ) {
 		return;
 	}
-	dl = &backEndData[tr.smpFrame]->dlights[r_numdlights++];
+	dl = &backEndData->dlights[r_numdlights++];
 	VectorCopy (org, dl->origin);
 	dl->radius = intensity;
 	dl->color[0] = r;
@@ -283,36 +283,9 @@ void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, flo
 	RE_AddDynamicLightToScene( org, intensity, r, g, b, qtrue );
 }
 
-/*
-@@@@@@@@@@@@@@@@@@@@@
-RE_RenderScene
 
-Draw a 3D view into a part of the window, then return
-to 2D drawing.
-
-Rendering a scene may require multiple views to be rendered
-to handle mirrors,
-@@@@@@@@@@@@@@@@@@@@@
-*/
-void RE_RenderScene( const refdef_t *fd ) {
-	viewParms_t		parms;
-	int				startTime;
-
-	if ( !tr.registered ) {
-		return;
-	}
-	GLimp_LogComment( "====== RE_RenderScene =====\n" );
-
-	if ( r_norefresh->integer ) {
-		return;
-	}
-
-	startTime = ri.Milliseconds();
-
-	if (!tr.world && !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
-		ri.Error (ERR_DROP, "R_RenderScene: NULL worldmodel");
-	}
-
+void RE_BeginScene(const refdef_t *fd)
+{
 	Com_Memcpy( tr.refdef.text, fd->text, sizeof( tr.refdef.text ) );
 
 	tr.refdef.x = fd->x;
@@ -350,22 +323,105 @@ void RE_RenderScene( const refdef_t *fd ) {
 		}
 	}
 
+	tr.refdef.sunDir[3] = 0.0f;
+	tr.refdef.sunCol[3] = 1.0f;
+	tr.refdef.sunAmbCol[3] = 1.0f;
+
+	VectorCopy(tr.sunDirection, tr.refdef.sunDir);
+	if ( (tr.refdef.rdflags & RDF_NOWORLDMODEL) || !(r_depthPrepass->value) ){
+		tr.refdef.colorScale = 1.0f;
+		VectorSet(tr.refdef.sunCol, 0, 0, 0);
+		VectorSet(tr.refdef.sunAmbCol, 0, 0, 0);
+	}
+	else
+	{
+#if defined(USE_OVERBRIGHT)
+		float scale = (1 << (r_mapOverBrightBits->integer - tr.overbrightBits)) / 255.0f;
+#else
+		float scale = (1 << r_mapOverBrightBits->integer) / 255.0f;
+#endif
+		tr.refdef.colorScale = r_forceSun->integer ? r_forceSunMapLightScale->value : tr.mapLightScale;
+
+		if (r_forceSun->integer)
+			VectorScale(tr.sunLight, scale * r_forceSunLightScale->value, tr.refdef.sunCol);
+		else
+			VectorScale(tr.sunLight, scale, tr.refdef.sunCol);
+
+		if (r_sunlightMode->integer == 1)
+		{
+			tr.refdef.sunAmbCol[0] =
+			tr.refdef.sunAmbCol[1] =
+			tr.refdef.sunAmbCol[2] = r_forceSun->integer ? r_forceSunAmbientScale->value : tr.sunShadowScale;
+		}
+		else
+		{
+			if (r_forceSun->integer)
+				VectorScale(tr.sunLight, scale * r_forceSunAmbientScale->value, tr.refdef.sunAmbCol);
+			else
+				VectorScale(tr.sunLight, scale * tr.sunShadowScale, tr.refdef.sunAmbCol);
+		}
+	}
+
+	if (r_forceAutoExposure->integer)
+	{
+		tr.refdef.autoExposureMinMax[0] = r_forceAutoExposureMin->value;
+		tr.refdef.autoExposureMinMax[1] = r_forceAutoExposureMax->value;
+	}
+	else
+	{
+		tr.refdef.autoExposureMinMax[0] = tr.autoExposureMinMax[0];
+		tr.refdef.autoExposureMinMax[1] = tr.autoExposureMinMax[1];
+	}
+
+	if (r_forceToneMap->integer)
+	{
+		tr.refdef.toneMinAvgMaxLinear[0] = pow(2, r_forceToneMapMin->value);
+		tr.refdef.toneMinAvgMaxLinear[1] = pow(2, r_forceToneMapAvg->value);
+		tr.refdef.toneMinAvgMaxLinear[2] = pow(2, r_forceToneMapMax->value);
+	}
+	else
+	{
+		tr.refdef.toneMinAvgMaxLinear[0] = pow(2, tr.toneMinAvgMaxLevel[0]);
+		tr.refdef.toneMinAvgMaxLinear[1] = pow(2, tr.toneMinAvgMaxLevel[1]);
+		tr.refdef.toneMinAvgMaxLinear[2] = pow(2, tr.toneMinAvgMaxLevel[2]);
+	}
+
+	// Makro - copy exta info if present
+	if (fd->rdflags & RDF_EXTRA) {
+		const refdefex_t* extra = (const refdefex_t*) (fd+1);
+
+		tr.refdef.blurFactor = extra->blurFactor;
+
+		if (fd->rdflags & RDF_SUNLIGHT)
+		{
+			VectorCopy(extra->sunDir,    tr.refdef.sunDir);
+			VectorCopy(extra->sunCol,    tr.refdef.sunCol);
+			VectorCopy(extra->sunAmbCol, tr.refdef.sunAmbCol);
+		}
+	} 
+	else
+	{
+		tr.refdef.blurFactor = 0.0f;
+	}
 
 	// derived info
 
 	tr.refdef.floatTime = tr.refdef.time * 0.001f;
 
 	tr.refdef.numDrawSurfs = r_firstSceneDrawSurf;
-	tr.refdef.drawSurfs = backEndData[tr.smpFrame]->drawSurfs;
+	tr.refdef.drawSurfs = backEndData->drawSurfs;
 
 	tr.refdef.num_entities = r_numentities - r_firstSceneEntity;
-	tr.refdef.entities = &backEndData[tr.smpFrame]->entities[r_firstSceneEntity];
+	tr.refdef.entities = &backEndData->entities[r_firstSceneEntity];
 
 	tr.refdef.num_dlights = r_numdlights - r_firstSceneDlight;
-	tr.refdef.dlights = &backEndData[tr.smpFrame]->dlights[r_firstSceneDlight];
+	tr.refdef.dlights = &backEndData->dlights[r_firstSceneDlight];
 
 	tr.refdef.numPolys = r_numpolys - r_firstScenePoly;
-	tr.refdef.polys = &backEndData[tr.smpFrame]->polys[r_firstScenePoly];
+	tr.refdef.polys = &backEndData->polys[r_firstScenePoly];
+
+	tr.refdef.num_pshadows = 0;
+	tr.refdef.pshadows = &backEndData->pshadows[0];
 
 	// turn off dynamic lighting globally by clearing all the
 	// dlights if it needs to be disabled or if vertex lighting is enabled
@@ -382,6 +438,105 @@ void RE_RenderScene( const refdef_t *fd ) {
 	// each scene / view.
 	tr.frameSceneNum++;
 	tr.sceneCount++;
+}
+
+
+void RE_EndScene()
+{
+	// the next scene rendered in this frame will tack on after this one
+	r_firstSceneDrawSurf = tr.refdef.numDrawSurfs;
+	r_firstSceneEntity = r_numentities;
+	r_firstSceneDlight = r_numdlights;
+	r_firstScenePoly = r_numpolys;
+}
+
+/*
+@@@@@@@@@@@@@@@@@@@@@
+RE_RenderScene
+
+Draw a 3D view into a part of the window, then return
+to 2D drawing.
+
+Rendering a scene may require multiple views to be rendered
+to handle mirrors,
+@@@@@@@@@@@@@@@@@@@@@
+*/
+void RE_RenderScene( const refdef_t *fd ) {
+	viewParms_t		parms;
+	int				startTime;
+
+	if ( !tr.registered ) {
+		return;
+	}
+	GLimp_LogComment( "====== RE_RenderScene =====\n" );
+
+	if ( r_norefresh->integer ) {
+		return;
+	}
+
+	startTime = ri.Milliseconds();
+
+	if (!tr.world && !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
+		ri.Error (ERR_DROP, "R_RenderScene: NULL worldmodel");
+	}
+
+	RE_BeginScene(fd);
+
+	// SmileTheory: playing with shadow mapping
+	if (!( fd->rdflags & RDF_NOWORLDMODEL ) && tr.refdef.num_dlights && r_dlightMode->integer >= 2)
+	{
+		R_RenderDlightCubemaps(fd);
+	}
+
+	/* playing with more shadows */
+	if(glRefConfig.framebufferObject && !( fd->rdflags & RDF_NOWORLDMODEL ) && r_shadows->integer == 4)
+	{
+		R_RenderPshadowMaps(fd);
+	}
+
+	// playing with even more shadows
+	if(glRefConfig.framebufferObject && r_sunlightMode->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) && (r_forceSun->integer || tr.sunShadows))
+	{
+		if (r_shadowCascadeZFar != 0)
+		{
+			R_RenderSunShadowMaps(fd, 0);
+			R_RenderSunShadowMaps(fd, 1);
+			R_RenderSunShadowMaps(fd, 2);
+		}
+		else
+		{
+			Mat4Zero(tr.refdef.sunShadowMvp[0]);
+			Mat4Zero(tr.refdef.sunShadowMvp[1]);
+			Mat4Zero(tr.refdef.sunShadowMvp[2]);
+		}
+
+		// only rerender last cascade if sun has changed position
+		if (r_forceSun->integer == 2 || !VectorCompare(tr.refdef.sunDir, tr.lastCascadeSunDirection))
+		{
+			VectorCopy(tr.refdef.sunDir, tr.lastCascadeSunDirection);
+			R_RenderSunShadowMaps(fd, 3);
+			Mat4Copy(tr.refdef.sunShadowMvp[3], tr.lastCascadeSunMvp);
+		}
+		else
+		{
+			Mat4Copy(tr.lastCascadeSunMvp, tr.refdef.sunShadowMvp[3]);
+		}
+	}
+
+	// playing with cube maps
+	// this is where dynamic cubemaps would be rendered
+	if (0) //(glRefConfig.framebufferObject && !( fd->rdflags & RDF_NOWORLDMODEL ))
+	{
+		int i, j;
+
+		for (i = 0; i < tr.numCubemaps; i++)
+		{
+			for (j = 0; j < 6; j++)
+			{
+				R_RenderCubemapSide(i, j, qtrue);
+			}
+		}
+	}
 
 	// setup view parms for the initial view
 	//
@@ -408,13 +563,17 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	VectorCopy( fd->vieworg, parms.pvsOrigin );
 
+	if(!( fd->rdflags & RDF_NOWORLDMODEL ) && r_depthPrepass->value && ((r_forceSun->integer) || tr.sunShadows))
+	{
+		parms.flags = VPF_USESUNLIGHT;
+	}
+
 	R_RenderView( &parms );
 
-	// the next scene rendered in this frame will tack on after this one
-	r_firstSceneDrawSurf = tr.refdef.numDrawSurfs;
-	r_firstSceneEntity = r_numentities;
-	r_firstSceneDlight = r_numdlights;
-	r_firstScenePoly = r_numpolys;
+	if(!( fd->rdflags & RDF_NOWORLDMODEL ))
+		R_AddPostProcessCmd();
+
+	RE_EndScene();
 
 	tr.frontEndMsec += ri.Milliseconds() - startTime;
 }

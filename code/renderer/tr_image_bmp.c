@@ -20,8 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include TR_CONFIG_H
-#include TR_LOCAL_H
+#include "tr_common.h"
 
 typedef struct
 {
@@ -120,7 +119,6 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 			ri.Error( ERR_DROP, "LoadBMP: header too short (%s)", name );
 
 		Com_Memcpy( bmpHeader.palette, buf_p, sizeof( bmpHeader.palette ) );
-		buf_p += sizeof(bmpHeader.palette);
 	}
 
 	if (buffer.b + bmpHeader.bitmapDataOffset > end)
