@@ -91,6 +91,7 @@ void R_RenderShadowEdges( void ) {
 		qglEnd();
 	}
 #else
+#ifndef USE_GLES
 	int		c, c2;
 	int		j, k;
 	int		i2;
@@ -138,6 +139,7 @@ void R_RenderShadowEdges( void ) {
 		}
 	}
 #endif
+#endif
 }
 
 /*
@@ -153,6 +155,7 @@ triangleFromEdge[ v1 ][ v2 ]
 =================
 */
 void RB_ShadowTessEnd( void ) {
+#ifndef USE_GLES
 	int		i;
 	int		numTris;
 	vec3_t	lightDir;
@@ -230,6 +233,7 @@ void RB_ShadowTessEnd( void ) {
 
 	// reenable writing to the color buffer
 	qglColorMask(rgba[0], rgba[1], rgba[2], rgba[3]);
+#endif
 }
 
 
@@ -244,6 +248,7 @@ overlap and double darken.
 =================
 */
 void RB_ShadowFinish( void ) {
+#ifndef USE_GLES
 	if ( r_shadows->integer != 2 ) {
 		return;
 	}
@@ -275,6 +280,7 @@ void RB_ShadowFinish( void ) {
 
 	qglColor4f(1,1,1,1);
 	qglDisable( GL_STENCIL_TEST );
+#endif
 }
 
 
