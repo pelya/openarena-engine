@@ -75,8 +75,7 @@ void IN_MLookDown( void ) {
 void IN_MLookUp( void ) {
 	in_mlooking = qfalse;
 	if ( !cl_freelook->integer ) {
-		IN_CenterViewDown ();
-		IN_CenterViewUp ();
+		IN_CenterView ();
 	}
 }
 
@@ -413,17 +412,13 @@ void IN_Button14Down(void) {IN_KeyDown(&in_buttons[14]);}
 void IN_Button14Up(void) {IN_KeyUp(&in_buttons[14]);}
 void IN_Gesture(void) {in_buttons[3].wasPressed = qtrue;}
 
-void IN_CenterViewDown (void) {
+void IN_CenterView (void) {
 	//cl.viewangles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
-
 	// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
 	if ( cl.joystickAxis[JOY_AXIS_SCREENJOY_X] == 0 && cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] == 0 ) {
 		in_swipeActivated = 1;
 		in_joystickJumpTriggerTime = 0; // Do not jump if user rotated view and immediately put finger back on joystick
 	}
-}
-
-void IN_CenterViewUp (void) {
 }
 
 //==========================================================================
@@ -968,7 +963,6 @@ void CL_SetAimingAngles( const vec3_t angles )
 
 void CL_SetCameraAngles( const vec3_t angles )
 {
-	//Com_Printf ("CL_SetCameraAngles %f %f -> %f %f\n", cl.viewangles[YAW], cl.viewangles[PITCH], angles[YAW], angles[PITCH]);
 	VectorCopy( angles, cl.viewangles );
 }
 
@@ -1128,7 +1122,6 @@ usercmd_t CL_CreateCmd( void ) {
 		VM_Call( cgvm, CG_ADJUST_CAMERA_ANGLES, (int) (cl.viewangles[YAW] * 1000), (int) (cl.viewangles[PITCH] * 1000), (int) (cl.viewangles[ROLL] * 1000) );
 	} else {
 		VectorCopy( cl.viewangles, cl.aimingangles );
-		cl.aimingangles[PITCH] -= SHORT2ANGLE( cl.snap.ps.delta_angles[PITCH] );
 	}
 
 	// store out the final values
@@ -1453,8 +1446,7 @@ CL_InitInput
 ============
 */
 void CL_InitInput( void ) {
-	Cmd_AddCommand ("+centerview",IN_CenterViewDown);
-	Cmd_AddCommand ("-centerview",IN_CenterViewUp);
+	Cmd_AddCommand ("centerview",IN_CenterView);
 	Cmd_AddCommand ("+moveup",IN_UpDown);
 	Cmd_AddCommand ("-moveup",IN_UpUp);
 	Cmd_AddCommand ("+movedown",IN_DownDown);
