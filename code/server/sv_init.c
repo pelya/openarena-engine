@@ -676,6 +676,8 @@ void SV_Init (void)
 	sv_master[0] = Cvar_Get("sv_master1", MASTER_SERVER_NAME, 0);
 	sv_master[1] = Cvar_Get("sv_master2", "master.ioquake3.org", 0);
 	sv_master[2] = Cvar_Get("sv_master3", NAT_TRAVERSAL_SERVER_NAME, 0);
+	if(!sv_master[2]->string[0])
+		Cvar_Set("sv_master3", NAT_TRAVERSAL_SERVER_NAME);
 	for(index = 3; index < MAX_MASTER_SERVERS; index++)
 		sv_master[index] = Cvar_Get(va("sv_master%d", index + 1), "", CVAR_ARCHIVE);
 
