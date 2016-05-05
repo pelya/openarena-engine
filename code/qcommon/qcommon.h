@@ -274,6 +274,12 @@ extern int demo_protocols[];
 #define MASTER_SERVER_NAME	"dpmaster.deathmask.net"
 #endif
 
+#ifndef NAT_TRAVERSAL_SERVER_NAME
+#define NAT_TRAVERSAL_SERVER_NAME	"78.27.177.68" // Yeah, it's my shoebox server at home
+#endif
+
+#define NAT_TRAVERSAL_SERVER_CVAR	"sv_master3"
+
 #ifndef STANDALONE
   #ifndef AUTHORIZE_SERVER_NAME
     #define	AUTHORIZE_SERVER_NAME	"authorize.quake3arena.com"
