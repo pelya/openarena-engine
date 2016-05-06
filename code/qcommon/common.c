@@ -332,6 +332,12 @@ void QDECL Com_Error( int code, const char *fmt, ... ) {
 		com_errorEntered = qfalse;
 		longjmp (abortframe, -1);
 	} else {
+		// Uncomment if you want to get a stack trace in GDB
+		/*
+		fprintf(stderr, "%s", com_errorMessage);
+		abort();
+		*/
+
 		VM_Forced_Unload_Start();
 		CL_Shutdown(va("Client fatal crashed: %s", com_errorMessage), qtrue, qtrue);
 		SV_Shutdown(va("Server fatal crashed: %s", com_errorMessage));

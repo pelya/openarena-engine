@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "client.h"
 #include <limits.h>
+#include <arpa/inet.h>
 
 #include "../sys/sys_local.h"
 #include "../sys/sys_loadlib.h"
@@ -197,6 +198,7 @@ void CL_CheckForResend( void );
 void CL_ShowIP_f(void);
 void CL_ServerStatus_f(void);
 void CL_ServerStatusResponse( netadr_t from, msg_t *msg );
+static void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping);
 
 /*
 ===============
@@ -2593,6 +2595,89 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 }
 
 /*
+Response with server info
+*/
+static void CL_ServersResponseWithInfoPacket( const netadr_t* from, msg_t *msg ) {
+	int				i;
+	netadr_t		address;
+	int				port;
+	byte*			buffptr;
+	byte*			buffend;
+	char			info[MAX_INFO_STRING];
+	char			addrportstr[NET_ADDRSTRMAXLEN + 10];
+	char			addrstr[NET_ADDRSTRMAXLEN];
+	byte*			infoend;
+
+	Com_Printf("CL_ServersResponseWithInfoPacket\n");
+
+	if (cls.numglobalservers == -1)
+	{
+		// state to detect lack of servers or lack of response
+		cls.numglobalservers = 0;
+		cls.numGlobalServerAddresses = 0;
+	}
+
+	// parse through server response string
+	buffptr    = msg->data;
+	buffend    = buffptr + msg->cursize;
+
+	// advance to initial token
+	for (; buffptr < buffend && buffptr[0] != '\n'; buffptr++) {};
+	buffptr++;
+
+	while (buffptr + 1 < buffend)
+	{
+		for (infoend = buffptr; infoend < buffend && infoend[0] != '\n'; infoend++) {};
+		if (infoend - buffptr + 1 >= MAX_INFO_STRING)
+			return; // Buffer overflow, ugh
+
+		Q_strncpyz(info, (char *)buffptr, infoend - buffptr + 1);
+		Com_Printf("%s\n", info);
+
+		buffptr = infoend + 1;
+
+		Q_strncpyz(addrportstr, Info_ValueForKey(info, "addr"), sizeof(addrportstr));
+		if (addrportstr[0])
+		{
+			if (sscanf("%20s %u", addrstr, &port) != 2)
+				continue;
+			address.type = NA_IP;
+			if (!inet_pton(AF_INET, addrstr, address.ip))
+				continue;
+			address.port = BigShort(port);
+		}
+		else
+		{
+			Q_strncpyz(addrportstr, Info_ValueForKey(info, "addr6"), sizeof(addrportstr));
+			if (!addrportstr[0])
+				continue; // No address at all in the info
+			if (sscanf("%40s %u", addrstr, &port) != 2)
+				continue;
+			address.type = NA_IP6;
+			if (!inet_pton(AF_INET6, addrstr, address.ip6))
+				continue;
+			address.port = BigShort(port);
+		}
+
+		for (i = 0; i < cls.numglobalservers && i < MAX_GLOBAL_SERVERS; i++)
+		{
+			if (NET_CompareAdr(cls.globalServers[i].adr, address))
+				break;
+		}
+		if (i >= MAX_GLOBAL_SERVERS)
+			return;
+		if (i >= cls.numglobalservers)
+		{
+			cls.numglobalservers++;
+			CL_InitServerInfo(&cls.globalServers[i], &address);
+		}
+
+		CL_SetServerInfo(&cls.globalServers[i], info, cls.globalServers[i].ping >= 0 ? cls.globalServers[i].ping : 999999);
+		Com_Printf("Set info for server %d\n", i);
+	}
+}
+
+/*
 =================
 CL_ConnectionlessPacket
 
@@ -2797,6 +2882,12 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	// list of servers sent back by a master server (extended)
 	if ( !Q_strncmp(c, "getserversExtResponse", 21) ) {
 		CL_ServersResponsePacket( &from, msg, qtrue );
+		return;
+	}
+
+	// list of servers sent back by a master server (extended)
+	if ( !Q_strncmp(c, "getserversWithInfoResponse", sizeof("getserversWithInfoResponse") - 1) ) {
+		CL_ServersResponseWithInfoPacket( &from, msg );
 		return;
 	}
 
@@ -3776,7 +3867,7 @@ void CL_Shutdown(char *finalmsg, qboolean disconnect, qboolean quit)
 
 }
 
-static void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping) {
+void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping) {
 	if (server) {
 		if (info) {
 			server->clients = atoi(Info_ValueForKey(info, "clients"));
@@ -4222,8 +4313,12 @@ void CL_GlobalServers_f( void ) {
 	cls.numglobalservers = -1;
 	cls.pingUpdateSource = AS_GLOBAL;
 
+	if (!strcmp (command, NAT_TRAVERSAL_SERVER_CVAR))
+		Com_sprintf(command, sizeof(command), "getserversWithInfo %s %s",
+			cl_serverlistGamename->string, Cmd_Argv(2));
+
 	// Use the extended query for IPv6 masters
-	if (to.type == NA_IP6 || to.type == NA_MULTICAST6)
+	else if (to.type == NA_IP6 || to.type == NA_MULTICAST6)
 	{
 		int v4enabled = Cvar_VariableIntegerValue("net_enabled") & NET_ENABLEV4;
 		
@@ -4241,6 +4336,7 @@ void CL_GlobalServers_f( void ) {
 	else
 		Com_sprintf(command, sizeof(command), "getservers %s %s",
 			cl_serverlistGamename->string, Cmd_Argv(2));
+
 
 	for (i=3; i < count; i++)
 	{
