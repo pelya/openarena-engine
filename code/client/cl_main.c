@@ -2632,14 +2632,14 @@ static void CL_ServersResponseWithInfoPacket( const netadr_t* from, msg_t *msg )
 			return; // Buffer overflow, ugh
 
 		Q_strncpyz(info, (char *)buffptr, infoend - buffptr + 1);
-		Com_Printf("%s\n", info);
+		//Com_Printf("%s\n", info);
 
 		buffptr = infoend + 1;
 
 		Q_strncpyz(addrportstr, Info_ValueForKey(info, "addr"), sizeof(addrportstr));
 		if (addrportstr[0])
 		{
-			if (sscanf("%20s %u", addrstr, &port) != 2)
+			if (sscanf(addrportstr, "%20s %u", addrstr, &port) != 2)
 				continue;
 			address.type = NA_IP;
 			if (!inet_pton(AF_INET, addrstr, address.ip))
@@ -2651,7 +2651,7 @@ static void CL_ServersResponseWithInfoPacket( const netadr_t* from, msg_t *msg )
 			Q_strncpyz(addrportstr, Info_ValueForKey(info, "addr6"), sizeof(addrportstr));
 			if (!addrportstr[0])
 				continue; // No address at all in the info
-			if (sscanf("%40s %u", addrstr, &port) != 2)
+			if (sscanf(addrportstr, "%40s %u", addrstr, &port) != 2)
 				continue;
 			address.type = NA_IP6;
 			if (!inet_pton(AF_INET6, addrstr, address.ip6))
@@ -2668,12 +2668,12 @@ static void CL_ServersResponseWithInfoPacket( const netadr_t* from, msg_t *msg )
 			return;
 		if (i >= cls.numglobalservers)
 		{
-			cls.numglobalservers++;
+			cls.numglobalservers = i + 1;
 			CL_InitServerInfo(&cls.globalServers[i], &address);
 		}
 
 		CL_SetServerInfo(&cls.globalServers[i], info, cls.globalServers[i].ping >= 0 ? cls.globalServers[i].ping : 999999);
-		Com_Printf("Set info for server %d\n", i);
+		Com_Printf("Got server %s: %s\n", Info_ValueForKey(info, "addr"), Info_ValueForKey(info, "hostname"));
 	}
 }
 
@@ -4406,7 +4406,51 @@ void CL_GetPingInfo( int n, char *buf, int buflen )
 		return;
 	}
 
-	Q_strncpyz( buf, cl_pinglist[n].info, buflen );
+	Com_Printf( "CL_GetPingInfo in %s, cvar %s\n", buf, NAT_TRAVERSAL_SERVER_CVAR );
+	if (!strncmp( buf, NAT_TRAVERSAL_SERVER_CVAR, sizeof(NAT_TRAVERSAL_SERVER_CVAR) ))
+	{
+		buf[0] = '\0';
+		Com_Printf( "CL_GetPingInfo getting info from NAT list, cls.numglobalservers %d cl_pinglist[n].adr %s\n", cls.numglobalservers, NET_AdrToStringwPort(cl_pinglist[n].adr) );
+		int i;
+		for (i = 0; i < cls.numglobalservers && i < MAX_GLOBAL_SERVERS; i++)
+		{
+			Com_Printf( "CL_GetPingInfo compare %d: %s\n", i, NET_AdrToStringwPort(cls.globalServers[i].adr) );
+			if (NET_CompareAdr(cls.globalServers[i].adr, cl_pinglist[n].adr))
+			{
+				Com_Printf( "CL_GetPingInfo found, filling info\n" );
+				Com_sprintf(buf, buflen,
+								"\\clients\\%d"
+								"\\hostname\\%s"
+								"\\mapname\\%s"
+								"\\sv_maxclients\\%d"
+								"\\game\\%s"
+								"\\gametype\\%d"
+								"\\nettype\\%d"
+								"\\minping\\%d"
+								"\\maxping\\%d"
+								// We don't care about punkbuster
+								"\\g_humanplayers\\%d"
+								"\\g_needpass\\%d",
+								cls.globalServers[i].clients,
+								cls.globalServers[i].hostName,
+								cls.globalServers[i].mapName,
+								cls.globalServers[i].maxClients,
+								cls.globalServers[i].game,
+								cls.globalServers[i].gameType,
+								cls.globalServers[i].netType,
+								cls.globalServers[i].minPing,
+								cls.globalServers[i].maxPing,
+								cls.globalServers[i].g_humanplayers,
+								cls.globalServers[i].g_needpass);
+				break;
+			}
+		}
+	}
+	else
+	{
+		Q_strncpyz( buf, cl_pinglist[n].info, buflen );
+	}
+	Com_Printf( "CL_GetPingInfo out %s\n", buf );
 }
 
 /*
