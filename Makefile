@@ -310,7 +310,7 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
   endif
 
   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes \
-    -pipe -DUSE_ICON
+    -pipe -DUSE_ICON -Werror=format -Werror=format-nonliteral
   CLIENT_CFLAGS += $(SDL_CFLAGS)
 
   OPTIMIZEVM = -O3 -funroll-loops -fomit-frame-pointer
@@ -834,7 +834,7 @@ else # ifeq sunos
 #############################################################################
 # SETUP AND BUILD -- GENERIC
 #############################################################################
-  BASE_CFLAGS=-DC_ONLY=1
+  BASE_CFLAGS=-DC_ONLY=1 -Werror=format -Werror=format-nonliteral
   OPTIMIZE = -O3
 
   SHLIBEXT=so
