@@ -2469,6 +2469,7 @@ void CL_InitServerInfo( serverInfo_t *server, netadr_t *address ) {
 	server->game[0] = '\0';
 	server->gameType = 0;
 	server->netType = 0;
+	Com_Printf( "CL_InitServerInfo clear info for server %p %s\n", server, NET_AdrToStringwPort( server->adr ) );
 }
 
 #define MAX_SERVERSPERPACKET	256
@@ -3870,6 +3871,7 @@ void CL_Shutdown(char *finalmsg, qboolean disconnect, qboolean quit)
 void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping) {
 	if (server) {
 		if (info) {
+			Com_Printf( "CL_SetServerInfo for server %p %s: %s\n", server, NET_AdrToStringwPort( server->adr ), Info_ValueForKey(info, "hostname") );
 			server->clients = atoi(Info_ValueForKey(info, "clients"));
 			Q_strncpyz(server->hostName,Info_ValueForKey(info, "hostname"), MAX_NAME_LENGTH);
 			Q_strncpyz(server->mapName, Info_ValueForKey(info, "mapname"), MAX_NAME_LENGTH);
@@ -4386,7 +4388,7 @@ void CL_GetPing( int n, char *buf, int buflen, int *pingtime )
 		}
 	}
 
-	CL_SetServerInfoByAddress(cl_pinglist[n].adr, cl_pinglist[n].info, cl_pinglist[n].time);
+	CL_SetServerInfoByAddress(cl_pinglist[n].adr, cl_pinglist[n].info[0] ? cl_pinglist[n].info : NULL, cl_pinglist[n].time);
 
 	*pingtime = time;
 }
@@ -4406,24 +4408,20 @@ void CL_GetPingInfo( int n, char *buf, int buflen )
 		return;
 	}
 
-	Com_Printf( "CL_GetPingInfo in %s, cvar %s\n", buf, NAT_TRAVERSAL_SERVER_CVAR );
 	if (!strncmp( buf, NAT_TRAVERSAL_SERVER_CVAR, sizeof(NAT_TRAVERSAL_SERVER_CVAR) ))
 	{
 		buf[0] = '\0';
-		Com_Printf( "CL_GetPingInfo getting info from NAT list, cls.numglobalservers %d cl_pinglist[n].adr %s\n", cls.numglobalservers, NET_AdrToStringwPort(cl_pinglist[n].adr) );
 		int i;
 		for (i = 0; i < cls.numglobalservers && i < MAX_GLOBAL_SERVERS; i++)
 		{
-			Com_Printf( "CL_GetPingInfo compare %d: %s\n", i, NET_AdrToStringwPort(cls.globalServers[i].adr) );
 			if (NET_CompareAdr(cls.globalServers[i].adr, cl_pinglist[n].adr))
 			{
-				Com_Printf( "CL_GetPingInfo found, filling info\n" );
 				Com_sprintf(buf, buflen,
 								"\\clients\\%d"
 								"\\hostname\\%s"
 								"\\mapname\\%s"
 								"\\sv_maxclients\\%d"
-								"\\game\\%s"
+								"\\game\\%s" // Unused by OpenArena
 								"\\gametype\\%d"
 								"\\nettype\\%d"
 								"\\minping\\%d"
@@ -4450,7 +4448,6 @@ void CL_GetPingInfo( int n, char *buf, int buflen )
 	{
 		Q_strncpyz( buf, cl_pinglist[n].info, buflen );
 	}
-	Com_Printf( "CL_GetPingInfo out %s\n", buf );
 }
 
 /*
@@ -4590,6 +4587,7 @@ void CL_Ping_f( void ) {
 	memcpy( &pingptr->adr, &to, sizeof (netadr_t) );
 	pingptr->start = Sys_Milliseconds();
 	pingptr->time  = 0;
+	pingptr->info[0] = '\0';
 
 	CL_SetServerInfoByAddress(pingptr->adr, NULL, 0);
 		

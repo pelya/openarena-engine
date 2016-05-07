@@ -11,4 +11,4 @@ USE_RENDERER_DLOPEN=0 USE_INTERNAL_ZLIB=0 USE_INTERNAL_JPEG=1 BUILD_RENDERER_REN
 cd build/debug-linux-`uname -m` && \
 ./openarena.`uname -m` +set r_fullscreen 0 $* #+devmap oacmpdm3
 
-# gdb -ex run --args \
+#gdb -ex run --args \
