@@ -2469,6 +2469,7 @@ void CL_InitServerInfo( serverInfo_t *server, netadr_t *address ) {
 	server->game[0] = '\0';
 	server->gameType = 0;
 	server->netType = 0;
+	server->country[0] = '\0';
 }
 
 #define MAX_SERVERSPERPACKET	256
@@ -3882,6 +3883,7 @@ void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping) {
 			server->punkbuster = atoi(Info_ValueForKey(info, "punkbuster"));
 			server->g_humanplayers = atoi(Info_ValueForKey(info, "g_humanplayers"));
 			server->g_needpass = atoi(Info_ValueForKey(info, "g_needpass"));
+			Q_strncpyz(server->country,Info_ValueForKey(info, "country"), sizeof(server->country));
 		}
 		server->ping = ping;
 	}
@@ -4027,6 +4029,7 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 	cls.localServers[i].punkbuster = 0;
 	cls.localServers[i].g_humanplayers = 0;
 	cls.localServers[i].g_needpass = 0;
+	cls.localServers[i].country[0] = '\0';
 									 
 	Q_strncpyz( info, MSG_ReadString( msg ), MAX_INFO_STRING );
 	if (strlen(info)) {
@@ -4426,7 +4429,8 @@ void CL_GetPingInfo( int n, char *buf, int buflen )
 								"\\maxping\\%d"
 								// We don't care about punkbuster
 								"\\g_humanplayers\\%d"
-								"\\g_needpass\\%d",
+								"\\g_needpass\\%d"
+								"\\country\\%s",
 								cls.globalServers[i].clients,
 								cls.globalServers[i].hostName,
 								cls.globalServers[i].mapName,
@@ -4437,7 +4441,8 @@ void CL_GetPingInfo( int n, char *buf, int buflen )
 								cls.globalServers[i].minPing,
 								cls.globalServers[i].maxPing,
 								cls.globalServers[i].g_humanplayers,
-								cls.globalServers[i].g_needpass);
+								cls.globalServers[i].g_needpass,
+								cls.globalServers[i].country);
 				break;
 			}
 		}

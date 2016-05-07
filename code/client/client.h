@@ -314,6 +314,7 @@ typedef struct {
 	int			punkbuster;
 	int			g_humanplayers;
 	int			g_needpass;
+	char		country[4];
 } serverInfo_t;
 
 typedef struct {
