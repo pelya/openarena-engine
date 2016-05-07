@@ -2469,7 +2469,6 @@ void CL_InitServerInfo( serverInfo_t *server, netadr_t *address ) {
 	server->game[0] = '\0';
 	server->gameType = 0;
 	server->netType = 0;
-	Com_Printf( "CL_InitServerInfo clear info for server %p %s\n", server, NET_AdrToStringwPort( server->adr ) );
 }
 
 #define MAX_SERVERSPERPACKET	256
@@ -3871,7 +3870,6 @@ void CL_Shutdown(char *finalmsg, qboolean disconnect, qboolean quit)
 void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping) {
 	if (server) {
 		if (info) {
-			Com_Printf( "CL_SetServerInfo for server %p %s: %s\n", server, NET_AdrToStringwPort( server->adr ), Info_ValueForKey(info, "hostname") );
 			server->clients = atoi(Info_ValueForKey(info, "clients"));
 			Q_strncpyz(server->hostName,Info_ValueForKey(info, "hostname"), MAX_NAME_LENGTH);
 			Q_strncpyz(server->mapName, Info_ValueForKey(info, "mapname"), MAX_NAME_LENGTH);
