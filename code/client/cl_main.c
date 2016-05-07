@@ -154,6 +154,8 @@ cvar_t	*cl_consoleKeys;
 cvar_t	*cl_rate;
 cvar_t  *cl_consoleType;
 cvar_t  *cl_consoleColor[4];
+cvar_t	*cl_natType;
+cvar_t	*cl_publicAddress;
 
 cvar_t *cl_consoleHeight;
 
@@ -2679,6 +2681,33 @@ static void CL_ServersResponseWithInfoPacket( const netadr_t* from, msg_t *msg )
 }
 
 /*
+Response from NAT masterserver to getMyAddr command
+*/
+static void CL_ServerGetMyAddrResponsePacket( const netadr_t* from, byte *data, size_t datasize ) {
+	char addrstr[25];
+	netadr_t addr;
+	int port;
+	char s[40];
+
+	Q_strncpyz(s, (char *)data, MIN(datasize, sizeof(s)));
+
+	if (cl_natType->integer != NAT_TYPE_PROCESSING_GETMYADDR)
+	{
+		Com_Printf( "CL_ServerGetMyAddrResponsePacket: ignoring untimely response packet %s\n", s );
+		return;
+	}
+	//Com_Printf( "CL_ServerGetMyAddrResponsePacket: got packet %s\n", s );
+	if (sscanf(s, "%20s %u", addrstr, &port) != 2 || !NET_StringToAdr(addrstr, &addr, NA_IP))
+	{
+		Com_Printf( "CL_ServerGetMyAddrResponsePacket: invalid address %s\n", s);
+		return;
+	}
+	addr.port = BigShort( port );
+	Cvar_Set( "cl_publicAddress", NET_AdrToStringwPort(addr) );
+	//Com_Printf( "CL_ServerGetMyAddrResponsePacket: got address %s\n", cl_publicAddress->string);
+}
+
+/*
 =================
 CL_ConnectionlessPacket
 
@@ -2889,6 +2918,12 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	// list of servers sent back by a master server (extended)
 	if ( !Q_strncmp(c, "getserversWithInfoResponse", sizeof("getserversWithInfoResponse") - 1) ) {
 		CL_ServersResponseWithInfoPacket( &from, msg );
+		return;
+	}
+
+	// list of servers sent back by a master server (extended)
+	if ( !Q_strncmp(c, "getMyAddrResponse", sizeof("getMyAddrResponse") - 1) ) {
+		CL_ServerGetMyAddrResponsePacket( &from, msg->data + sizeof("getMyAddrResponse") + 4, msg->cursize - sizeof("getMyAddrResponse") - 4 );
 		return;
 	}
 
@@ -3716,6 +3751,9 @@ void CL_Init( void ) {
 	Cvar_Get ("password", "", CVAR_USERINFO);
 	Cvar_Get ("cg_predictItems", "1", CVAR_USERINFO | CVAR_ARCHIVE );
 
+	cl_natType = Cvar_Get ("cl_natType", "0", 0);
+	cl_publicAddress = Cvar_Get ("cl_publicAddress", "", 0);
+
 #ifdef USE_MUMBLE
 	cl_useMumble = Cvar_Get ("cl_useMumble", "0", CVAR_ARCHIVE | CVAR_LATCH);
 	cl_mumbleScale = Cvar_Get ("cl_mumbleScale", "0.0254", CVAR_ARCHIVE);
@@ -3750,7 +3788,6 @@ void CL_Init( void ) {
 	}
 #endif
 
-
 	// cgame might not be initialized before menu is used
 	Cvar_Get ("cg_viewsize", "100", CVAR_ARCHIVE );
 	// Make sure cg_stereoSeparation is zero as that variable is deprecated and should not be used anymore.
@@ -3784,6 +3821,7 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("model", CL_SetModel_f );
 	Cmd_AddCommand ("video", CL_Video_f );
 	Cmd_AddCommand ("stopvideo", CL_StopVideo_f );
+	Cmd_AddCommand ("determine_nat_type", CL_DetermineNatType_f );
 	CL_InitRef();
 
 	SCR_Init ();
@@ -4833,4 +4871,58 @@ qboolean CL_CDKeyValidate( const char *key, const char *checksum ) {
 
 	return qfalse;
 #endif
+}
+
+void CL_DetermineNatType_f( void ) {
+	static int timeout = 0;
+	static int retries = 0;
+	enum { NAT_MASTER_TIMEOUT = 1000, NAT_MASTER_RETRIES = 6 };
+
+	if (cl_natType->integer == NAT_TYPE_PROCESSING_INIT)
+	{
+		Cvar_SetValue( "cl_natType", NAT_TYPE_PROCESSING_GETMYADDR );
+		timeout = cls.realtime;
+		retries = 0;
+	}
+	if (cl_natType->integer == NAT_TYPE_PROCESSING_GETMYADDR)
+	{
+		if (cl_publicAddress->string && cl_publicAddress->string[0])
+		{
+			Com_Printf( "CL_DetermineNatType_f: our public address is %s\n", cl_publicAddress->string );
+			Cvar_SetValue( "cl_natType", NAT_TYPE_PROCESSING_FAKEREG );
+			timeout = cls.realtime;
+			retries = 0;
+		}
+		else
+		{
+			if (cls.realtime >= timeout)
+			{
+				netadr_t to;
+				int i;
+				timeout = cls.realtime + NAT_MASTER_TIMEOUT;
+				retries ++;
+				if (retries >= NAT_MASTER_RETRIES || Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR)[0] == '\0')
+				{
+					Com_Printf( "CL_DetermineNatType_f: Error: cannot connect to the NAT masterserver %s\n", Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR) );
+					Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+					return;
+				}
+				i = NET_StringToAdr( Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR), &to, NA_UNSPEC );
+				if (!i)
+				{
+					Com_Printf( "CL_DetermineNatType_f: Error: could not resolve address of master %s\n", Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR) );
+					Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+					return;
+				}
+				if (i == 2)
+					to.port = BigShort(PORT_MASTER);
+
+				Com_Printf( "CL_DetermineNatType_f: sending getMyAddr\n" );
+				NET_OutOfBandPrint( NS_SERVER, to, "%s", "getMyAddr" );
+			}
+		}
+	}
+	if (cl_natType->integer == NAT_TYPE_PROCESSING_FAKEREG)
+	{
+	}
 }

@@ -473,6 +473,9 @@ extern cvar_t *cl_consoleHeight;
 
 extern cvar_t *r_cardboardStereo;
 
+extern cvar_t *cl_natType;
+extern cvar_t *cl_publicAddress;
+
 #ifdef USE_MUMBLE
 extern	cvar_t	*cl_useMumble;
 extern	cvar_t	*cl_mumbleScale;
@@ -579,6 +582,7 @@ void	CL_GlobalServers_f( void );
 void	CL_FavoriteServers_f( void );
 void	CL_Ping_f( void );
 qboolean CL_UpdateVisiblePings_f( int source );
+void CL_DetermineNatType_f( void );
 
 
 //
