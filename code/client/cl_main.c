@@ -156,6 +156,8 @@ cvar_t  *cl_consoleType;
 cvar_t  *cl_consoleColor[4];
 cvar_t	*cl_natType;
 cvar_t	*cl_publicAddress;
+cvar_t	*cl_publicAddressPreservedByNAT;
+cvar_t	*cl_natGetinfoChallenge;
 
 cvar_t *cl_consoleHeight;
 
@@ -2490,6 +2492,9 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 	
 	Com_Printf("CL_ServersResponsePacket\n");
 
+	if (cl_natType->integer == NAT_TYPE_PROCESSING_FAKEREG)
+		Cvar_SetValue( "cl_publicAddressPreservedByNAT", cl_publicAddressPreservedByNAT->integer - 1 );
+
 	if (cls.numglobalservers == -1) {
 		// state to detect lack of servers or lack of response
 		cls.numglobalservers = 0;
@@ -2547,6 +2552,13 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 		addresses[numservers].port = (*buffptr++) << 8;
 		addresses[numservers].port += *buffptr++;
 		addresses[numservers].port = BigShort( addresses[numservers].port );
+
+		if (cl_natType->integer == NAT_TYPE_PROCESSING_FAKEREG &&
+			!strcmp(cl_publicAddress->string, NET_AdrToStringwPort(addresses[numservers])))
+		{
+			Com_Printf("Got our public address in server response\n");
+			Cvar_SetValue( "cl_publicAddressPreservedByNAT", 1 );
+		}
 
 		// syntax check
 		if (*buffptr != '\\' && *buffptr != '/')
@@ -2689,13 +2701,14 @@ static void CL_ServerGetMyAddrResponsePacket( const netadr_t* from, byte *data, 
 	int port;
 	char s[40];
 
-	Q_strncpyz(s, (char *)data, MIN(datasize, sizeof(s)));
-
 	if (cl_natType->integer != NAT_TYPE_PROCESSING_GETMYADDR)
 	{
-		Com_Printf( "CL_ServerGetMyAddrResponsePacket: ignoring untimely response packet %s\n", s );
+		Com_Printf( "CL_ServerGetMyAddrResponsePacket: ignoring untimely response packet\n" );
 		return;
 	}
+
+	Q_strncpyz(s, (char *)data, MIN(datasize, sizeof(s)));
+
 	//Com_Printf( "CL_ServerGetMyAddrResponsePacket: got packet %s\n", s );
 	if (sscanf(s, "%20s %u", addrstr, &port) != 2 || !NET_StringToAdr(addrstr, &addr, NA_IP))
 	{
@@ -2705,6 +2718,24 @@ static void CL_ServerGetMyAddrResponsePacket( const netadr_t* from, byte *data, 
 	addr.port = BigShort( port );
 	Cvar_Set( "cl_publicAddress", NET_AdrToStringwPort(addr) );
 	//Com_Printf( "CL_ServerGetMyAddrResponsePacket: got address %s\n", cl_publicAddress->string);
+}
+
+/*
+Respond to our fake heartbeat with some fake info for non-NAT masterserver
+*/
+static void CL_ServerGetInfoFakeRegistrationPacket( const netadr_t* from, byte *data, size_t datasize ) {
+	char challenge[32];
+
+	if (cl_natType->integer != NAT_TYPE_PROCESSING_HEARTBEAT)
+	{
+		Com_Printf( "CL_ServerGetInfoFakeRegistrationPacket: ignoring untimely getinfo packet\n" );
+		return;
+	}
+
+	Q_strncpyz( challenge, (char *)data, MIN(datasize, sizeof(challenge)) );
+
+	Cvar_Set( "cl_natGetinfoChallenge", challenge );
+	Com_Printf( "CL_ServerGetInfoFakeRegistrationPacket: got challenge %s\n", challenge);
 }
 
 /*
@@ -2915,15 +2946,21 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		return;
 	}
 
-	// list of servers sent back by a master server (extended)
+	// list of servers sent back by a master server (even more extended)
 	if ( !Q_strncmp(c, "getserversWithInfoResponse", sizeof("getserversWithInfoResponse") - 1) ) {
 		CL_ServersResponseWithInfoPacket( &from, msg );
 		return;
 	}
 
-	// list of servers sent back by a master server (extended)
+	// Get our public IPv4 address from NAT masterserver
 	if ( !Q_strncmp(c, "getMyAddrResponse", sizeof("getMyAddrResponse") - 1) ) {
-		CL_ServerGetMyAddrResponsePacket( &from, msg->data + sizeof("getMyAddrResponse") + 4, msg->cursize - sizeof("getMyAddrResponse") - 4 );
+		CL_ServerGetMyAddrResponsePacket( &from, msg->data + sizeof("getMyAddrResponse") + 4, msg->cursize - sizeof("getMyAddrResponse") - 3 );
+		return;
+	}
+
+	// Respond to our fake heartbeat with some fake info for non-NAT masterserver
+	if ( !Q_strncmp(c, "getinfo", sizeof("getinfo") - 1) ) {
+		CL_ServerGetInfoFakeRegistrationPacket( &from, msg->data + sizeof("getinfo") + 4, msg->cursize - sizeof("getinfo") - 3 );
 		return;
 	}
 
@@ -3753,6 +3790,8 @@ void CL_Init( void ) {
 
 	cl_natType = Cvar_Get ("cl_natType", "0", 0);
 	cl_publicAddress = Cvar_Get ("cl_publicAddress", "", 0);
+	cl_publicAddressPreservedByNAT = Cvar_Get ("cl_publicAddressPreservedByNAT", "0", 0);
+	cl_natGetinfoChallenge = Cvar_Get ("cl_natGetinfoChallenge", "", 0);
 
 #ifdef USE_MUMBLE
 	cl_useMumble = Cvar_Get ("cl_useMumble", "0", CVAR_ARCHIVE | CVAR_LATCH);
@@ -4877,52 +4916,131 @@ void CL_DetermineNatType_f( void ) {
 	static int timeout = 0;
 	static int retries = 0;
 	enum { NAT_MASTER_TIMEOUT = 1000, NAT_MASTER_RETRIES = 6 };
+	static const char * MASTER1_CVAR = "sv_master1";
 
 	if (cl_natType->integer == NAT_TYPE_PROCESSING_INIT)
 	{
 		Cvar_SetValue( "cl_natType", NAT_TYPE_PROCESSING_GETMYADDR );
 		timeout = cls.realtime;
 		retries = 0;
+		if (!Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR)[0] || !Cvar_VariableString(MASTER1_CVAR)[0])
+		{
+			Com_Printf( "CL_DetermineNatType_f: Error: masterserver cvar %s or %s is empty\n", NAT_TRAVERSAL_SERVER_CVAR, MASTER1_CVAR );
+			Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+			return;
+		}
 	}
+
 	if (cl_natType->integer == NAT_TYPE_PROCESSING_GETMYADDR)
 	{
 		if (cl_publicAddress->string && cl_publicAddress->string[0])
 		{
 			Com_Printf( "CL_DetermineNatType_f: our public address is %s\n", cl_publicAddress->string );
+			Cvar_SetValue( "cl_natType", NAT_TYPE_PROCESSING_HEARTBEAT );
+			timeout = cls.realtime;
+			retries = 0;
+		}
+		else if (cls.realtime >= timeout)
+		{
+			netadr_t to;
+			int i;
+			timeout = cls.realtime + NAT_MASTER_TIMEOUT;
+			retries ++;
+			if (retries >= NAT_MASTER_RETRIES)
+			{
+				Com_Printf( "CL_DetermineNatType_f: Error: cannot connect to the NAT masterserver %s\n", Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR) );
+				Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+				return;
+			}
+			i = NET_StringToAdr( Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR), &to, NA_IP );
+			if (!i)
+			{
+				Com_Printf( "CL_DetermineNatType_f: Error: could not resolve address of masterserver %s\n", Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR) );
+				Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+				return;
+			}
+			if (i == 2)
+				to.port = BigShort(PORT_MASTER);
+
+			Com_Printf( "CL_DetermineNatType_f: sending getMyAddr to %s\n", Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR) );
+			NET_OutOfBandPrint( NS_CLIENT, to, "%s", "getMyAddr" );
+		}
+	}
+
+	if (cl_natType->integer == NAT_TYPE_PROCESSING_HEARTBEAT)
+	{
+		if (cl_natGetinfoChallenge->string[0])
+		{
+			Com_Printf( "CL_DetermineNatType_f: got getinfo from masterserver\n" );
 			Cvar_SetValue( "cl_natType", NAT_TYPE_PROCESSING_FAKEREG );
 			timeout = cls.realtime;
 			retries = 0;
 		}
-		else
+		else if (cls.realtime >= timeout)
 		{
-			if (cls.realtime >= timeout)
+			netadr_t to;
+			int i;
+			timeout = cls.realtime + NAT_MASTER_TIMEOUT;
+			retries ++;
+			if (retries >= NAT_MASTER_RETRIES)
 			{
-				netadr_t to;
-				int i;
-				timeout = cls.realtime + NAT_MASTER_TIMEOUT;
-				retries ++;
-				if (retries >= NAT_MASTER_RETRIES || Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR)[0] == '\0')
-				{
-					Com_Printf( "CL_DetermineNatType_f: Error: cannot connect to the NAT masterserver %s\n", Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR) );
-					Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
-					return;
-				}
-				i = NET_StringToAdr( Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR), &to, NA_UNSPEC );
-				if (!i)
-				{
-					Com_Printf( "CL_DetermineNatType_f: Error: could not resolve address of master %s\n", Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR) );
-					Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
-					return;
-				}
-				if (i == 2)
-					to.port = BigShort(PORT_MASTER);
-
-				Com_Printf( "CL_DetermineNatType_f: sending getMyAddr\n" );
-				NET_OutOfBandPrint( NS_SERVER, to, "%s", "getMyAddr" );
+				Com_Printf( "CL_DetermineNatType_f: Error: masterserver %s did not respond to heartbeat\n", Cvar_VariableString(MASTER1_CVAR) );
+				Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+				return;
 			}
+			i = NET_StringToAdr( Cvar_VariableString(MASTER1_CVAR), &to, NA_IP );
+			if (!i)
+			{
+				Com_Printf( "CL_DetermineNatType_f: Error: could not resolve address of masterserver %s\n", Cvar_VariableString(MASTER1_CVAR) );
+				Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+				return;
+			}
+			if (i == 2)
+				to.port = BigShort(PORT_MASTER);
+
+			Com_Printf( "CL_DetermineNatType_f: sending heartbeat to %s\n", Cvar_VariableString(MASTER1_CVAR) );
+			NET_OutOfBandPrint( NS_SERVER, to, "%s", "heartbeat DarkPlaces\n" );
 		}
 	}
+
+	// Yeah copy-paste
 	if (cl_natType->integer == NAT_TYPE_PROCESSING_FAKEREG)
 	{
+		if (cl_publicAddressPreservedByNAT->integer == 1)
+		{
+			Com_Printf( "CL_DetermineNatType_f: our public address matches, NAT is port restricted or better\n" );
+			Cvar_SetValue( "cl_natType", NAT_TYPE_GOOD );
+			return;
+		}
+		else if (cls.realtime >= timeout)
+		{
+			netadr_t to;
+			int i;
+			static const char * MASTER1_CVAR = "sv_master1";
+			timeout = cls.realtime + NAT_MASTER_TIMEOUT;
+			retries ++;
+			if (retries >= NAT_MASTER_RETRIES || (cl_publicAddressPreservedByNAT->integer <= -2 && retries >= 3)) // Two ping with two replies are enough
+			{
+				Com_Printf( "CL_DetermineNatType_f: Error: masterserver %s did not return our address, NAT is symmetric\n", Cvar_VariableString(MASTER1_CVAR) );
+				Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+				return;
+			}
+			i = NET_StringToAdr( Cvar_VariableString(MASTER1_CVAR), &to, NA_IP );
+			if (!i)
+			{
+				Com_Printf( "CL_DetermineNatType_f: Error: could not resolve address of masterserver %s\n", Cvar_VariableString(MASTER1_CVAR) );
+				Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+				return;
+			}
+			if (i == 2)
+				to.port = BigShort(PORT_MASTER);
+
+			Com_Printf( "CL_DetermineNatType_f: sending serverinfo and getservers to %s\n", Cvar_VariableString(MASTER1_CVAR) );
+			// Don't send hostname or mapname, we're only checking NAT type
+			NET_OutOfBandPrint( NS_SERVER, to, "infoResponse\n\\gametype\\-1\\sv_maxclients\\-1\\clients\\-1\\protocol\\%d\\gamename\\%s\\challenge\\%s",
+									PROTOCOL_VERSION, GAMENAME_FOR_MASTER, cl_natGetinfoChallenge->string );
+			NET_OutOfBandPrint( NS_SERVER, to, "getservers %s %d gametype=-1 full",
+									GAMENAME_FOR_MASTER, PROTOCOL_VERSION );
+		}
 	}
 }

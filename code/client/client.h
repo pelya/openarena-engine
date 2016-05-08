@@ -475,6 +475,8 @@ extern cvar_t *r_cardboardStereo;
 
 extern cvar_t *cl_natType;
 extern cvar_t *cl_publicAddress;
+extern cvar_t *cl_publicAddressPreservedByNAT;
+extern cvar_t *cl_natGetinfoChallenge;
 
 #ifdef USE_MUMBLE
 extern	cvar_t	*cl_useMumble;
