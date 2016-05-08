@@ -247,7 +247,7 @@ void SV_MasterHeartbeat(const char *message)
 	netenabled = Cvar_VariableIntegerValue("net_enabled");
 
 	// "dedicated 1" is for lan play, "dedicated 2" is for inet public play
-	if ( ( /*(!com_dedicated || com_dedicated->integer != 2) &&*/ !(sv_public->integer) ) || !(netenabled & (NET_ENABLEV4 | NET_ENABLEV6)))
+	if ((!com_dedicated || com_dedicated->integer != 2) && sv_public->integer <= 0)
 		return;		// only dedicated servers send heartbeats
 
 	// if not time yet, don't send anything
