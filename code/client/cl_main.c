@@ -2556,7 +2556,6 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 		if (cl_natType->integer == NAT_TYPE_PROCESSING_FAKEREG &&
 			!strcmp(cl_publicAddress->string, NET_AdrToStringwPort(addresses[numservers])))
 		{
-			Com_Printf("Got our public address in server response\n");
 			Cvar_SetValue( "cl_publicAddressPreservedByNAT", 1 );
 		}
 
@@ -2703,7 +2702,7 @@ static void CL_ServerGetMyAddrResponsePacket( const netadr_t* from, byte *data, 
 
 	if (cl_natType->integer != NAT_TYPE_PROCESSING_GETMYADDR)
 	{
-		Com_Printf( "CL_ServerGetMyAddrResponsePacket: ignoring untimely response packet\n" );
+		//Com_Printf( "CL_ServerGetMyAddrResponsePacket: ignoring untimely response packet\n" );
 		return;
 	}
 
@@ -2712,7 +2711,7 @@ static void CL_ServerGetMyAddrResponsePacket( const netadr_t* from, byte *data, 
 	//Com_Printf( "CL_ServerGetMyAddrResponsePacket: got packet %s\n", s );
 	if (sscanf(s, "%20s %u", addrstr, &port) != 2 || !NET_StringToAdr(addrstr, &addr, NA_IP))
 	{
-		Com_Printf( "CL_ServerGetMyAddrResponsePacket: invalid address %s\n", s);
+		//Com_Printf( "CL_ServerGetMyAddrResponsePacket: invalid address %s\n", s);
 		return;
 	}
 	addr.port = BigShort( port );
@@ -2728,14 +2727,14 @@ static void CL_ServerGetInfoFakeRegistrationPacket( const netadr_t* from, byte *
 
 	if (cl_natType->integer != NAT_TYPE_PROCESSING_HEARTBEAT)
 	{
-		Com_Printf( "CL_ServerGetInfoFakeRegistrationPacket: ignoring untimely getinfo packet\n" );
+		//Com_Printf( "CL_ServerGetInfoFakeRegistrationPacket: ignoring untimely getinfo packet\n" );
 		return;
 	}
 
 	Q_strncpyz( challenge, (char *)data, MIN(datasize, sizeof(challenge)) );
 
 	Cvar_Set( "cl_natGetinfoChallenge", challenge );
-	Com_Printf( "CL_ServerGetInfoFakeRegistrationPacket: got challenge %s\n", challenge);
+	//Com_Printf( "CL_ServerGetInfoFakeRegistrationPacket: got challenge %s\n", challenge);
 }
 
 /*
@@ -4962,7 +4961,7 @@ void CL_DetermineNatType_f( void ) {
 			if (i == 2)
 				to.port = BigShort(PORT_MASTER);
 
-			Com_Printf( "CL_DetermineNatType_f: sending getMyAddr to %s\n", Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR) );
+			//Com_Printf( "CL_DetermineNatType_f: sending getMyAddr to %s\n", Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR) );
 			NET_OutOfBandPrint( NS_CLIENT, to, "%s", "getMyAddr" );
 		}
 	}
@@ -4971,7 +4970,7 @@ void CL_DetermineNatType_f( void ) {
 	{
 		if (cl_natGetinfoChallenge->string[0])
 		{
-			Com_Printf( "CL_DetermineNatType_f: got getinfo from masterserver\n" );
+			//Com_Printf( "CL_DetermineNatType_f: got getinfo from masterserver\n" );
 			Cvar_SetValue( "cl_natType", NAT_TYPE_PROCESSING_FAKEREG );
 			timeout = cls.realtime;
 			retries = 0;
@@ -4998,7 +4997,7 @@ void CL_DetermineNatType_f( void ) {
 			if (i == 2)
 				to.port = BigShort(PORT_MASTER);
 
-			Com_Printf( "CL_DetermineNatType_f: sending heartbeat to %s\n", Cvar_VariableString(MASTER1_CVAR) );
+			//Com_Printf( "CL_DetermineNatType_f: sending heartbeat to %s\n", Cvar_VariableString(MASTER1_CVAR) );
 			NET_OutOfBandPrint( NS_SERVER, to, "%s", "heartbeat DarkPlaces\n" );
 		}
 	}
@@ -5035,7 +5034,7 @@ void CL_DetermineNatType_f( void ) {
 			if (i == 2)
 				to.port = BigShort(PORT_MASTER);
 
-			Com_Printf( "CL_DetermineNatType_f: sending serverinfo and getservers to %s\n", Cvar_VariableString(MASTER1_CVAR) );
+			//Com_Printf( "CL_DetermineNatType_f: sending serverinfo and getservers to %s\n", Cvar_VariableString(MASTER1_CVAR) );
 			// Don't send hostname or mapname, we're only checking NAT type
 			NET_OutOfBandPrint( NS_SERVER, to, "infoResponse\n\\gametype\\-1\\sv_maxclients\\-1\\clients\\-1\\protocol\\%d\\gamename\\%s\\challenge\\%s",
 									PROTOCOL_VERSION, GAMENAME_FOR_MASTER, cl_natGetinfoChallenge->string );
