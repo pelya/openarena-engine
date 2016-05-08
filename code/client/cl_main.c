@@ -4914,7 +4914,7 @@ qboolean CL_CDKeyValidate( const char *key, const char *checksum ) {
 void CL_DetermineNatType_f( void ) {
 	static int timeout = 0;
 	static int retries = 0;
-	enum { NAT_MASTER_TIMEOUT = 1000, NAT_MASTER_RETRIES = 6 };
+	enum { NAT_MASTER_TIMEOUT = 1000, NAT_MASTER_RETRIES = 5 };
 	static const char * MASTER1_CVAR = "sv_master1";
 
 	if (cl_natType->integer == NAT_TYPE_PROCESSING_INIT)
