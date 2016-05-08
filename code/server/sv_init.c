@@ -690,7 +690,7 @@ void SV_Init (void)
 #ifndef STANDALONE
 	sv_strictAuth = Cvar_Get ("sv_strictAuth", "1", CVAR_ARCHIVE );
 #endif
-	sv_public = Cvar_Get( "sv_public", "0", CVAR_ARCHIVE );
+	sv_public = Cvar_Get( "sv_public", "1", CVAR_ARCHIVE );
 	sv_banFile = Cvar_Get("sv_banFile", "serverbans.dat", CVAR_ARCHIVE);
 
 	// initialize bot cvars so they are listed and can be set before loading the botlib
