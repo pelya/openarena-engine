@@ -83,7 +83,7 @@ Netchan_Setup
 called to open a channel to a remote system
 ==============
 */
-void Netchan_Setup(netsrc_t sock, netchan_t *chan, netadr_t adr, int qport, int challenge, qboolean compat)
+void Netchan_Setup(netsrc_t sock, netchan_t *chan, netadr_t adr, int sockid, int qport, int challenge, qboolean compat)
 {
 	Com_Memset (chan, 0, sizeof(*chan));
 	
@@ -93,6 +93,7 @@ void Netchan_Setup(netsrc_t sock, netchan_t *chan, netadr_t adr, int qport, int 
 	chan->incomingSequence = 0;
 	chan->outgoingSequence = 1;
 	chan->challenge = challenge;
+	chan->sockid = sockid;
 
 #ifdef LEGACY_PROTOCOL
 	chan->compat = compat;
@@ -139,7 +140,7 @@ void Netchan_TransmitNextFragment( netchan_t *chan ) {
 	MSG_WriteData( &send, chan->unsentBuffer + chan->unsentFragmentStart, fragmentLength );
 
 	// send the datagram
-	NET_SendPacket(chan->sock, send.cursize, send.data, chan->remoteAddress);
+	NET_SendPacket(chan->sock, send.cursize, send.data, chan->remoteAddress, chan->sockid);
 	
 	// Store send time and size of this packet for rate control
 	chan->lastSentTime = Sys_Milliseconds();
@@ -214,7 +215,7 @@ void Netchan_Transmit( netchan_t *chan, int length, const byte *data ) {
 	MSG_WriteData( &send, data, length );
 
 	// send the datagram
-	NET_SendPacket( chan->sock, send.cursize, send.data, chan->remoteAddress );
+	NET_SendPacket( chan->sock, send.cursize, send.data, chan->remoteAddress, chan->sockid );
 
 	// Store send time and size of this packet for rate control
 	chan->lastSentTime = Sys_Milliseconds();
@@ -482,12 +483,13 @@ typedef struct packetQueue_s {
         int length;
         byte *data;
         netadr_t to;
+        int sockid;
         int release;
 } packetQueue_t;
 
 packetQueue_t *packetQueue = NULL;
 
-static void NET_QueuePacket( int length, const void *data, netadr_t to,
+static void NET_QueuePacket( int length, const void *data, netadr_t to, int sockid,
 	int offset )
 {
 	packetQueue_t *new, *next = packetQueue;
@@ -500,6 +502,7 @@ static void NET_QueuePacket( int length, const void *data, netadr_t to,
 	Com_Memcpy(new->data, data, length);
 	new->length = length;
 	new->to = to;
+	new->sockid = sockid;
 	new->release = Sys_Milliseconds() + (int)((float)offset / com_timescale->value);	
 	new->next = NULL;
 
@@ -526,7 +529,7 @@ void NET_FlushPacketQueue(void)
 		if(packetQueue->release >= now)
 			break;
 		Sys_SendPacket(packetQueue->length, packetQueue->data,
-			packetQueue->to);
+			packetQueue->to, packetQueue->sockid);
 		last = packetQueue;
 		packetQueue = packetQueue->next;
 		Z_Free(last->data);
@@ -534,7 +537,7 @@ void NET_FlushPacketQueue(void)
 	}
 }
 
-void NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to ) {
+void NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to, int sockid ) {
 
 	// sequenced packets are shown in netchan, so just show oob
 	if ( showpackets->integer && *(int *)data == -1 )	{
@@ -553,13 +556,13 @@ void NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to ) 
 	}
 
 	if ( sock == NS_CLIENT && cl_packetdelay->integer > 0 ) {
-		NET_QueuePacket( length, data, to, cl_packetdelay->integer );
+		NET_QueuePacket( length, data, to, sockid, cl_packetdelay->integer );
 	}
 	else if ( sock == NS_SERVER && sv_packetdelay->integer > 0 ) {
-		NET_QueuePacket( length, data, to, sv_packetdelay->integer );
+		NET_QueuePacket( length, data, to, sockid, sv_packetdelay->integer );
 	}
 	else {
-		Sys_SendPacket( length, data, to );
+		Sys_SendPacket( length, data, to, sockid );
 	}
 }
 
@@ -570,7 +573,7 @@ NET_OutOfBandPrint
 Sends a text message in an out-of-band datagram
 ================
 */
-void QDECL NET_OutOfBandPrint( netsrc_t sock, netadr_t adr, const char *format, ... ) {
+void QDECL NET_OutOfBandPrint( netsrc_t sock, netadr_t adr, int sockid, const char *format, ... ) {
 	va_list		argptr;
 	char		string[MAX_MSGLEN];
 
@@ -586,7 +589,7 @@ void QDECL NET_OutOfBandPrint( netsrc_t sock, netadr_t adr, const char *format, 
 	va_end( argptr );
 
 	// send the datagram
-	NET_SendPacket( sock, strlen( string ), string, adr );
+	NET_SendPacket( sock, strlen( string ), string, adr, sockid );
 }
 
 /*
@@ -615,7 +618,7 @@ void QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, byte *format, int len
 	mbuf.cursize = len+4;
 	Huff_Compress( &mbuf, 12);
 	// send the datagram
-	NET_SendPacket( sock, mbuf.cursize, mbuf.data, adr );
+	NET_SendPacket( sock, mbuf.cursize, mbuf.data, adr, sockid );
 }
 
 /*

@@ -2137,7 +2137,7 @@ sysEvent_t	Com_GetEvent( void ) {
 Com_RunAndTimeServerPacket
 =================
 */
-void Com_RunAndTimeServerPacket( netadr_t *evFrom, msg_t *buf ) {
+void Com_RunAndTimeServerPacket( netadr_t *evFrom, msg_t *buf, int sockid ) {
 	int		t1, t2, msec;
 
 	t1 = 0;
@@ -2146,7 +2146,7 @@ void Com_RunAndTimeServerPacket( netadr_t *evFrom, msg_t *buf ) {
 		t1 = Sys_Milliseconds ();
 	}
 
-	SV_PacketEvent( *evFrom, buf );
+	SV_PacketEvent( *evFrom, buf, sockid );
 
 	if ( com_speeds->integer ) {
 		t2 = Sys_Milliseconds ();
@@ -2185,7 +2185,7 @@ int Com_EventLoop( void ) {
 			while ( NET_GetLoopPacket( NS_SERVER, &evFrom, &buf ) ) {
 				// if the server just shut down, flush the events
 				if ( com_sv_running->integer ) {
-					Com_RunAndTimeServerPacket( &evFrom, &buf );
+					Com_RunAndTimeServerPacket( &evFrom, &buf, 0 );
 				}
 			}
 

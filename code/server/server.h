@@ -348,7 +348,7 @@ void SV_SpawnServer( char *server, qboolean killBots );
 //
 void SV_GetChallenge(netadr_t from);
 
-void SV_DirectConnect( netadr_t from );
+void SV_DirectConnect( netadr_t from, int sockid );
 
 #ifndef STANDALONE
 void SV_AuthorizeIpPacket( netadr_t from );

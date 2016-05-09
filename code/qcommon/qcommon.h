@@ -172,9 +172,9 @@ void		NET_Shutdown( void );
 void		NET_Restart_f( void );
 void		NET_Config( qboolean enableNetworking );
 void		NET_FlushPacketQueue(void);
-void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to);
-void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
-void		QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, byte *format, int len );
+void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to, int sockid);
+void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, int sockid, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
+void		QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, int sockid, byte *format, int len );
 
 qboolean	NET_CompareAdr (netadr_t a, netadr_t b);
 qboolean	NET_CompareBaseAdrMask(netadr_t a, netadr_t b, int netmask);
@@ -236,7 +236,7 @@ typedef struct {
 } netchan_t;
 
 void Netchan_Init( int qport );
-void Netchan_Setup(netsrc_t sock, netchan_t *chan, netadr_t adr, int qport, int challenge, qboolean compat);
+void Netchan_Setup(netsrc_t sock, netchan_t *chan, netadr_t adr, int sockid, int qport, int challenge, qboolean compat);
 
 void Netchan_Transmit( netchan_t *chan, int length, const byte *data );
 void Netchan_TransmitNextFragment( netchan_t *chan );
@@ -846,7 +846,7 @@ int			Com_Filter(char *filter, char *name, int casesensitive);
 int			Com_FilterPath(char *filter, char *name, int casesensitive);
 int			Com_RealTime(qtime_t *qtime);
 qboolean	Com_SafeMode( void );
-void		Com_RunAndTimeServerPacket(netadr_t *evFrom, msg_t *buf);
+void		Com_RunAndTimeServerPacket(netadr_t *evFrom, msg_t *buf, int sockid);
 
 qboolean	Com_IsVoipTarget(uint8_t *voipTargets, int voipTargetsSize, int clientNum);
 
@@ -1058,7 +1058,7 @@ void SCR_DebugGraph (float value);	// FIXME: move logging to common?
 void SV_Init( void );
 void SV_Shutdown( char *finalmsg );
 void SV_Frame( int msec );
-void SV_PacketEvent( netadr_t from, msg_t *msg );
+void SV_PacketEvent( netadr_t from, msg_t *msg, int sockid );
 int SV_FrameMsec(void);
 qboolean SV_GameCommand( void );
 int SV_SendQueuedPackets(void);
@@ -1134,7 +1134,7 @@ cpuFeatures_t Sys_GetProcessorFeatures( void );
 
 void	Sys_SetErrorText( const char *text );
 
-void	Sys_SendPacket( int length, const void *data, netadr_t to );
+void	Sys_SendPacket( int length, const void *data, netadr_t to, int sockid );
 
 qboolean	Sys_StringToAdr( const char *s, netadr_t *a, netadrtype_t family );
 //Does NOT parse port numbers, only base addresses.

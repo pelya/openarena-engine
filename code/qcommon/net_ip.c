@@ -113,7 +113,14 @@ static cvar_t	*net_dropsim;
 
 static struct sockaddr	socksRelayAddr;
 
-static SOCKET	ip_socket = INVALID_SOCKET;
+static SOCKET	ip_sockets[MAX_IP_SOCKETS] = { // No easy way to initialize an array
+	INVALID_SOCKET, INVALID_SOCKET, INVALID_SOCKET, INVALID_SOCKET,
+	INVALID_SOCKET, INVALID_SOCKET, INVALID_SOCKET, INVALID_SOCKET,
+	INVALID_SOCKET, INVALID_SOCKET, INVALID_SOCKET, INVALID_SOCKET,
+};
+//static SOCKET	ip_socket = INVALID_SOCKET;
+#define ip_socket ip_sockets[0] // Yay hack, but if it's good enough for h_addr in stdlib, it's good enough for me
+
 static SOCKET	ip6_socket = INVALID_SOCKET;
 static SOCKET	socks_socket = INVALID_SOCKET;
 static SOCKET	multicast6_socket = INVALID_SOCKET;
@@ -520,57 +527,62 @@ NET_GetPacket
 Receive one packet
 ==================
 */
-qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_message, fd_set *fdr)
+qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_message, fd_set *fdr, int *sockid)
 {
 	int 	ret;
 	struct sockaddr_storage from;
 	socklen_t	fromlen;
 	int		err;
-	
-	if(ip_socket != INVALID_SOCKET && FD_ISSET(ip_socket, fdr))
+
+	for(int i = 0; i < MAX_IP_SOCKETS; i++)
 	{
-		fromlen = sizeof(from);
-		ret = recvfrom( ip_socket, (void *)net_message->data, net_message->maxsize, 0, (struct sockaddr *) &from, &fromlen );
-		
-		if (ret == SOCKET_ERROR)
+		*sockid = i;
+		if(ip_sockets[i] != INVALID_SOCKET && FD_ISSET(ip_sockets[i], fdr))
 		{
-			err = socketError;
+			fromlen = sizeof(from);
+			ret = recvfrom( ip_sockets[i], (void *)net_message->data, net_message->maxsize, 0, (struct sockaddr *) &from, &fromlen );
+			
+			if (ret == SOCKET_ERROR)
+			{
+				err = socketError;
 
-			if( err != EAGAIN && err != ECONNRESET )
-				Com_Printf( "NET_GetPacket: %s\n", NET_ErrorString() );
-		}
-		else
-		{
+				if( err != EAGAIN && err != ECONNRESET )
+					Com_Printf( "NET_GetPacket: %s\n", NET_ErrorString() );
+			}
+			else
+			{
 
-			memset( ((struct sockaddr_in *)&from)->sin_zero, 0, 8 );
-		
-			if ( usingSocks && memcmp( &from, &socksRelayAddr, fromlen ) == 0 ) {
-				if ( ret < 10 || net_message->data[0] != 0 || net_message->data[1] != 0 || net_message->data[2] != 0 || net_message->data[3] != 1 ) {
+				memset( ((struct sockaddr_in *)&from)->sin_zero, 0, 8 );
+			
+				if ( usingSocks && memcmp( &from, &socksRelayAddr, fromlen ) == 0 ) {
+					if ( ret < 10 || net_message->data[0] != 0 || net_message->data[1] != 0 || net_message->data[2] != 0 || net_message->data[3] != 1 ) {
+						return qfalse;
+					}
+					net_from->type = NA_IP;
+					net_from->ip[0] = net_message->data[4];
+					net_from->ip[1] = net_message->data[5];
+					net_from->ip[2] = net_message->data[6];
+					net_from->ip[3] = net_message->data[7];
+					net_from->port = *(short *)&net_message->data[8];
+					net_message->readcount = 10;
+				}
+				else {
+					SockadrToNetadr( (struct sockaddr *) &from, net_from );
+					net_message->readcount = 0;
+				}
+			
+				if( ret >= net_message->maxsize ) {
+					Com_Printf( "Oversize packet from %s\n", NET_AdrToString (*net_from) );
 					return qfalse;
 				}
-				net_from->type = NA_IP;
-				net_from->ip[0] = net_message->data[4];
-				net_from->ip[1] = net_message->data[5];
-				net_from->ip[2] = net_message->data[6];
-				net_from->ip[3] = net_message->data[7];
-				net_from->port = *(short *)&net_message->data[8];
-				net_message->readcount = 10;
+				
+				net_message->cursize = ret;
+				return qtrue;
 			}
-			else {
-				SockadrToNetadr( (struct sockaddr *) &from, net_from );
-				net_message->readcount = 0;
-			}
-		
-			if( ret >= net_message->maxsize ) {
-				Com_Printf( "Oversize packet from %s\n", NET_AdrToString (*net_from) );
-				return qfalse;
-			}
-			
-			net_message->cursize = ret;
-			return qtrue;
 		}
 	}
 	
+	sockid = 0;
 	if(ip6_socket != INVALID_SOCKET && FD_ISSET(ip6_socket, fdr))
 	{
 		fromlen = sizeof(from);
@@ -640,7 +652,7 @@ static char socksBuf[4096];
 Sys_SendPacket
 ==================
 */
-void Sys_SendPacket( int length, const void *data, netadr_t to ) {
+void Sys_SendPacket( int length, const void *data, netadr_t to, int sockid ) {
 	int				ret = SOCKET_ERROR;
 	struct sockaddr_storage	addr;
 
@@ -650,10 +662,11 @@ void Sys_SendPacket( int length, const void *data, netadr_t to ) {
 		return;
 	}
 
-	if( (ip_socket == INVALID_SOCKET && to.type == NA_IP) ||
-		(ip_socket == INVALID_SOCKET && to.type == NA_BROADCAST) ||
+	if( (ip_sockets[sockid] == INVALID_SOCKET && to.type == NA_IP) ||
+		(ip_sockets[sockid] == INVALID_SOCKET && to.type == NA_BROADCAST) ||
 		(ip6_socket == INVALID_SOCKET && to.type == NA_IP6) ||
-		(ip6_socket == INVALID_SOCKET && to.type == NA_MULTICAST6) )
+		(ip6_socket == INVALID_SOCKET && to.type == NA_MULTICAST6) ||
+		(sockid != 0 && to.type != NA_IP) )
 		return;
 
 	if(to.type == NA_MULTICAST6 && (net_enabled->integer & NET_DISABLEMCAST))
@@ -670,11 +683,11 @@ void Sys_SendPacket( int length, const void *data, netadr_t to ) {
 		*(int *)&socksBuf[4] = ((struct sockaddr_in *)&addr)->sin_addr.s_addr;
 		*(short *)&socksBuf[8] = ((struct sockaddr_in *)&addr)->sin_port;
 		memcpy( &socksBuf[10], data, length );
-		ret = sendto( ip_socket, socksBuf, length+10, 0, &socksRelayAddr, sizeof(socksRelayAddr) );
+		ret = sendto( ip_sockets[sockid], socksBuf, length+10, 0, &socksRelayAddr, sizeof(socksRelayAddr) );
 	}
 	else {
 		if(addr.ss_family == AF_INET)
-			ret = sendto( ip_socket, data, length, 0, (struct sockaddr *) &addr, sizeof(struct sockaddr_in) );
+			ret = sendto( ip_sockets[sockid], data, length, 0, (struct sockaddr *) &addr, sizeof(struct sockaddr_in) );
 		else if(addr.ss_family == AF_INET6)
 			ret = sendto( ip6_socket, data, length, 0, (struct sockaddr *) &addr, sizeof(struct sockaddr_in6) );
 	}
@@ -1400,9 +1413,16 @@ void NET_OpenIP( void ) {
 					break;
 			}
 		}
-		
+
 		if(ip_socket == INVALID_SOCKET)
 			Com_Printf( "WARNING: Couldn't bind to a v4 ip address.\n");
+
+		for( i = 1 ; i < MAX_IP_SOCKETS ; i++ ) {
+			ip_sockets[i] = NET_IPSocket( net_ip->string, PORT_ANY, &err );
+			if (ip_sockets[i] == INVALID_SOCKET) {
+				Com_Printf( "WARNING: Couldn't bind to a ipv4 address for NAT for socket %d.\n", i);
+			}
+		}
 	}
 }
 
@@ -1621,12 +1641,13 @@ void NET_Event(fd_set *fdr)
 	byte bufData[MAX_MSGLEN + 1];
 	netadr_t from;
 	msg_t netmsg;
+	int sockid;
 	
 	while(1)
 	{
 		MSG_Init(&netmsg, bufData, sizeof(bufData));
 
-		if(NET_GetPacket(&from, &netmsg, fdr))
+		if(NET_GetPacket(&from, &netmsg, fdr, &sockid))
 		{
 			if(net_dropsim->value > 0.0f && net_dropsim->value <= 100.0f)
 			{
@@ -1636,7 +1657,7 @@ void NET_Event(fd_set *fdr)
 			}
 
 			if(com_sv_running->integer)
-				Com_RunAndTimeServerPacket(&from, &netmsg);
+				Com_RunAndTimeServerPacket(&from, &netmsg, sockid);
 			else
 				CL_PacketEvent(from, &netmsg);
 		}

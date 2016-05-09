@@ -307,7 +307,7 @@ A "connect" OOB command has been received
 ==================
 */
 
-void SV_DirectConnect( netadr_t from ) {
+void SV_DirectConnect( netadr_t from, int sockid ) {
 	char		userinfo[MAX_INFO_STRING];
 	int			i;
 	client_t	*cl, *newcl;
@@ -535,9 +535,9 @@ gotnewcl:
 	// save the address
 #ifdef LEGACY_PROTOCOL
 	newcl->compat = compat;
-	Netchan_Setup(NS_SERVER, &newcl->netchan, from, qport, challenge, compat);
+	Netchan_Setup(NS_SERVER, &newcl->netchan, from, sockid, qport, challenge, compat);
 #else
-	Netchan_Setup(NS_SERVER, &newcl->netchan, from, qport, challenge, qfalse);
+	Netchan_Setup(NS_SERVER, &newcl->netchan, from, sockid, qport, challenge, qfalse);
 #endif
 	// init the netchan queue
 	newcl->netchan_end_queue = &newcl->netchan_start_queue;

@@ -805,7 +805,7 @@ Clients that are in the game can still send
 connectionless packets.
 =================
 */
-static void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
+static void SV_ConnectionlessPacket( netadr_t from, msg_t *msg, int sockid ) {
 	char	*s;
 	char	*c;
 
@@ -829,7 +829,7 @@ static void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	} else if (!Q_stricmp(c, "getchallenge")) {
 		SV_GetChallenge(from);
 	} else if (!Q_stricmp(c, "connect")) {
-		SV_DirectConnect( from );
+		SV_DirectConnect( from, sockid );
 #ifndef STANDALONE
 	} else if (!Q_stricmp(c, "ipAuthorize")) {
 		SV_AuthorizeIpPacket( from );
@@ -853,14 +853,14 @@ static void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 SV_PacketEvent
 =================
 */
-void SV_PacketEvent( netadr_t from, msg_t *msg ) {
+void SV_PacketEvent( netadr_t from, msg_t *msg, int sockid ) {
 	int			i;
 	client_t	*cl;
 	int			qport;
 
 	// check for connectionless packet (0xffffffff) first
 	if ( msg->cursize >= 4 && *(int *)msg->data == -1) {
-		SV_ConnectionlessPacket( from, msg );
+		SV_ConnectionlessPacket( from, msg, sockid );
 		return;
 	}
 
@@ -891,6 +891,8 @@ void SV_PacketEvent( netadr_t from, msg_t *msg ) {
 			Com_Printf( "SV_PacketEvent: fixing up a translated port\n" );
 			cl->netchan.remoteAddress.port = from.port;
 		}
+
+		//cl->netchan.sockid = sockid;
 
 		// make sure it is a valid, in sequence packet
 		if (SV_Netchan_Process(cl, msg)) {
