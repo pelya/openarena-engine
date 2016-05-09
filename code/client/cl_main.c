@@ -2687,7 +2687,7 @@ static void CL_ServersResponseWithInfoPacket( const netadr_t* from, msg_t *msg )
 		}
 
 		CL_SetServerInfo(&cls.globalServers[i], info, cls.globalServers[i].ping >= 0 ? cls.globalServers[i].ping : 999999);
-		Com_Printf("Got server %s: %s\n", Info_ValueForKey(info, "addr"), Info_ValueForKey(info, "hostname"));
+		//Com_Printf("Got server %s: %s\n", Info_ValueForKey(info, "addr"), Info_ValueForKey(info, "hostname"));
 	}
 }
 
