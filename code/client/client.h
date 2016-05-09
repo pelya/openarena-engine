@@ -584,7 +584,7 @@ void	CL_GlobalServers_f( void );
 void	CL_FavoriteServers_f( void );
 void	CL_Ping_f( void );
 qboolean CL_UpdateVisiblePings_f( int source );
-void CL_DetermineNatType_f( void );
+void	CL_DetermineNatType_f( void );
 
 
 //

@@ -527,6 +527,7 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 			S_StopAllSounds();
 			VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
 			break;
+		case CA_CONNECTING_NAT:
 		case CA_CONNECTING:
 		case CA_CHALLENGING:
 		case CA_CONNECTED:

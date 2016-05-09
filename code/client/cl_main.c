@@ -1748,9 +1748,10 @@ void CL_Connect_f( void ) {
 	const char	*serverString;
 	int argc = Cmd_Argc();
 	netadrtype_t family = NA_UNSPEC;
+	qboolean nat = qfalse;
 
 	if ( argc != 2 && argc != 3 ) {
-		Com_Printf( "usage: connect [-4|-6] server\n");
+		Com_Printf( "usage: connect [-4|-6|-nat] server\n");
 		return;	
 	}
 	
@@ -1762,8 +1763,11 @@ void CL_Connect_f( void ) {
 			family = NA_IP;
 		else if(!strcmp(Cmd_Argv(1), "-6"))
 			family = NA_IP6;
-		else
-			Com_Printf( "warning: only -4 or -6 as address type understood.\n");
+		else if(!strcmp(Cmd_Argv(1), "-nat")) {
+			family = NA_IP;
+			nat = qtrue;
+		} else
+			Com_Printf( "warning: only -4 or -6 or -nat as address type understood.\n");
 		
 		server = Cmd_Argv(2);
 	}
@@ -1818,7 +1822,7 @@ void CL_Connect_f( void ) {
 		clc.state = CA_CHALLENGING;
 	else
 	{
-		clc.state = CA_CONNECTING;
+		clc.state = nat ? CA_CONNECTING_NAT : CA_CONNECTING;
 		
 		// Set a client challenge number that ideally is mirrored back by the server.
 		clc.challenge = ((rand() << 16) ^ rand()) ^ Com_Milliseconds();
@@ -2346,6 +2350,7 @@ void CL_CheckForResend( void ) {
 	int		port, i;
 	char	info[MAX_INFO_STRING];
 	char	data[MAX_INFO_STRING];
+	netadr_t natrelay;
 
 	// don't send anything if playing back a demo
 	if ( clc.demoplaying ) {
@@ -2353,7 +2358,7 @@ void CL_CheckForResend( void ) {
 	}
 
 	// resend if we haven't gotten a reply yet
-	if ( clc.state != CA_CONNECTING && clc.state != CA_CHALLENGING ) {
+	if ( clc.state != CA_CONNECTING_NAT && clc.state != CA_CONNECTING && clc.state != CA_CHALLENGING ) {
 		return;
 	}
 
@@ -2366,6 +2371,21 @@ void CL_CheckForResend( void ) {
 
 
 	switch ( clc.state ) {
+	case CA_CONNECTING_NAT:
+		// relaying data through the NAT masterserver
+		i = NET_StringToAdr( Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR), &natrelay, NA_IP );
+		if (!i) {
+			Com_Error( ERR_FATAL, "CL_CheckForResend: cannot resolve %s\n", NAT_TRAVERSAL_SERVER_CVAR );
+			clc.state = CA_DISCONNECTED;
+			break;
+		} else if (i == 2)
+			natrelay.port = BigShort(PORT_MASTER);
+
+		Com_sprintf(data, sizeof(data), "relaySend %s %u\ngetchallenge %d %s", NET_AdrToString(clc.serverAddress), (unsigned short)BigShort(clc.serverAddress.port), clc.challenge, cl_serverlistGamename->string);
+
+		NET_OutOfBandPrint(NS_CLIENT, natrelay, "%s", data);
+		break;
+
 	case CA_CONNECTING:
 		// requesting a challenge .. IPv6 users always get in as authorize server supports no ipv6.
 #ifndef STANDALONE
@@ -2960,6 +2980,40 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	// Respond to our fake heartbeat with some fake info for non-NAT masterserver
 	if ( !Q_strncmp(c, "getinfo", sizeof("getinfo") - 1) ) {
 		CL_ServerGetInfoFakeRegistrationPacket( &from, msg->data + sizeof("getinfo") + 4, msg->cursize - sizeof("getinfo") - 3 );
+		return;
+	}
+
+	if (!Q_stricmp(c, "relayRecv"))
+	{
+		if (clc.state != CA_CONNECTING_NAT || Cmd_Argc() < 6 || Q_stricmp(Cmd_Argv(3), "challengeResponse"))
+		{
+			Com_DPrintf("Unwanted NAT challenge response received. Ignored.\n");
+			return;
+		}
+
+		challenge = atoi(Cmd_Argv(5));
+
+		if(challenge != clc.challenge)
+		{
+			Com_Printf("Bad challenge for NAT challengeResponse. Ignored.\n");
+			return;
+		}
+
+		if (!NET_StringToAdr(Cmd_Argv(1), &clc.serverAddress, NA_IP))
+		{
+			Com_Printf("Bad challenge for NAT challengeResponse. Ignored.\n");
+			return;
+		}
+		clc.serverAddress.port = BigShort(atoi(Cmd_Argv(2)));
+
+		// start sending challenge response instead of challenge request packets
+		clc.challenge = atoi(Cmd_Argv(4));
+		//clc.state = CA_CHALLENGING;
+		clc.state = CA_CONNECTING;
+		clc.connectPacketCount = 0;
+		clc.connectTime = -99999;
+
+		Com_DPrintf ("NAT challengeResponse: %d new server address %s\n", clc.challenge, NET_AdrToStringwPort(clc.serverAddress));
 		return;
 	}
 
@@ -3929,6 +3983,7 @@ void CL_Shutdown(char *finalmsg, qboolean disconnect, qboolean quit)
 	Cmd_RemoveCommand ("model");
 	Cmd_RemoveCommand ("video");
 	Cmd_RemoveCommand ("stopvideo");
+	Cmd_RemoveCommand ("determine_nat_type");
 
 	CL_ShutdownInput();
 	Con_Shutdown();
