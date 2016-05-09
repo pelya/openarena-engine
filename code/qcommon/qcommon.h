@@ -279,6 +279,7 @@ extern int demo_protocols[];
 #endif
 
 #define NAT_TRAVERSAL_SERVER_CVAR	"sv_master3"
+#define NAT_TRAVERSAL_SERVER_IDX	(atoi(NAT_TRAVERSAL_SERVER_CVAR + sizeof(NAT_TRAVERSAL_SERVER_CVAR) - 2) - 1) // ugly string parsing yeah
 
 #ifndef STANDALONE
   #ifndef AUTHORIZE_SERVER_NAME

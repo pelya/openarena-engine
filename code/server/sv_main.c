@@ -237,6 +237,7 @@ but not on every player enter or exit.
 ================
 */
 #define	HEARTBEAT_MSEC	300*1000
+#define	HEARTBEAT_NAT_MSEC	15*1000 // NEw NAT masterserver requires more frequent heartbeats
 void SV_MasterHeartbeat(const char *message)
 {
 	static netadr_t	adr[MAX_MASTER_SERVERS][2]; // [2] for v4 and v6 address for the same address string.
@@ -251,14 +252,19 @@ void SV_MasterHeartbeat(const char *message)
 		return;		// only dedicated servers send heartbeats
 
 	// if not time yet, don't send anything
-	if ( svs.time < svs.nextHeartbeatTime )
+	if ( svs.time < svs.nextHeartbeatTimeNat )
 		return;
 
-	svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
+	svs.nextHeartbeatTimeNat = svs.time + HEARTBEAT_NAT_MSEC;
 
 	// send to group masters
 	for (i = 0; i < MAX_MASTER_SERVERS; i++)
 	{
+		if ( svs.time < svs.nextHeartbeatTime )
+			i = NAT_TRAVERSAL_SERVER_IDX; // Last server in the list
+		else
+			svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
+
 		if(!sv_master[i]->string[0])
 			continue;
 
@@ -339,10 +345,12 @@ Informs all masters that this server is going down
 void SV_MasterShutdown( void ) {
 	// send a heartbeat right now
 	svs.nextHeartbeatTime = -9999;
+	svs.nextHeartbeatTimeNat = -9999;
 	SV_MasterHeartbeat(HEARTBEAT_FOR_MASTER);
 
 	// send it again to minimize chance of drops
 	svs.nextHeartbeatTime = -9999;
+	svs.nextHeartbeatTimeNat = -9999;
 	SV_MasterHeartbeat(HEARTBEAT_FOR_MASTER);
 
 	// when the master tries to poll the server, it won't respond, so
