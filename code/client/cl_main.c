@@ -2573,10 +2573,13 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 		addresses[numservers].port += *buffptr++;
 		addresses[numservers].port = BigShort( addresses[numservers].port );
 
-		if (cl_natType->integer == NAT_TYPE_PROCESSING_FAKEREG &&
-			!strcmp(cl_publicAddress->string, NET_AdrToStringwPort(addresses[numservers])))
+		if (cl_natType->integer == NAT_TYPE_PROCESSING_FAKEREG)
 		{
-			Cvar_SetValue( "cl_publicAddressPreservedByNAT", 1 );
+			const char * addr = NET_AdrToStringwPort(addresses[numservers]);
+			if (!strcmp(cl_publicAddress->string, addr))
+				Cvar_SetValue( "cl_publicAddressPreservedByNAT", 1 );
+			else if (strchr(addr, ':') != NULL && !strncmp(cl_publicAddress->string, addr, strchr(addr, ':') - addr + 1))
+				Com_Printf("CL_ServersResponsePacket: our NAT changed our address to %s\n", addr);
 		}
 
 		// syntax check
