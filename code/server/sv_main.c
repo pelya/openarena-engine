@@ -238,6 +238,7 @@ but not on every player enter or exit.
 */
 #define	HEARTBEAT_MSEC	300*1000
 #define	HEARTBEAT_NAT_MSEC	15*1000 // NEw NAT masterserver requires more frequent heartbeats
+
 void SV_MasterHeartbeat(const char *message)
 {
 	static netadr_t	adr[MAX_MASTER_SERVERS][2]; // [2] for v4 and v6 address for the same address string.
@@ -329,9 +330,9 @@ void SV_MasterHeartbeat(const char *message)
 		// ever incompatably changes
 
 		if(adr[i][0].type != NA_BAD)
-			NET_OutOfBandPrint( NS_SERVER, adr[i][0], "heartbeat %s\n", message);
+			NET_OutOfBandPrint( NS_SERVER, adr[i][0], 0, "heartbeat %s\n", message);
 		if(adr[i][1].type != NA_BAD)
-			NET_OutOfBandPrint( NS_SERVER, adr[i][1], "heartbeat %s\n", message);
+			NET_OutOfBandPrint( NS_SERVER, adr[i][1], 0, "heartbeat %s\n", message);
 	}
 }
 
@@ -553,7 +554,7 @@ and all connected players.  Used for getting detailed information after
 the simple info query.
 ================
 */
-static void SVC_Status( netadr_t from ) {
+static void SVC_Status( netadr_t from, int sockid ) {
 	char	player[1024];
 	char	status[MAX_MSGLEN];
 	int		i;
@@ -610,7 +611,7 @@ static void SVC_Status( netadr_t from ) {
 		}
 	}
 
-	NET_OutOfBandPrint( NS_SERVER, from, "statusResponse\n%s\n%s", infostring, status );
+	NET_OutOfBandPrint( NS_SERVER, from, sockid, "statusResponse\n%s\n%s", infostring, status );
 }
 
 /*
@@ -621,7 +622,7 @@ Responds with a short info message that should be enough to determine
 if a user is interested in a server to do a full status
 ================
 */
-void SVC_Info( netadr_t from ) {
+void SVC_Info( netadr_t from, int sockid ) {
 	int		i, count, humans;
 	char	*gamedir;
 	char	infostring[MAX_INFO_STRING];
@@ -707,7 +708,7 @@ void SVC_Info( netadr_t from ) {
 		Info_SetValueForKey( infostring, "game", gamedir );
 	}
 
-	NET_OutOfBandPrint( NS_SERVER, from, "infoResponse\n%s", infostring );
+	NET_OutOfBandPrint( NS_SERVER, from, sockid, "infoResponse\n%s", infostring );
 }
 
 /*
@@ -717,7 +718,7 @@ SVC_FlushRedirect
 ================
 */
 static void SV_FlushRedirect( char *outputbuf ) {
-	NET_OutOfBandPrint( NS_SERVER, svs.redirectAddress, "print\n%s", outputbuf );
+	NET_OutOfBandPrint( NS_SERVER, svs.redirectAddress, svs.redirectSockId, "print\n%s", outputbuf );
 }
 
 /*
@@ -729,7 +730,7 @@ Shift down the remaining args
 Redirect all printfs
 ===============
 */
-static void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
+static void SVC_RemoteCommand( netadr_t from, msg_t *msg, int sockid ) {
 	qboolean	valid;
 	char		remaining[1024];
 	// TTimo - scaled down to accumulate, but not overflow anything network wise, print wise etc.
@@ -764,6 +765,7 @@ static void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 
 	// start redirecting all print outputs to the packet
 	svs.redirectAddress = from;
+	svs.redirectSockId = sockid;
 	Com_BeginRedirect (sv_outputbuf, SV_OUTPUTBUF_LENGTH, SV_FlushRedirect);
 
 	if ( !strlen( sv_rconPassword->string ) ) {
@@ -823,11 +825,11 @@ static void SV_ConnectionlessPacket( netadr_t from, msg_t *msg, int sockid ) {
 	Com_DPrintf ("SV packet %s : %s\n", NET_AdrToString(from), c);
 
 	if (!Q_stricmp(c, "getstatus")) {
-		SVC_Status( from );
+		SVC_Status( from, sockid );
   } else if (!Q_stricmp(c, "getinfo")) {
-		SVC_Info( from );
+		SVC_Info( from, sockid );
 	} else if (!Q_stricmp(c, "getchallenge")) {
-		SV_GetChallenge(from);
+		SV_GetChallenge(from, sockid);
 	} else if (!Q_stricmp(c, "connect")) {
 		SV_DirectConnect( from, sockid );
 #ifndef STANDALONE
@@ -835,7 +837,7 @@ static void SV_ConnectionlessPacket( netadr_t from, msg_t *msg, int sockid ) {
 		SV_AuthorizeIpPacket( from );
 #endif
 	} else if (!Q_stricmp(c, "rcon")) {
-		SVC_RemoteCommand( from, msg );
+		SVC_RemoteCommand( from, msg, sockid );
 	} else if (!Q_stricmp(c, "disconnect")) {
 		// if a client starts up a local server, we may see some spurious
 		// server disconnect messages when their new server sees our final

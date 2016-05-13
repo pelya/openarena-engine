@@ -532,9 +532,9 @@ qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_message, fd_set *fdr, int 
 	int 	ret;
 	struct sockaddr_storage from;
 	socklen_t	fromlen;
-	int		err;
+	int		err, i;
 
-	for(int i = 0; i < MAX_IP_SOCKETS; i++)
+	for(i = 0; i < MAX_IP_SOCKETS; i++)
 	{
 		*sockid = i;
 		if(ip_sockets[i] != INVALID_SOCKET && FD_ISSET(ip_sockets[i], fdr))

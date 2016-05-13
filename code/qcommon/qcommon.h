@@ -173,7 +173,7 @@ void		NET_Restart_f( void );
 void		NET_Config( qboolean enableNetworking );
 void		NET_FlushPacketQueue(void);
 void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to, int sockid);
-void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, int sockid, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
+void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, int sockid, const char *format, ...) __attribute__ ((format (printf, 4, 5)));
 void		QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, int sockid, byte *format, int len );
 
 qboolean	NET_CompareAdr (netadr_t a, netadr_t b);
@@ -204,6 +204,7 @@ Netchan handles packet fragmentation and out of order / duplicate suppression
 
 typedef struct {
 	netsrc_t	sock;
+	int			sockid;
 
 	int			dropped;			// between last packet and previous
 

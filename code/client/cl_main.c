@@ -4478,7 +4478,7 @@ void CL_GlobalServers_f( void ) {
 		Q_strcat(command, sizeof(command), Cmd_Argv(i));
 	}
 
-	NET_OutOfBandPrint( NS_SERVER, to, 0, "%s", command );
+	NET_OutOfBandPrint( NS_CLIENT, to, 0, "%s", command );
 }
 
 

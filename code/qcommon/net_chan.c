@@ -88,12 +88,12 @@ void Netchan_Setup(netsrc_t sock, netchan_t *chan, netadr_t adr, int sockid, int
 	Com_Memset (chan, 0, sizeof(*chan));
 	
 	chan->sock = sock;
+	chan->sockid = sockid;
 	chan->remoteAddress = adr;
 	chan->qport = qport;
 	chan->incomingSequence = 0;
 	chan->outgoingSequence = 1;
 	chan->challenge = challenge;
-	chan->sockid = sockid;
 
 #ifdef LEGACY_PROTOCOL
 	chan->compat = compat;
@@ -599,7 +599,7 @@ NET_OutOfBandPrint
 Sends a data message in an out-of-band datagram (only used for "connect")
 ================
 */
-void QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, byte *format, int len ) {
+void QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, int sockid, byte *format, int len ) {
 	byte		string[MAX_MSGLEN*2];
 	int			i;
 	msg_t		mbuf;
