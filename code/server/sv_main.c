@@ -330,9 +330,9 @@ void SV_MasterHeartbeat(const char *message)
 		// ever incompatably changes
 
 		if(adr[i][0].type != NA_BAD)
-			NET_OutOfBandPrint( NS_SERVER, adr[i][0], 0, "heartbeat %s\n", message);
+			NET_OutOfBandPrint( NS_SERVER, adr[i][0], "heartbeat %s\n", message);
 		if(adr[i][1].type != NA_BAD)
-			NET_OutOfBandPrint( NS_SERVER, adr[i][1], 0, "heartbeat %s\n", message);
+			NET_OutOfBandPrint( NS_SERVER, adr[i][1], "heartbeat %s\n", message);
 	}
 }
 
@@ -611,7 +611,7 @@ static void SVC_Status( netadr_t from, int sockid ) {
 		}
 	}
 
-	NET_OutOfBandPrint( NS_SERVER, from, sockid, "statusResponse\n%s\n%s", infostring, status );
+	NET_OutOfBandPrint( NS_SERVER + sockid, from, "statusResponse\n%s\n%s", infostring, status );
 }
 
 /*
@@ -708,7 +708,7 @@ void SVC_Info( netadr_t from, int sockid ) {
 		Info_SetValueForKey( infostring, "game", gamedir );
 	}
 
-	NET_OutOfBandPrint( NS_SERVER, from, sockid, "infoResponse\n%s", infostring );
+	NET_OutOfBandPrint( NS_SERVER + sockid, from, "infoResponse\n%s", infostring );
 }
 
 /*
@@ -718,7 +718,7 @@ SVC_FlushRedirect
 ================
 */
 static void SV_FlushRedirect( char *outputbuf ) {
-	NET_OutOfBandPrint( NS_SERVER, svs.redirectAddress, svs.redirectSockId, "print\n%s", outputbuf );
+	NET_OutOfBandPrint( NS_SERVER + svs.redirectSockId, svs.redirectAddress, "print\n%s", outputbuf );
 }
 
 /*
@@ -893,8 +893,6 @@ void SV_PacketEvent( netadr_t from, msg_t *msg, int sockid ) {
 			Com_Printf( "SV_PacketEvent: fixing up a translated port\n" );
 			cl->netchan.remoteAddress.port = from.port;
 		}
-
-		//cl->netchan.sockid = sockid;
 
 		// make sure it is a valid, in sequence packet
 		if (SV_Netchan_Process(cl, msg)) {

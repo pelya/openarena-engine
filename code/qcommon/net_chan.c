@@ -83,12 +83,11 @@ Netchan_Setup
 called to open a channel to a remote system
 ==============
 */
-void Netchan_Setup(netsrc_t sock, netchan_t *chan, netadr_t adr, int sockid, int qport, int challenge, qboolean compat)
+void Netchan_Setup(netsrc_t sock, netchan_t *chan, netadr_t adr, int qport, int challenge, qboolean compat)
 {
 	Com_Memset (chan, 0, sizeof(*chan));
 	
 	chan->sock = sock;
-	chan->sockid = sockid;
 	chan->remoteAddress = adr;
 	chan->qport = qport;
 	chan->incomingSequence = 0;
@@ -140,7 +139,7 @@ void Netchan_TransmitNextFragment( netchan_t *chan ) {
 	MSG_WriteData( &send, chan->unsentBuffer + chan->unsentFragmentStart, fragmentLength );
 
 	// send the datagram
-	NET_SendPacket(chan->sock, send.cursize, send.data, chan->remoteAddress, chan->sockid);
+	NET_SendPacket(chan->sock, send.cursize, send.data, chan->remoteAddress);
 	
 	// Store send time and size of this packet for rate control
 	chan->lastSentTime = Sys_Milliseconds();
@@ -215,7 +214,7 @@ void Netchan_Transmit( netchan_t *chan, int length, const byte *data ) {
 	MSG_WriteData( &send, data, length );
 
 	// send the datagram
-	NET_SendPacket( chan->sock, send.cursize, send.data, chan->remoteAddress, chan->sockid );
+	NET_SendPacket( chan->sock, send.cursize, send.data, chan->remoteAddress );
 
 	// Store send time and size of this packet for rate control
 	chan->lastSentTime = Sys_Milliseconds();
@@ -263,7 +262,7 @@ qboolean Netchan_Process( netchan_t *chan, msg_t *msg ) {
 	}
 
 	// read the qport if we are a server
-	if ( chan->sock == NS_SERVER ) {
+	if ( chan->sock >= NS_SERVER ) {
 		MSG_ReadShort( msg );
 	}
 
@@ -537,8 +536,8 @@ void NET_FlushPacketQueue(void)
 	}
 }
 
-void NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to, int sockid ) {
-
+void NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to ) {
+	int sockid = sock >= NS_SERVER ? sock - NS_SERVER : 0;
 	// sequenced packets are shown in netchan, so just show oob
 	if ( showpackets->integer && *(int *)data == -1 )	{
 		Com_Printf ("send packet %4i\n", length);
@@ -558,7 +557,7 @@ void NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to, i
 	if ( sock == NS_CLIENT && cl_packetdelay->integer > 0 ) {
 		NET_QueuePacket( length, data, to, sockid, cl_packetdelay->integer );
 	}
-	else if ( sock == NS_SERVER && sv_packetdelay->integer > 0 ) {
+	else if ( sock >= NS_SERVER && sv_packetdelay->integer > 0 ) {
 		NET_QueuePacket( length, data, to, sockid, sv_packetdelay->integer );
 	}
 	else {
@@ -573,7 +572,7 @@ NET_OutOfBandPrint
 Sends a text message in an out-of-band datagram
 ================
 */
-void QDECL NET_OutOfBandPrint( netsrc_t sock, netadr_t adr, int sockid, const char *format, ... ) {
+void QDECL NET_OutOfBandPrint( netsrc_t sock, netadr_t adr, const char *format, ... ) {
 	va_list		argptr;
 	char		string[MAX_MSGLEN];
 
@@ -589,7 +588,7 @@ void QDECL NET_OutOfBandPrint( netsrc_t sock, netadr_t adr, int sockid, const ch
 	va_end( argptr );
 
 	// send the datagram
-	NET_SendPacket( sock, strlen( string ), string, adr, sockid );
+	NET_SendPacket( sock, strlen( string ), string, adr );
 }
 
 /*
@@ -599,7 +598,7 @@ NET_OutOfBandPrint
 Sends a data message in an out-of-band datagram (only used for "connect")
 ================
 */
-void QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, int sockid, byte *format, int len ) {
+void QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, byte *format, int len ) {
 	byte		string[MAX_MSGLEN*2];
 	int			i;
 	msg_t		mbuf;
@@ -618,7 +617,7 @@ void QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, int sockid, byte *for
 	mbuf.cursize = len+4;
 	Huff_Compress( &mbuf, 12);
 	// send the datagram
-	NET_SendPacket( sock, mbuf.cursize, mbuf.data, adr, sockid );
+	NET_SendPacket( sock, mbuf.cursize, mbuf.data, adr );
 }
 
 /*

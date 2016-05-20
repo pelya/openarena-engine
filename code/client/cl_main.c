@@ -1598,7 +1598,7 @@ void CL_RequestMotd( void ) {
 	Info_SetValueForKey( info, "renderer", cls.glconfig.renderer_string );
 	Info_SetValueForKey( info, "version", com_version->string );
 
-	NET_OutOfBandPrint( NS_CLIENT, cls.updateServer, 0, "getmotd \"%s\"\n", info );
+	NET_OutOfBandPrint( NS_CLIENT, cls.updateServer, "getmotd \"%s\"\n", info );
 #endif
 }
 
@@ -1682,7 +1682,7 @@ void CL_RequestAuthorization( void ) {
 
 	fs = Cvar_Get ("cl_anonymous", "0", CVAR_INIT|CVAR_SYSTEMINFO );
 
-	NET_OutOfBandPrint(NS_CLIENT, cls.authorizeServer, 0, "getKeyAuthorize %i %s", fs->integer, nums );
+	NET_OutOfBandPrint(NS_CLIENT, cls.authorizeServer, "getKeyAuthorize %i %s", fs->integer, nums );
 }
 #endif
 /*
@@ -1903,7 +1903,7 @@ void CL_Rcon_f( void ) {
 		}
 	}
 	
-	NET_SendPacket (NS_CLIENT, strlen(message)+1, message, to, 0);
+	NET_SendPacket (NS_CLIENT, strlen(message)+1, message, to);
 }
 
 /*
@@ -2383,7 +2383,7 @@ void CL_CheckForResend( void ) {
 
 		Com_sprintf(data, sizeof(data), "relaySend %s %u\ngetchallenge %d %s", NET_AdrToString(clc.serverAddress), (unsigned short)BigShort(clc.serverAddress.port), clc.challenge, cl_serverlistGamename->string);
 
-		NET_OutOfBandPrint(NS_CLIENT, natrelay, 0, "%s", data);
+		NET_OutOfBandPrint(NS_CLIENT, natrelay, "%s", data);
 		break;
 
 	case CA_CONNECTING:
@@ -2398,7 +2398,7 @@ void CL_CheckForResend( void ) {
 		// with a meaningful message
 		Com_sprintf(data, sizeof(data), "getchallenge %d %s", clc.challenge, cl_serverlistGamename->string);
 
-		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, 0, "%s", data);
+		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "%s", data);
 		break;
 		
 	case CA_CHALLENGING:
@@ -2433,7 +2433,7 @@ void CL_CheckForResend( void ) {
 		data[10+i] = 0;
 
     // NOTE TTimo don't forget to set the right data length!
-		NET_OutOfBandData( NS_CLIENT, clc.serverAddress, 0, (byte *) &data[0], i+10 );
+		NET_OutOfBandData( NS_CLIENT, clc.serverAddress, (byte *) &data[0], i+10 );
 		// the most current userinfo has been sent, so watch for any
 		// newer changes to userinfo variables
 		cvar_modifiedFlags &= ~CVAR_USERINFO;
@@ -2904,10 +2904,10 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		}
 
 #ifdef LEGACY_PROTOCOL
-		Netchan_Setup(NS_CLIENT, &clc.netchan, from, 0, Cvar_VariableValue("net_qport"),
+		Netchan_Setup(NS_CLIENT, &clc.netchan, from, Cvar_VariableValue("net_qport"),
 			      clc.challenge, clc.compat);
 #else
-		Netchan_Setup(NS_CLIENT, &clc.netchan, from, 0, Cvar_VariableValue("net_qport"),
+		Netchan_Setup(NS_CLIENT, &clc.netchan, from, Cvar_VariableValue("net_qport"),
 			      clc.challenge, qfalse);
 #endif
 
@@ -2930,7 +2930,7 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 
 	// echo request from server
 	if ( !Q_stricmp(c, "echo") ) {
-		NET_OutOfBandPrint( NS_CLIENT, from, 0, "%s", Cmd_Argv(1) );
+		NET_OutOfBandPrint( NS_CLIENT, from, "%s", Cmd_Argv(1) );
 		return;
 	}
 
@@ -4252,7 +4252,7 @@ int CL_ServerStatus( char *serverAddress, char *serverStatusString, int maxLen )
 			serverStatus->retrieved = qfalse;
 			serverStatus->time = 0;
 			serverStatus->startTime = Com_Milliseconds();
-			NET_OutOfBandPrint( NS_CLIENT, to, 0, "getstatus" );
+			NET_OutOfBandPrint( NS_CLIENT, to, "getstatus" );
 			return qfalse;
 		}
 	}
@@ -4264,7 +4264,7 @@ int CL_ServerStatus( char *serverAddress, char *serverStatusString, int maxLen )
 		serverStatus->retrieved = qfalse;
 		serverStatus->startTime = Com_Milliseconds();
 		serverStatus->time = 0;
-		NET_OutOfBandPrint( NS_CLIENT, to, 0, "getstatus" );
+		NET_OutOfBandPrint( NS_CLIENT, to, "getstatus" );
 		return qfalse;
 	}
 	return qfalse;
@@ -4400,9 +4400,9 @@ void CL_LocalServers_f( void ) {
 			to.port = BigShort( (short)(PORT_SERVER + j) );
 
 			to.type = NA_BROADCAST;
-			NET_SendPacket( NS_CLIENT, strlen( message ), message, to, 0 );
+			NET_SendPacket( NS_CLIENT, strlen( message ), message, to );
 			to.type = NA_MULTICAST6;
-			NET_SendPacket( NS_CLIENT, strlen( message ), message, to, 0 );
+			NET_SendPacket( NS_CLIENT, strlen( message ), message, to );
 		}
 	}
 }
@@ -4481,7 +4481,7 @@ void CL_GlobalServers_f( void ) {
 		Q_strcat(command, sizeof(command), Cmd_Argv(i));
 	}
 
-	NET_OutOfBandPrint( NS_CLIENT, to, 0, "%s", command );
+	NET_OutOfBandPrint( NS_CLIENT, to, "%s", command );
 }
 
 
@@ -4728,7 +4728,7 @@ void CL_Ping_f( void ) {
 
 	CL_SetServerInfoByAddress(pingptr->adr, NULL, 0);
 		
-	NET_OutOfBandPrint( NS_CLIENT, to, 0, "getinfo xxx" );
+	NET_OutOfBandPrint( NS_CLIENT, to, "getinfo xxx" );
 }
 
 /*
@@ -4796,7 +4796,7 @@ qboolean CL_UpdateVisiblePings_f(int source) {
 						memcpy(&cl_pinglist[j].adr, &server[i].adr, sizeof(netadr_t));
 						cl_pinglist[j].start = Sys_Milliseconds();
 						cl_pinglist[j].time = 0;
-						NET_OutOfBandPrint( NS_CLIENT, cl_pinglist[j].adr, 0, "getinfo xxx" );
+						NET_OutOfBandPrint( NS_CLIENT, cl_pinglist[j].adr, "getinfo xxx" );
 						slots++;
 					}
 				}
@@ -4884,7 +4884,7 @@ void CL_ServerStatus_f(void) {
 			return;
 	}
 
-	NET_OutOfBandPrint( NS_CLIENT, *toptr, 0, "getstatus" );
+	NET_OutOfBandPrint( NS_CLIENT, *toptr, "getstatus" );
 
 	serverStatus = CL_GetServerStatus( *toptr );
 	serverStatus->address = *toptr;
@@ -5020,7 +5020,7 @@ void CL_DetermineNatType_f( void ) {
 				to.port = BigShort(PORT_MASTER);
 
 			//Com_Printf( "CL_DetermineNatType_f: sending getMyAddr to %s\n", Cvar_VariableString(NAT_TRAVERSAL_SERVER_CVAR) );
-			NET_OutOfBandPrint( NS_CLIENT, to, 0, "%s", "getMyAddr" );
+			NET_OutOfBandPrint( NS_CLIENT, to, "%s", "getMyAddr" );
 		}
 	}
 
@@ -5056,7 +5056,7 @@ void CL_DetermineNatType_f( void ) {
 				to.port = BigShort(PORT_MASTER);
 
 			//Com_Printf( "CL_DetermineNatType_f: sending heartbeat to %s\n", Cvar_VariableString(MASTER1_CVAR) );
-			NET_OutOfBandPrint( NS_CLIENT, to, 0, "%s", "heartbeat DarkPlaces\n" );
+			NET_OutOfBandPrint( NS_CLIENT, to, "%s", "heartbeat DarkPlaces\n" );
 		}
 	}
 
@@ -5094,9 +5094,9 @@ void CL_DetermineNatType_f( void ) {
 
 			//Com_Printf( "CL_DetermineNatType_f: sending serverinfo and getservers to %s\n", Cvar_VariableString(MASTER1_CVAR) );
 			// Don't send hostname or mapname, we're only checking NAT type
-			NET_OutOfBandPrint( NS_CLIENT, to, 0, "infoResponse\n\\gametype\\-1\\sv_maxclients\\-1\\clients\\-1\\protocol\\%d\\gamename\\%s\\challenge\\%s",
+			NET_OutOfBandPrint( NS_CLIENT, to, "infoResponse\n\\gametype\\-1\\sv_maxclients\\-1\\clients\\-1\\protocol\\%d\\gamename\\%s\\challenge\\%s",
 									PROTOCOL_VERSION, GAMENAME_FOR_MASTER, cl_natGetinfoChallenge->string );
-			NET_OutOfBandPrint( NS_CLIENT, to, 0, "getservers %s %d gametype=-1 full",
+			NET_OutOfBandPrint( NS_CLIENT, to, "getservers %s %d gametype=-1 full",
 									GAMENAME_FOR_MASTER, PROTOCOL_VERSION );
 		}
 	}

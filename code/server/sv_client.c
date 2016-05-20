@@ -80,7 +80,7 @@ void SV_GetChallenge(netadr_t from, int sockid)
 	// reject client if the gamename string sent by the client doesn't match ours
 	if (gameMismatch)
 	{
-		NET_OutOfBandPrint(NS_SERVER, from, sockid, "print\nGame mismatch: This is a %s server\n",
+		NET_OutOfBandPrint(NS_SERVER + sockid, from, "print\nGame mismatch: This is a %s server\n",
 			com_gamename->string);
 		return;
 	}
@@ -185,7 +185,7 @@ void SV_GetChallenge(netadr_t from, int sockid)
 #endif
 
 	challenge->pingTime = svs.time;
-	NET_OutOfBandPrint(NS_SERVER, challenge->adr, sockid, "challengeResponse %d %d %d",
+	NET_OutOfBandPrint(NS_SERVER + sockid, challenge->adr, "challengeResponse %d %d %d",
 			   challenge->challenge, clientChallenge, com_protocol->integer);
 }
 
@@ -331,7 +331,7 @@ void SV_DirectConnect( netadr_t from, int sockid ) {
 	// Check whether this client is banned.
 	if(SV_IsBanned(&from, qfalse))
 	{
-		NET_OutOfBandPrint(NS_SERVER, from, sockid, "print\nYou are banned from this server.\n");
+		NET_OutOfBandPrint(NS_SERVER + sockid, from, "print\nYou are banned from this server.\n");
 		return;
 	}
 
@@ -347,7 +347,7 @@ void SV_DirectConnect( netadr_t from, int sockid ) {
 	{
 		if(version != com_protocol->integer)
 		{
-			NET_OutOfBandPrint(NS_SERVER, from, sockid, "print\nServer uses protocol version %i "
+			NET_OutOfBandPrint(NS_SERVER + sockid, from, "print\nServer uses protocol version %i "
 					   "(yours is %i).\n", com_protocol->integer, version);
 			Com_DPrintf("    rejected connect from version %i\n", version);
 			return;
@@ -380,7 +380,7 @@ void SV_DirectConnect( netadr_t from, int sockid ) {
 	else
 		ip = (char *)NET_AdrToString( from );
 	if( ( strlen( ip ) + strlen( userinfo ) + 4 ) >= MAX_INFO_STRING ) {
-		NET_OutOfBandPrint( NS_SERVER, from, sockid,
+		NET_OutOfBandPrint( NS_SERVER + sockid, from,
 			"print\nUserinfo string length exceeded.  "
 			"Try removing setu cvars from your config.\n" );
 		return;
@@ -404,7 +404,7 @@ void SV_DirectConnect( netadr_t from, int sockid ) {
 
 		if (i == MAX_CHALLENGES)
 		{
-			NET_OutOfBandPrint( NS_SERVER, from, sockid, "print\nNo or bad challenge for your address.\n" );
+			NET_OutOfBandPrint( NS_SERVER + sockid, from, "print\nNo or bad challenge for your address.\n" );
 			return;
 		}
 	
@@ -421,13 +421,13 @@ void SV_DirectConnect( netadr_t from, int sockid ) {
 		// never reject a LAN client based on ping
 		if ( !Sys_IsLANAddress( from ) ) {
 			if ( sv_minPing->value && ping < sv_minPing->value ) {
-				NET_OutOfBandPrint( NS_SERVER, from, sockid, "print\nServer is for high pings only\n" );
+				NET_OutOfBandPrint( NS_SERVER + sockid, from, "print\nServer is for high pings only\n" );
 				Com_DPrintf ("Client %i rejected on a too low ping\n", i);
 				challengeptr->wasrefused = qtrue;
 				return;
 			}
 			if ( sv_maxPing->value && ping > sv_maxPing->value ) {
-				NET_OutOfBandPrint( NS_SERVER, from, sockid, "print\nServer is for low pings only\n" );
+				NET_OutOfBandPrint( NS_SERVER + sockid, from, "print\nServer is for low pings only\n" );
 				Com_DPrintf ("Client %i rejected on a too high ping\n", i);
 				challengeptr->wasrefused = qtrue;
 				return;
@@ -510,7 +510,7 @@ void SV_DirectConnect( netadr_t from, int sockid ) {
 			}
 		}
 		else {
-			NET_OutOfBandPrint( NS_SERVER, from, sockid, "print\nServer is full.\n" );
+			NET_OutOfBandPrint( NS_SERVER + sockid, from, "print\nServer is full.\n" );
 			Com_DPrintf ("Rejected a connection.\n");
 			return;
 		}
@@ -535,9 +535,9 @@ gotnewcl:
 	// save the address
 #ifdef LEGACY_PROTOCOL
 	newcl->compat = compat;
-	Netchan_Setup(NS_SERVER, &newcl->netchan, from, sockid, qport, challenge, compat);
+	Netchan_Setup(NS_SERVER + sockid, &newcl->netchan, from, qport, challenge, compat);
 #else
-	Netchan_Setup(NS_SERVER, &newcl->netchan, from, sockid, qport, challenge, qfalse);
+	Netchan_Setup(NS_SERVER + sockid, &newcl->netchan, from, qport, challenge, qfalse);
 #endif
 	// init the netchan queue
 	newcl->netchan_end_queue = &newcl->netchan_start_queue;
@@ -551,7 +551,7 @@ gotnewcl:
 		// we can't just use VM_ArgPtr, because that is only valid inside a VM_Call
 		char *str = VM_ExplicitArgPtr( gvm, denied );
 
-		NET_OutOfBandPrint( NS_SERVER, from, sockid, "print\n%s\n", str );
+		NET_OutOfBandPrint( NS_SERVER + sockid, from, "print\n%s\n", str );
 		Com_DPrintf ("Game rejected a connection: %s.\n", str);
 		return;
 	}
@@ -559,7 +559,7 @@ gotnewcl:
 	SV_UserinfoChanged( newcl );
 
 	// send the connect packet to the client
-	NET_OutOfBandPrint(NS_SERVER, from, sockid, "connectResponse %d", challenge);
+	NET_OutOfBandPrint(NS_SERVER + sockid, from, "connectResponse %d", challenge);
 
 	Com_DPrintf( "Going from CS_FREE to CS_CONNECTED for %s\n", newcl->name );
 
