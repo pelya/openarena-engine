@@ -349,7 +349,11 @@ void SV_SpawnServer( char *server, qboolean killBots );
 //
 void SV_GetChallenge( netadr_t from, int sockid );
 
+void SV_GetNatChallenge( netadr_t from, int sockid );
+
 void SV_DirectConnect( netadr_t from, int sockid );
+
+void SVC_Info( netadr_t from, int sockid );
 
 #ifndef STANDALONE
 void SV_AuthorizeIpPacket( netadr_t from );

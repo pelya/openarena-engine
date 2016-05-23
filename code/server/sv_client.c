@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "server.h"
 
 static void SV_CloseDownload( client_t *cl );
+static void SV_ProcessChallenge(netadr_t from, netadr_t destination, int sockid, const char *natCommandPrefix);
 
 /*
 =================
@@ -51,6 +52,11 @@ v4-only auth server for these new types of connections.
 =================
 */
 void SV_GetChallenge(netadr_t from, int sockid)
+{
+	SV_ProcessChallenge(from, from, sockid, "");
+}
+
+void SV_ProcessChallenge(netadr_t from, netadr_t destination, int sockid, const char *natCommandPrefix)
 {
 	int		i;
 	int		oldest;
@@ -185,8 +191,83 @@ void SV_GetChallenge(netadr_t from, int sockid)
 #endif
 
 	challenge->pingTime = svs.time;
-	NET_OutOfBandPrint(NS_SERVER + sockid, challenge->adr, "challengeResponse %d %d %d",
-			   challenge->challenge, clientChallenge, com_protocol->integer);
+	NET_OutOfBandPrint(NS_SERVER + sockid, destination, "%schallengeResponse %d %d %d",
+			   natCommandPrefix, challenge->challenge, clientChallenge, com_protocol->integer);
+}
+
+/*
+===============
+SVC_GetNatChallenge
+
+Process a connection request from client, passed through NAT masterserver.
+Allocate new socket from NAT sockets list, and send a response using this socket through NAT masterserver,
+then keep sending packets to a client address using this socket
+===============
+*/
+void SV_GetNatChallenge( netadr_t from, int sockid )
+{
+	netadr_t clientAddr;
+	int clientSockId;
+	char buf[256];
+	client_t *cl;
+	int i;
+
+	if (Cmd_Argc() < 6 || Q_stricmp(Cmd_Argv(3), "getchallenge") || sockid != 0)
+	{
+		Com_DPrintf("Malformed NAT challenge received. Ignored.\n");
+		return;
+	}
+
+	if (!NET_StringToAdr(Cmd_Argv(1), &clientAddr, NA_IP))
+	{
+		Com_Printf("Bad address in NAT challenge. Ignored.\n");
+		return;
+	}
+	clientAddr.port = BigShort(atoi(Cmd_Argv(2)));
+
+	// Shift arguments and pass them to SV_ProcessChallenge()
+	Q_strncpyz( buf, Cmd_Argv(3), sizeof(buf) );
+	Q_strcat( buf, sizeof(buf), " " );
+	Q_strcat( buf, sizeof(buf), Cmd_Argv(4) );
+	Q_strcat( buf, sizeof(buf), " " );
+	Q_strcat( buf, sizeof(buf), Cmd_Argv(5) );
+	Cmd_TokenizeString( buf );
+
+	// Find a free socket. socket 0 is special, it is used for NAT masterserver exclusively (and for LAN clients)
+	for (clientSockId = 1; clientSockId < MAX_IP_SOCKETS; clientSockId++)
+	{
+		int id = -1;
+		for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++)
+		{
+			if (cl->state == CS_FREE)
+			{
+				continue;
+			}
+			id = cl->netchan.sock - NS_SERVER;
+			if (clientSockId == id)
+			{
+				break;
+			}
+		}
+		if (clientSockId != id)
+		{
+			break;
+		}
+	}
+
+	// TODO: save clientSockId into the challenge, so when two clients are connecting at the same time, we won't use the same socket
+
+	if (clientSockId >= MAX_IP_SOCKETS)
+	{
+		NET_OutOfBandPrint( NS_SERVER, from, "relaySend %s %u\nprint\nServer is full.\n", NET_AdrToString(clientAddr), (unsigned short)BigShort(clientAddr.port) );
+		Com_DPrintf ("Rejected a connection - no free NAT socket.\n");
+		return;
+	}
+
+	Com_DPrintf("NAT challenge received from %s. Relaying response to %s.\n", NET_AdrToStringwPort(from), NET_AdrToStringwPort(clientAddr));
+	Com_sprintf(buf, sizeof(buf), "relaySend %s %u\n", NET_AdrToString(clientAddr), (unsigned short)BigShort(clientAddr.port));
+	SV_ProcessChallenge(clientAddr, from, clientSockId, buf); // Send response to NAT masterserver
+	SVC_Info(clientAddr, clientSockId); // Send dummy packet to the client to switch our router tables to accept packets from clientAddr
 }
 
 #ifndef STANDALONE

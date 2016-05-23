@@ -2761,6 +2761,42 @@ static void CL_ServerGetInfoFakeRegistrationPacket( const netadr_t* from, byte *
 }
 
 /*
+Challenge response from the server, passed through NAT masterserver
+*/
+static void CL_ServerNatChallengeResponsePacket( const netadr_t* from ) {
+	int challenge;
+
+	if (clc.state != CA_CONNECTING_NAT || Cmd_Argc() < 6 || Q_stricmp(Cmd_Argv(3), "challengeResponse"))
+	{
+		Com_DPrintf("Unwanted NAT challenge response received. Ignored.\n");
+		return;
+	}
+
+	challenge = atoi(Cmd_Argv(5));
+
+	if(challenge != clc.challenge)
+	{
+		Com_Printf("Bad challenge for NAT challengeResponse. Ignored.\n");
+		return;
+	}
+
+	if (!NET_StringToAdr(Cmd_Argv(1), &clc.serverAddress, NA_IP))
+	{
+		Com_Printf("Bad challenge for NAT challengeResponse. Ignored.\n");
+		return;
+	}
+	clc.serverAddress.port = BigShort(atoi(Cmd_Argv(2)));
+
+	// start sending challenge response packets
+	clc.challenge = atoi(Cmd_Argv(4));
+	clc.state = CA_CONNECTING;
+	clc.connectPacketCount = 0;
+	clc.connectTime = -99999;
+
+	Com_DPrintf ("NAT challengeResponse: %d new server address %s\n", clc.challenge, NET_AdrToStringwPort(clc.serverAddress));
+}
+
+/*
 =================
 CL_ConnectionlessPacket
 
@@ -2988,35 +3024,7 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 
 	if (!Q_stricmp(c, "relayRecv"))
 	{
-		if (clc.state != CA_CONNECTING_NAT || Cmd_Argc() < 6 || Q_stricmp(Cmd_Argv(3), "challengeResponse"))
-		{
-			Com_DPrintf("Unwanted NAT challenge response received. Ignored.\n");
-			return;
-		}
-
-		challenge = atoi(Cmd_Argv(5));
-
-		if(challenge != clc.challenge)
-		{
-			Com_Printf("Bad challenge for NAT challengeResponse. Ignored.\n");
-			return;
-		}
-
-		if (!NET_StringToAdr(Cmd_Argv(1), &clc.serverAddress, NA_IP))
-		{
-			Com_Printf("Bad challenge for NAT challengeResponse. Ignored.\n");
-			return;
-		}
-		clc.serverAddress.port = BigShort(atoi(Cmd_Argv(2)));
-
-		// start sending challenge response instead of challenge request packets
-		clc.challenge = atoi(Cmd_Argv(4));
-		//clc.state = CA_CHALLENGING;
-		clc.state = CA_CONNECTING;
-		clc.connectPacketCount = 0;
-		clc.connectTime = -99999;
-
-		Com_DPrintf ("NAT challengeResponse: %d new server address %s\n", clc.challenge, NET_AdrToStringwPort(clc.serverAddress));
+		CL_ServerNatChallengeResponsePacket( &from );
 		return;
 	}
 
