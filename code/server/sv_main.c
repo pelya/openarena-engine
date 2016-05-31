@@ -252,19 +252,18 @@ void SV_MasterHeartbeat(const char *message)
 	if ((!com_dedicated || com_dedicated->integer != 2) && sv_public->integer <= 0)
 		return;		// only dedicated servers send heartbeats
 
-	// if not time yet, don't send anything
-	if ( svs.time < svs.nextHeartbeatTimeNat )
-		return;
-
-	svs.nextHeartbeatTimeNat = svs.time + HEARTBEAT_NAT_MSEC;
-
 	// send to group masters
 	for (i = 0; i < MAX_MASTER_SERVERS; i++)
 	{
-		if ( svs.time < svs.nextHeartbeatTime )
+		if ( svs.time < svs.nextHeartbeatTime ) {
+			// if not time yet, don't send anything
+			if ( svs.time < svs.nextHeartbeatTimeNat )
+				return;
+			svs.nextHeartbeatTimeNat = svs.time + HEARTBEAT_NAT_MSEC;
 			i = NAT_TRAVERSAL_SERVER_IDX; // Last server in the list
-		else
+		} else {
 			svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
+		}
 
 		if(!sv_master[i]->string[0])
 			continue;
