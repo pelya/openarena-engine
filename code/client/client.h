@@ -477,6 +477,7 @@ extern cvar_t *cl_natType;
 extern cvar_t *cl_publicAddress;
 extern cvar_t *cl_publicAddressPreservedByNAT;
 extern cvar_t *cl_natGetinfoChallenge;
+extern cvar_t *cl_publicIPv6;
 
 #ifdef USE_MUMBLE
 extern	cvar_t	*cl_useMumble;

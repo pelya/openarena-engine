@@ -158,6 +158,7 @@ cvar_t	*cl_natType;
 cvar_t	*cl_publicAddress;
 cvar_t	*cl_publicAddressPreservedByNAT;
 cvar_t	*cl_natGetinfoChallenge;
+cvar_t	*cl_publicIPv6;
 
 cvar_t *cl_consoleHeight;
 
@@ -2512,8 +2513,12 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 	
 	Com_Printf("CL_ServersResponsePacket\n");
 
-	if (cl_natType->integer == NAT_TYPE_PROCESSING_FAKEREG)
+	if (cl_natType->integer == NAT_TYPE_PROCESSING_FAKEREG) {
 		Cvar_SetValue( "cl_publicAddressPreservedByNAT", cl_publicAddressPreservedByNAT->integer - 1 );
+	}
+	if (extended && !cl_publicIPv6->integer) {
+		Cvar_SetValue( "cl_publicIPv6", 1 );
+	}
 
 	if (cls.numglobalservers == -1) {
 		// state to detect lack of servers or lack of response
@@ -3866,6 +3871,7 @@ void CL_Init( void ) {
 	cl_publicAddress = Cvar_Get ("cl_publicAddress", "", 0);
 	cl_publicAddressPreservedByNAT = Cvar_Get ("cl_publicAddressPreservedByNAT", "0", 0);
 	cl_natGetinfoChallenge = Cvar_Get ("cl_natGetinfoChallenge", "", 0);
+	cl_publicIPv6 = Cvar_Get ("cl_publicIPv6", "0", 0);
 
 #ifdef USE_MUMBLE
 	cl_useMumble = Cvar_Get ("cl_useMumble", "0", CVAR_ARCHIVE | CVAR_LATCH);
