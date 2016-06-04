@@ -2763,32 +2763,42 @@ static void CL_ServerGetInfoFakeRegistrationPacket( const netadr_t* from, byte *
 /*
 Challenge response from the server, passed through NAT masterserver
 */
-static void CL_ServerNatChallengeResponsePacket( const netadr_t* from ) {
+static void CL_ServerNatChallengeResponsePacket( const netadr_t* from, msg_t *msg ) {
 	int challenge;
+	char *s;
 
-	if (clc.state != CA_CONNECTING_NAT || Cmd_Argc() < 6 || Q_stricmp(Cmd_Argv(3), "challengeResponse"))
+	if (clc.state != CA_CONNECTING_NAT || Cmd_Argc() < 3)
 	{
-		Com_DPrintf("Unwanted NAT challenge response received. Ignored.\n");
-		return;
-	}
-
-	challenge = atoi(Cmd_Argv(5));
-
-	if(challenge != clc.challenge)
-	{
-		Com_Printf("Bad challenge for NAT challengeResponse. Ignored.\n");
+		Com_DPrintf("Unexpected NAT challenge response received. Ignored.\n");
 		return;
 	}
 
 	if (!NET_StringToAdr(Cmd_Argv(1), &clc.serverAddress, NA_IP))
 	{
-		Com_Printf("Bad challenge for NAT challengeResponse. Ignored.\n");
+		Com_DPrintf("Bad NAT challengeResponse packet. Ignored.\n");
 		return;
 	}
 	clc.serverAddress.port = BigShort(atoi(Cmd_Argv(2)));
 
+	s = MSG_ReadStringLine(msg);
+	Cmd_TokenizeString( s );
+
+	if (Cmd_Argc() < 4 || Q_stricmp(Cmd_Argv(0), "challengeResponse") || atoi(Cmd_Argv(3)) != PROTOCOL_VERSION)
+	{
+		Com_DPrintf("Malformed NAT challenge response received. Ignored.\n");
+		return;
+	}
+
+	challenge = atoi(Cmd_Argv(2));
+
+	if (challenge != clc.challenge)
+	{
+		Com_DPrintf("Bad challenge in NAT challengeResponse packet. Ignored.\n");
+		return;
+	}
+
 	// start sending challenge response packets
-	clc.challenge = atoi(Cmd_Argv(4));
+	clc.challenge = atoi(Cmd_Argv(1));
 	clc.state = CA_CONNECTING;
 	clc.connectPacketCount = 0;
 	clc.connectTime = -99999;
@@ -3024,7 +3034,7 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 
 	if (!Q_stricmp(c, "relayRecv"))
 	{
-		CL_ServerNatChallengeResponsePacket( &from );
+		CL_ServerNatChallengeResponsePacket( &from, msg );
 		return;
 	}
 

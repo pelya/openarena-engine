@@ -1679,17 +1679,21 @@ void NET_Sleep(int msec)
 	fd_set fdr;
 	int retval;
 	SOCKET highestfd = INVALID_SOCKET;
+	int i;
 
 	if(msec < 0)
 		msec = 0;
 
 	FD_ZERO(&fdr);
 
-	if(ip_socket != INVALID_SOCKET)
+	for(i = 0; i < MAX_IP_SOCKETS; i++)
 	{
-		FD_SET(ip_socket, &fdr);
-
-		highestfd = ip_socket;
+		if(ip_sockets[i] != INVALID_SOCKET)
+		{
+			FD_SET(ip_sockets[i], &fdr);
+			if (highestfd < ip_sockets[i])
+				highestfd = ip_sockets[i];
+		}
 	}
 	if(ip6_socket != INVALID_SOCKET)
 	{

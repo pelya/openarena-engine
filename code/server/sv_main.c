@@ -842,7 +842,7 @@ static void SV_ConnectionlessPacket( netadr_t from, msg_t *msg, int sockid ) {
 		// server disconnect messages when their new server sees our final
 		// sequenced messages to the old client
 	} else if (!Q_stricmp(c, "relayRecv")) {
-		SV_GetNatChallenge( from, sockid );
+		SV_GetNatChallenge( from, sockid, msg );
 	} else {
 		Com_DPrintf ("bad connectionless packet from %s:\n%s\n",
 			NET_AdrToString (from), s);

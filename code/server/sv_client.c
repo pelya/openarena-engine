@@ -204,34 +204,40 @@ Allocate new socket from NAT sockets list, and send a response using this socket
 then keep sending packets to a client address using this socket
 ===============
 */
-void SV_GetNatChallenge( netadr_t from, int sockid )
+void SV_GetNatChallenge( netadr_t from, int sockid, msg_t *msg )
 {
 	netadr_t clientAddr;
 	int clientSockId;
 	char buf[256];
 	client_t *cl;
 	int i;
+	char *s;
 
-	if (Cmd_Argc() < 6 || Q_stricmp(Cmd_Argv(3), "getchallenge") || sockid != 0)
+	Com_DPrintf ("SV_GetNatChallenge from master %s sockid %d argc %d: %s %s\n", NET_AdrToStringwPort (from), sockid, Cmd_Argc(), Cmd_Argv(1), Cmd_Argv(2));
+
+	if (Cmd_Argc() < 3 || sockid != 0)
 	{
-		Com_DPrintf("Malformed NAT challenge received. Ignored.\n");
+		Com_DPrintf("Malformed NAT relay message received. Ignored.\n");
 		return;
 	}
 
 	if (!NET_StringToAdr(Cmd_Argv(1), &clientAddr, NA_IP))
 	{
-		Com_Printf("Bad address in NAT challenge. Ignored.\n");
+		Com_DPrintf("Bad address in NAT challenge. Ignored.\n");
 		return;
 	}
 	clientAddr.port = BigShort(atoi(Cmd_Argv(2)));
 
-	// Shift arguments and pass them to SV_ProcessChallenge()
-	Q_strncpyz( buf, Cmd_Argv(3), sizeof(buf) );
-	Q_strcat( buf, sizeof(buf), " " );
-	Q_strcat( buf, sizeof(buf), Cmd_Argv(4) );
-	Q_strcat( buf, sizeof(buf), " " );
-	Q_strcat( buf, sizeof(buf), Cmd_Argv(5) );
-	Cmd_TokenizeString( buf );
+	s = MSG_ReadStringLine(msg);
+	Cmd_TokenizeString( s );
+	// Pass arguments as-is to SV_ProcessChallenge()
+	Com_DPrintf ("SV_GetNatChallenge: %s\n", s);
+
+	if (Cmd_Argc() < 3 || Q_stricmp(Cmd_Argv(0), "getchallenge"))
+	{
+		Com_DPrintf("Malformed NAT challenge received. Ignored.\n");
+		return;
+	}
 
 	// Find a free socket. socket 0 is special, it is used for NAT masterserver exclusively (and for LAN clients)
 	for (clientSockId = 1; clientSockId < MAX_IP_SOCKETS; clientSockId++)
@@ -254,6 +260,7 @@ void SV_GetNatChallenge( netadr_t from, int sockid )
 			break;
 		}
 	}
+	Com_DPrintf ("SV_GetNatChallenge: allocated sockid %d\n", clientSockId);
 
 	// TODO: save clientSockId into the challenge, so when two clients are connecting at the same time, we won't use the same socket
 
@@ -264,7 +271,8 @@ void SV_GetNatChallenge( netadr_t from, int sockid )
 		return;
 	}
 
-	Com_DPrintf("NAT challenge received from %s. Relaying response to %s.\n", NET_AdrToStringwPort(from), NET_AdrToStringwPort(clientAddr));
+	strcpy(buf, NET_AdrToStringwPort(clientAddr)); // For debug printf
+	Com_DPrintf("NAT challenge received from %s. Relaying response to %s.\n", NET_AdrToStringwPort(from), buf);
 	Com_sprintf(buf, sizeof(buf), "relaySend %s %u\n", NET_AdrToString(clientAddr), (unsigned short)BigShort(clientAddr.port));
 	SV_ProcessChallenge(clientAddr, from, clientSockId, buf); // Send response to NAT masterserver
 	SVC_Info(clientAddr, clientSockId); // Send dummy packet to the client to switch our router tables to accept packets from clientAddr
