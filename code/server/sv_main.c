@@ -267,6 +267,8 @@ void SV_MasterHeartbeat(const char *message)
 
 		if(!sv_master[i]->string[0])
 			continue;
+		if ( i == NAT_TRAVERSAL_SERVER_IDX && Cvar_VariableIntegerValue("cl_natType") != NAT_TYPE_GOOD )
+			continue;
 
 		// see if we haven't already resolved the name
 		// resolving usually causes hitches on win95, so only
