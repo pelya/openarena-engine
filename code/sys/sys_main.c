@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <dirent.h>
 
 #ifndef DEDICATED
 #ifdef USE_LOCAL_HEADERS
@@ -612,10 +613,21 @@ int main( int argc, char **argv )
 	}
 #endif
 
-	//SDL_Delay(7000); // Wait for debugger
-	remove(".openarena/baseoa/pak7-android.pk3"); // If some server pushed old VM scripts to us - remove them
 	remove(".openarena/ioq3+oa.pid"); // The game will not start if we do not delete this file, lame!
 
+	// Remove all downloaded .pk3 files from baseoa on init
+	DIR *dir;
+	struct dirent *ent;
+	if ((dir = opendir (".openarena/baseoa")) != NULL) {
+		while ((ent = readdir (dir)) != NULL) {
+			if (strrchr(ent->d_name, ".pk3") == ent->d_name + strlen(ent->d_name) - 4) {
+				char path[2048];
+				Com_sprintf(path, sizeof(path), ".openarena/baseoa/%s", ent->d_name);
+				remove(path);
+			}
+		}
+		closedir (dir);
+	}
 
 	Sys_PlatformInit( );
 
