@@ -1104,15 +1104,12 @@ usercmd_t CL_CreateCmd( void ) {
 		cl.viewangles[YAW] -= 360.0f;
 	else if ( cl.viewangles[YAW] < -180.0f )
 		cl.viewangles[YAW] += 360.0f;
-	if ( cl.viewangles[PITCH] > 180.0f )
-		cl.viewangles[PITCH] = 180.0f;
-	else if ( cl.viewangles[PITCH] < -180.0f )
-		cl.viewangles[PITCH] = -180.0f;
-	if ( !cg_thirdPerson->integer ) {
-		if (  cl.viewangles[PITCH] < -90.0f )
-			cl.viewangles[PITCH] = -90.0f;
-		if (  cl.viewangles[PITCH] > 90.0f )
-			cl.viewangles[PITCH] = 90.0f;
+
+	if ( cg_thirdPerson->integer ) {
+		if ( cl.viewangles[PITCH] > 180.0f )
+			cl.viewangles[PITCH] = 180.0f;
+		else if ( cl.viewangles[PITCH] < -180.0f )
+			cl.viewangles[PITCH] = -180.0f;
 	}
 
 	if ( ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR || cg_thirdPerson->integer ) &&
