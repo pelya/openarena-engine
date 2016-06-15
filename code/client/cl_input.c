@@ -918,7 +918,8 @@ void CL_MouseMove(usercmd_t *cmd)
 		static int oldMouseX, oldMouseY;
 		int dx = in_mouseX - oldMouseX;
 		int dy = in_mouseY - oldMouseY;
-		
+		if ( m_pitch->value < 0 )
+			dy = -dy;
 		if ( in_mouseSwipingActive ) {
 			cl.viewangles[YAW] -= (float)dx * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
 			cl.viewangles[PITCH] += (float)dy * cl_sensitivity->value * cl.cgameSensitivity * 0.05f;
