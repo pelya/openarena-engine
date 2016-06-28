@@ -359,6 +359,7 @@ void IN_Button0Up(void)
 			if ( cg_touchscreenControls->integer == TOUCHSCREEN_TAP_TO_FIRE ||
 				 cg_touchscreenControls->integer == TOUCHSCREEN_AIM_UNDER_FINGER ) {
 				int weaponX = in_mouseX * 640 / cls.glconfig.vidWidth;
+				qboolean wasAttacking = in_buttons[0].active; // Stop firing on a second tap
 				IN_KeyUp(&in_buttons[0]);
 				in_tapMouseX = in_mouseX;
 				in_tapMouseY = in_mouseY;
@@ -366,7 +367,7 @@ void IN_Button0Up(void)
 				cl.touchscreenAttackButtonPos[0] = in_mouseX - cl.touchscreenAttackButtonPos[2] * 0.5f;
 				cl.touchscreenAttackButtonPos[1] = in_mouseY - cl.touchscreenAttackButtonPos[3] * 0.5f;
 				cl.touchscreenAttackButtonPos[4] = 0.75f;
-				if ( ( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE ) || (
+				if ( wasAttacking || ( Key_GetCatcher( ) & ~KEYCATCH_CGAME || clc.state != CA_ACTIVE ) || (
 					in_androidWeaponSelectionBarActive && ( (
 					!cg_weaponBarAtBottom->integer &&
 					weaponX > 320 - cg_weaponBarActiveWidth->integer &&
