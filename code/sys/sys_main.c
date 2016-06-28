@@ -620,7 +620,7 @@ int main( int argc, char **argv )
 	struct dirent *ent;
 	if ((dir = opendir (".openarena/baseoa")) != NULL) {
 		while ((ent = readdir (dir)) != NULL) {
-			if (strrchr(ent->d_name, ".pk3") == ent->d_name + strlen(ent->d_name) - 4) {
+			if (strlen(ent->d_name) >= 4 && strcmp(ent->d_name + strlen(ent->d_name) - 4, ".pk3") == 0) {
 				char path[2048];
 				Com_sprintf(path, sizeof(path), ".openarena/baseoa/%s", ent->d_name);
 				remove(path);
