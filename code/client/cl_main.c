@@ -5005,7 +5005,7 @@ static int upnpThreadFunc(void * data)
 	char cmd[1024];
 	if (!getenv("APPDIR"))
 		return 1;
-	Com_sprintf( cmd, sizeof( cmd ), "%s/upnpc -a myself %d %d udp 120", getenv("APPDIR"), port, port );
+	Com_sprintf( cmd, sizeof( cmd ), "%s/upnpc -a myself -e OpenArena %d %d udp 120", getenv("APPDIR"), port, port );
 	int status = system(cmd);
 	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
 		printf("\n=== UPnP active ===\n");
