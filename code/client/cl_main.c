@@ -24,6 +24,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "client.h"
 #include <limits.h>
 #include <arpa/inet.h>
+#include <SDL_thread.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "../sys/sys_local.h"
 #include "../sys/sys_loadlib.h"
@@ -4993,6 +4996,33 @@ qboolean CL_CDKeyValidate( const char *key, const char *checksum ) {
 #endif
 }
 
+static SDL_Thread * upnpThread = NULL;
+static volatile enum { UPNP_INIT, UPNP_FAILED, UPNP_ACTIVE } upnpStatus = UPNP_INIT;
+
+static int upnpThreadFunc(void * data)
+{
+	int port = (int) data;
+	char cmd[1024];
+	if (!getenv("APPDIR"))
+		return 1;
+	Com_sprintf( cmd, sizeof( cmd ), "%s/upnpc -a myself %d %d udp 120", getenv("APPDIR"), port, port );
+	int status = system(cmd);
+	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+		printf("\n=== UPnP active ===\n");
+		upnpStatus = UPNP_ACTIVE;
+		while (qtrue) {
+			// Continue until the process is killed
+			SDL_Delay(65 * 1000);
+			system(cmd);
+		}
+	}
+	printf("\n=== UPnP failed ===\n");
+	upnpStatus = UPNP_FAILED;
+	return 0;
+}
+
+static qboolean natTypeUpnpChecked = qfalse;
+
 void CL_DetermineNatType_f( void ) {
 	static int timeout = 0;
 	static int retries = 0;
@@ -5001,6 +5031,9 @@ void CL_DetermineNatType_f( void ) {
 
 	if (cl_natType->integer == NAT_TYPE_PROCESSING_INIT)
 	{
+		if (!upnpThread) {
+			upnpThread = SDL_CreateThread(&upnpThreadFunc, (void *)Cvar_VariableIntegerValue("net_port"));
+		}
 		Cvar_SetValue( "cl_natType", NAT_TYPE_PROCESSING_GETMYADDR );
 		timeout = cls.realtime;
 		retries = 0;
@@ -5102,8 +5135,9 @@ void CL_DetermineNatType_f( void ) {
 			retries ++;
 			if (retries >= NAT_MASTER_RETRIES || (cl_publicAddressPreservedByNAT->integer <= -2 && retries >= 3)) // Two ping with two replies are enough
 			{
-				Com_Printf( "CL_DetermineNatType_f: Error: masterserver %s did not return our address, NAT is symmetric\n", Cvar_VariableString(MASTER1_CVAR) );
-				Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+				Com_Printf( "CL_DetermineNatType_f: Error: masterserver %s did not return our address, checking UPnP\n", Cvar_VariableString(MASTER1_CVAR) );
+				Cvar_SetValue( "cl_natType", NAT_TYPE_PROCESSING_UPNP );
+				timeout = cls.realtime + NAT_MASTER_TIMEOUT * NAT_MASTER_RETRIES; // 5 seconds are enough
 				return;
 			}
 			i = NET_StringToAdr( Cvar_VariableString(MASTER1_CVAR), &to, NA_IP );
@@ -5122,6 +5156,32 @@ void CL_DetermineNatType_f( void ) {
 									PROTOCOL_VERSION, GAMENAME_FOR_MASTER, cl_natGetinfoChallenge->string );
 			NET_OutOfBandPrint( NS_CLIENT, to, "getservers %s %d gametype=-1 full",
 									GAMENAME_FOR_MASTER, PROTOCOL_VERSION );
+		}
+	}
+
+	if (cl_natType->integer == NAT_TYPE_PROCESSING_UPNP)
+	{
+		if (cl_publicAddressPreservedByNAT->integer == 1)
+		{
+			Com_Printf( "CL_DetermineNatType_f: our public address matches, NAT is port restricted or better\n" );
+			Cvar_SetValue( "cl_natType", NAT_TYPE_GOOD );
+			return;
+		}
+		else if (upnpStatus == UPNP_ACTIVE && !natTypeUpnpChecked)
+		{
+			Com_Printf( "CL_DetermineNatType_f: UPnP is active, checking NAT again\n" );
+			natTypeUpnpChecked = qtrue;
+			Cvar_SetValue( "cl_natType", NAT_TYPE_PROCESSING_GETMYADDR );
+			Cvar_Set( "cl_publicAddress", "" );
+			Cvar_Set( "cl_natGetinfoChallenge", "" );
+			Cvar_SetValue( "cl_publicAddressPreservedByNAT", 0 );
+			return;
+		}
+		else if (cls.realtime >= timeout || upnpStatus == UPNP_FAILED || natTypeUpnpChecked)
+		{
+			Com_Printf( "CL_DetermineNatType_f: Error: masterserver %s did not return our address, NAT is symmetric\n", Cvar_VariableString(MASTER1_CVAR) );
+			Cvar_SetValue( "cl_natType", NAT_TYPE_BAD );
+			return;
 		}
 	}
 }
