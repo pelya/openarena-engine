@@ -5002,22 +5002,31 @@ static volatile enum { UPNP_INIT, UPNP_FAILED, UPNP_ACTIVE } upnpStatus = UPNP_I
 static int upnpThreadFunc(void * data)
 {
 	int port = (int) data;
-	char cmd[1024];
+	char cmd[1024], cmd2[1024], cmd3[1024];
 	if (!getenv("APPDIR"))
 		return 1;
-	Com_sprintf( cmd, sizeof( cmd ), "%s/upnpc -a myself -e OpenArena %d %d udp 120", getenv("APPDIR"), port, port );
+	remove("upnp.log");
+	Com_sprintf( cmd, sizeof( cmd ), "%s/upnpc -e OpenArena -a myself %d %d udp 300 >>upnp.log 2>&1", getenv("APPDIR"), port, port );
+	Com_sprintf( cmd2, sizeof( cmd2 ), "%s/upnpc -e OpenArena -l >>upnp.log 2>&1", getenv("APPDIR") );
+	Com_sprintf( cmd3, sizeof( cmd3 ), "%s/upnpc -e OpenArena -s >>upnp.log 2>&1", getenv("APPDIR") );
 	int status = system(cmd);
 	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
 		printf("\n=== UPnP active ===\n");
+		system("echo === UPnP active === >>upnp.log");
 		upnpStatus = UPNP_ACTIVE;
 		while (qtrue) {
 			// Continue until the process is killed
-			SDL_Delay(65 * 1000);
+			SDL_Delay(60 * 1000);
 			system(cmd);
+			system(cmd2);
+			system(cmd3);
 		}
 	}
-	printf("\n=== UPnP failed ===\n");
 	upnpStatus = UPNP_FAILED;
+	printf("\n=== UPnP failed ===\n");
+	system("echo === UPnP failed, reading active connections === >>upnp.log");
+	system(cmd2);
+	system(cmd3);
 	return 0;
 }
 
