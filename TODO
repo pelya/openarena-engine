@@ -1,6 +1,9 @@
 Next release:
-Separate volume for VoIP audio
-Bugfixes, if any
+Remove all aiming modes except "Tap to shoot".
+Camera rotate button above the joystick does not work, it sends 'centerview' VM command.
+Move all controls to the engine, so that VM from the PC version can be played.
+Show PC servers by default, put them into the same list as Android servers.
+Make sure all controls work when playing on PC servers.
 
 Distant future:
 4-players split-screen mode, to be taken from https://github.com/zturtleman/spearmint
