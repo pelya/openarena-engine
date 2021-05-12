@@ -1,14 +1,17 @@
 Next release:
-Remove all aiming modes except "Tap to shoot".
+Remove "Shoot under finger" and "Aim under finger" controls.
 Camera rotate button above the joystick does not work, it sends 'centerview' VM command.
-Move all controls to the engine, so that VM from the PC version can be played.
 Show PC servers by default, put them into the same list as Android servers.
-Make sure all controls work when playing on PC servers.
-"Tap to shoot" - make crosshair smaller when stopped shooting.
+Make sure mouse+keyboard controls work when playing on PC servers.
+Hide touchscreen controls when right mouse button is clicked.
+"Tap to shoot" - make crosshair smaller when stopped shooting. Preferrably in engine and not in VM.
+"Floating crosshair" - do not switch to first-person zoom, as it is buggy, implement 3-rd person zoom without bugs.
 
 Distant future:
-4-players split-screen mode, to be taken from https://github.com/zturtleman/spearmint
-Make weblinks and emails clickable in chat text and in server messages
+Move all controls to the engine, so that VM from the PC version can be played with touchscreen + gyro.
+Only "Tap to shoot" and "Shoot button" will be supported.
+Move swipe to rotate 180 degrees and camera rotate button from VM to the engine.
+Make camera rotate button a part of the joystick and not a separate button, draw left/right arrow on it.
 
 Minor:
 Fix chat messages split incorrectly
