@@ -432,7 +432,7 @@ extern	vec3_t	axisDefault[3];
 
 int Q_isnan(float x);
 
-#if idx64
+#if !defined(__ANDROID__) && idx64
   extern long qftolsse(float f);
   extern int qvmftolsse(void);
   extern void qsnapvectorsse(vec3_t vec);

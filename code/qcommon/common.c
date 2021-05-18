@@ -2591,7 +2591,7 @@ Find out whether we have SSE support for Q_ftol function
 =================
 */
 
-#if id386 || idx64
+#if !defined(__ANDROID__) && (id386 || idx64)
 
 static void Com_DetectSSE(void)
 {
