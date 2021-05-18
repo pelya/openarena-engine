@@ -6,6 +6,12 @@ Make sure mouse+keyboard controls work when playing on PC servers.
 Hide touchscreen controls when right mouse button is clicked.
 "Tap to shoot" - make crosshair smaller when stopped shooting. Preferrably in engine and not in VM.
 "Floating crosshair" - do not switch to first-person zoom, as it is buggy, implement 3-rd person zoom without bugs.
+Add dynamic camera button to joystick, add option for joystick tap action.
+Tap to aim for aiming modes with shoot button.
+Option for the second tap to stop shooting in tap to shoot mode.
+Option to disable joystick jump.
+Visual feedback when you start and stop shooting on tap (crosshair size change).
+Zooming is totally broken, camera jumps upwards all the time.
 
 Distant future:
 Move all controls to the engine, so that VM from the PC version can be played with touchscreen + gyro.
