@@ -187,7 +187,6 @@ cvar_t	*r_flaresDlight;
 //cvar_t	*r_flaresSurfradii;
 
 cvar_t	*r_runningOnOuya;
-cvar_t	*r_cardboardStereo;
 
 /*
 ** InitOpenGL

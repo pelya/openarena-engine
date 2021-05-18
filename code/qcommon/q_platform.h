@@ -180,7 +180,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #ifdef __clang__
-#define ID_INLINE static inline
+#define ID_INLINE /*static*/ inline
 #else
 #define ID_INLINE inline
 #endif
