@@ -5003,12 +5003,12 @@ static int upnpThreadFunc(void * data)
 {
 	int port = (int) data;
 	char cmd[1024], cmd2[1024], cmd3[1024];
-	if (!getenv("APPDIR"))
+	if (!getenv("LIBDIR"))
 		return 1;
 	remove("upnp.log");
-	Com_sprintf( cmd, sizeof( cmd ), "%s/upnpc -e OpenArena -a myself %d %d udp 300 >>upnp.log 2>&1", getenv("APPDIR"), port, port );
-	Com_sprintf( cmd2, sizeof( cmd2 ), "%s/upnpc -e OpenArena -l >>upnp.log 2>&1", getenv("APPDIR") );
-	Com_sprintf( cmd3, sizeof( cmd3 ), "%s/upnpc -e OpenArena -s >>upnp.log 2>&1", getenv("APPDIR") );
+	Com_sprintf( cmd, sizeof( cmd ), "%s/libupnpc.so -e OpenArena -a myself %d %d udp 300 >>upnp.log 2>&1", getenv("LIBDIR"), port, port );
+	Com_sprintf( cmd2, sizeof( cmd2 ), "%s/libupnpc.so -e OpenArena -l >>upnp.log 2>&1", getenv("LIBDIR") );
+	Com_sprintf( cmd3, sizeof( cmd3 ), "%s/libupnpc.so -e OpenArena -s >>upnp.log 2>&1", getenv("LIBDIR") );
 	int status = system(cmd);
 	if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
 		printf("\n=== UPnP active ===\n");
