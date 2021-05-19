@@ -12,6 +12,7 @@ Option for the second tap to stop shooting in tap to shoot mode.
 Option to disable joystick jump.
 Visual feedback when you start and stop shooting on tap (crosshair size change).
 Zooming is totally broken, camera jumps upwards all the time.
+Mount .obb file as a filesystem, 'openarena +set fs_basepath $APPDIR' and make symlinks to ANDROID_OBB_MOUNT_DIR
 
 Distant future:
 Move all controls to the engine, so that VM from the PC version can be played with touchscreen + gyro.
