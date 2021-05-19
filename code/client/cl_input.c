@@ -75,7 +75,7 @@ void IN_MLookDown( void ) {
 void IN_MLookUp( void ) {
 	in_mlooking = qfalse;
 	if ( !cl_freelook->integer ) {
-		IN_CenterView ();
+		IN_CenterViewDown ();
 	}
 }
 
@@ -413,13 +413,16 @@ void IN_Button14Down(void) {IN_KeyDown(&in_buttons[14]);}
 void IN_Button14Up(void) {IN_KeyUp(&in_buttons[14]);}
 void IN_Gesture(void) {in_buttons[3].wasPressed = qtrue;}
 
-void IN_CenterView (void) {
+void IN_CenterViewDown (void) {
 	//cl.viewangles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
 	// User released joystick, then pressed the centerview button - it will rotate to the last joystick direction
 	if ( cl.joystickAxis[JOY_AXIS_SCREENJOY_X] == 0 && cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] == 0 ) {
 		in_swipeActivated = 1;
 		in_joystickJumpTriggerTime = 0; // Do not jump if user rotated view and immediately put finger back on joystick
 	}
+}
+
+void IN_CenterViewUp (void) {
 }
 
 //==========================================================================
@@ -1445,7 +1448,8 @@ CL_InitInput
 ============
 */
 void CL_InitInput( void ) {
-	Cmd_AddCommand ("centerview",IN_CenterView);
+	Cmd_AddCommand ("+centerview",IN_CenterViewDown);
+	Cmd_AddCommand ("-centerview",IN_CenterViewUp);
 	Cmd_AddCommand ("+moveup",IN_UpDown);
 	Cmd_AddCommand ("-moveup",IN_UpUp);
 	Cmd_AddCommand ("+movedown",IN_DownDown);
