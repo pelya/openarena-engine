@@ -3166,6 +3166,11 @@ static void FS_Startup( const char *gameName )
 	fs_homepath = Cvar_Get ("fs_homepath", homePath, CVAR_INIT|CVAR_PROTECTED );
 	fs_gamedirvar = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
 
+	if (getenv("ANDROID_OBB_MOUNT_DIR") != NULL && strlen(getenv("ANDROID_OBB_MOUNT_DIR")) > 0) {
+		Com_Printf( "Game data OBB mounted to %s\n", getenv("ANDROID_OBB_MOUNT_DIR") );
+		FS_AddGameDirectory( getenv("ANDROID_OBB_MOUNT_DIR"), gameName );
+	}
+
 	// add search path elements in reverse priority order
 	if (fs_basepath->string[0]) {
 		FS_AddGameDirectory( fs_basepath->string, gameName );
