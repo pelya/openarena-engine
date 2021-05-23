@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 int g_console_field_width = 39; //78;
 int g_console_text_input_toggled_ui = 0;
-extern char g_console_text_input_buffer[MAX_STRING_CHARS - 16] = "";
+char g_console_text_input_buffer[MAX_STRING_CHARS - 16] = "";
 
 #define	NUM_CON_TIMES 5
 

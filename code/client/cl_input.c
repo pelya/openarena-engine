@@ -298,6 +298,8 @@ void IN_Button0Down(void)
 							in_mouseY > in_tapMouseY - tapArea &&
 							in_mouseY < in_tapMouseY + tapArea ) { // TODO: make it octagon, not square
 						IN_KeyDown(&in_buttons[0]);
+						cg_crosshairSize->value = cg_crosshairSize->value * 1.7f;
+						Cvar_SetValue("cg_crosshairSize", cg_crosshairSize->value);
 					}
 					cl.touchscreenAttackButtonPos[4] = 0.0f;
 				}
@@ -779,6 +781,16 @@ static void CL_ProcessAccelerometer( void ) {
 #endif
 }
 
+static void CL_ProcessTapToShootCrosshair( void ) {
+	float defSize = atof(cg_crosshairSize->resetString);
+	if ( cg_crosshairSize->value > defSize )
+	{
+		cg_crosshairSize->value -= cls.unscaledFrametime / 20.0f;
+		cg_crosshairSize->value = MAX(defSize, cg_crosshairSize->value);
+		Cvar_SetValue("cg_crosshairSize", cg_crosshairSize->value);
+	}
+}
+
 static void CL_ScaleMovementCmdToMaximiumForStrafeJump( usercmd_t *cmd ) {
 	// Normalize them to 127
 	if ( abs(cmd->forwardmove) > abs(cmd->rightmove) ) {
@@ -1095,6 +1107,8 @@ usercmd_t CL_CreateCmd( void ) {
 	CL_CmdButtons( &cmd );
 
 	CL_ProcessAccelerometer();
+
+	CL_ProcessTapToShootCrosshair();
 
 	// check to make sure the angles haven't wrapped
 	if ( cl.viewangles[PITCH] - oldAngles[PITCH] > 90 ) {

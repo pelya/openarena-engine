@@ -445,6 +445,7 @@ extern	cvar_t	*cg_weaponBarActiveWeapons;
 extern	cvar_t	*cg_weaponBarAtBottom;
 extern	cvar_t	*cg_holdingUsableItem;
 extern	cvar_t	*cg_thirdPerson;
+extern	cvar_t	*cg_crosshairSize;
 // Stupid Ouya requires a lot of custom code
 extern	cvar_t	*cl_runningOnOuya;
 

@@ -126,6 +126,7 @@ cvar_t	*cg_touchscreenControls;
 cvar_t	*cg_cameraRotateButton;
 cvar_t	*in_swapGamepadSticks;
 cvar_t	*r_cardboardStereo;
+cvar_t	*cg_crosshairSize;
 
 cvar_t	*cl_touchscreenVmCallbacks;
 cvar_t	*cg_weaponBarActiveWidth;
@@ -3818,6 +3819,7 @@ void CL_Init( void ) {
 	in_swipeFreeStickyEdges = Cvar_Get ("in_swipeFreeStickyEdges", "1", CVAR_ARCHIVE);
 	in_swapGamepadSticks = Cvar_Get ("in_swapGamepadSticks", "0", CVAR_ARCHIVE);
 	cg_thirdPerson = Cvar_Get ("cg_thirdPerson", "0", 0);
+	cg_crosshairSize = Cvar_Get ("cg_crosshairSize", "30", 0);
 
 	cl_serverlistGamename = Cvar_Get ("cl_serverlistGamename", GAMENAME_FOR_MASTER, CVAR_ARCHIVE);
 
