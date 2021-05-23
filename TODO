@@ -14,6 +14,7 @@ Distant future:
 Move all controls to the engine, so that VM from the PC version can be played with touchscreen + gyro.
 Only "Tap to shoot" and "Shoot button" will be supported.
 Move swipe to rotate 180 degrees and camera rotate button from VM to the engine.
+Move overlay-fire-button.png from pak7-android.pk3 to somewhere it can be loaded with PC VM.
 
 Minor:
 Fix chat messages split incorrectly
