@@ -851,6 +851,38 @@ void Con_DrawConsole( void ) {
 
 //================================================================
 
+#ifdef __ANDROID__
+static int textToKeycodeCheckShift( int * sym )
+{
+	switch( *sym )
+	{
+		case '!': *sym = '1'; return 1;
+		case '@': *sym = '2'; return 1;
+		case '#': *sym = '3'; return 1;
+		case '$': *sym = '4'; return 1;
+		case '%': *sym = '5'; return 1;
+		case '^': *sym = '6'; return 1;
+		case '&': *sym = '7'; return 1;
+		case '*': *sym = '8'; return 1;
+		case '(': *sym = '9'; return 1;
+		case ')': *sym = '0'; return 1;
+		case '_': *sym = '-'; return 1;
+		case '+': *sym = '='; return 1;
+		case '|': *sym = '\\';return 1;
+		case '<': *sym = ','; return 1;
+		case '>': *sym = '.'; return 1;
+		case '?': *sym = '/'; return 1;
+		case ':': *sym = ';'; return 1;
+		case '"': *sym = '\'';return 1;
+		case '{': *sym = '['; return 1;
+		case '}': *sym = ']'; return 1;
+		case '~': *sym = '`'; return 1;
+		default: if( *sym >= 'A' && *sym <= 'Z' ) { *sym += 'a' - 'A'; return 1; };
+	}
+	return 0;
+}
+#endif
+
 /*
 ==================
 Con_RunConsole
@@ -882,11 +914,11 @@ void Con_RunConsole (void) {
 
 #ifdef __ANDROID__
 	// Process Android text input
-	//Com_Printf("clc.state %d CA_ACTIVE %d Key_GetCatcher %d &~ %d\n", clc.state, clc.state == CA_ACTIVE, Key_GetCatcher(), (Key_GetCatcher( ) & ~(KEYCATCH_CGAME | KEYCATCH_MESSAGE)) == 0);
 	if ( SDL_IsScreenKeyboardShown ( NULL ) )
 	{
 		if ( SDL_ANDROID_GetScreenKeyboardTextInputAsync( g_console_text_input_buffer, sizeof(g_console_text_input_buffer) ) == SDL_ANDROID_TEXTINPUT_ASYNC_FINISHED )
 		{
+			//Com_Printf("clc.state %d CA_ACTIVE %d Key_GetCatcher() %d\n", clc.state, clc.state == CA_ACTIVE, Key_GetCatcher());
 			if ( g_console_text_input_buffer[0] != 0 && g_console_text_input_buffer[strlen(g_console_text_input_buffer) - 1] == '\n' )
 			{
 				g_console_text_input_buffer[strlen(g_console_text_input_buffer) - 1] = 0;
@@ -913,96 +945,17 @@ void Con_RunConsole (void) {
 				// Translate to key input events somehow
 				for (int i = 0; i < strlen(g_console_text_input_buffer); i++)
 				{
-					char key = g_console_text_input_buffer[i];
-					//CL_CharEvent(g_console_text_input_buffer[i]);
-					if ((key >= 'a' && key <= 'z') || (key >= '0' && key <= '9'))
-					{
-						CL_KeyEvent( key, qtrue, 0 );
-						CL_KeyEvent( key, qfalse, 0 );
-					}
-					if (key >= 'A' && key <= 'Z')
+					int key = g_console_text_input_buffer[i];
+					CL_CharEvent( key );
+					int shift = textToKeycodeCheckShift( &key );
+					if (shift)
 					{
 						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( key + 'a' - 'A', qtrue, 0 );
-						CL_KeyEvent( key + 'a' - 'A', qfalse, 0 );
-						CL_KeyEvent( K_SHIFT, qfalse, 0 );
 					}
-					if (key == ' ' || key == '-' || key == '=' || key == '\\' ||
-						key == '[' || key == ']' || key == ';' || key == '\'' ||
-						key == ',' || key == '.' || key == '/')
+					CL_KeyEvent( key, qtrue, 0 );
+					CL_KeyEvent( key, qfalse, 0 );
+					if (shift)
 					{
-						CL_KeyEvent( key, qtrue, 0 );
-						CL_KeyEvent( key, qfalse, 0 );
-					}
-					// TODO: this is ugly!
-					if (key == '_')
-					{
-						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( '-', qtrue, 0 );
-						CL_KeyEvent( '-', qfalse, 0 );
-						CL_KeyEvent( K_SHIFT, qfalse, 0 );
-					}
-					if (key == '+')
-					{
-						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( '=', qtrue, 0 );
-						CL_KeyEvent( '=', qfalse, 0 );
-						CL_KeyEvent( K_SHIFT, qfalse, 0 );
-					}
-					if (key == '|')
-					{
-						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( '\\', qtrue, 0 );
-						CL_KeyEvent( '\\', qfalse, 0 );
-						CL_KeyEvent( K_SHIFT, qfalse, 0 );
-					}
-					if (key == '{')
-					{
-						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( '[', qtrue, 0 );
-						CL_KeyEvent( '[', qfalse, 0 );
-						CL_KeyEvent( K_SHIFT, qfalse, 0 );
-					}
-					if (key == '}')
-					{
-						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( ']', qtrue, 0 );
-						CL_KeyEvent( ']', qfalse, 0 );
-						CL_KeyEvent( K_SHIFT, qfalse, 0 );
-					}
-					if (key == ':')
-					{
-						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( ';', qtrue, 0 );
-						CL_KeyEvent( ';', qfalse, 0 );
-						CL_KeyEvent( K_SHIFT, qfalse, 0 );
-					}
-					if (key == '"')
-					{
-						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( '\'', qtrue, 0 );
-						CL_KeyEvent( '\'', qfalse, 0 );
-						CL_KeyEvent( K_SHIFT, qfalse, 0 );
-					}
-					if (key == '<')
-					{
-						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( ',', qtrue, 0 );
-						CL_KeyEvent( ',', qfalse, 0 );
-						CL_KeyEvent( K_SHIFT, qfalse, 0 );
-					}
-					if (key == '>')
-					{
-						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( '.', qtrue, 0 );
-						CL_KeyEvent( '.', qfalse, 0 );
-						CL_KeyEvent( K_SHIFT, qfalse, 0 );
-					}
-					if (key == '?')
-					{
-						CL_KeyEvent( K_SHIFT, qtrue, 0 );
-						CL_KeyEvent( '/', qtrue, 0 );
-						CL_KeyEvent( '/', qfalse, 0 );
 						CL_KeyEvent( K_SHIFT, qfalse, 0 );
 					}
 				}
