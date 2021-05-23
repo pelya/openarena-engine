@@ -10,6 +10,7 @@ Add more options for joystick tap action other than jump.
 Option to disable joystick jump.
 Zooming is totally broken, camera jumps upwards all the time.
 Swipe-to-rotate is broken when camera rotate button is enabled and holding the joystick.
+Remapping and re-layouting screen buttons in SDL menu is broken.
 
 Distant future:
 Move all controls to the engine, so that VM from the PC version can be played with touchscreen + gyro.
