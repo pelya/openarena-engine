@@ -123,6 +123,7 @@ cvar_t	*in_swipeFreeCrosshairOffset;
 cvar_t	*in_swipeFreeStickyEdges;
 cvar_t	*cg_railgunAutoZoom;
 cvar_t	*cg_touchscreenControls;
+cvar_t	*cg_cameraRotateButton;
 cvar_t	*in_swapGamepadSticks;
 cvar_t	*r_cardboardStereo;
 
@@ -3810,6 +3811,7 @@ void CL_Init( void ) {
 	cg_weaponBarActiveWeapons = Cvar_Get ("cg_weaponBarActiveWeapons", "", 0);
 	cg_weaponBarAtBottom = Cvar_Get ("cg_weaponBarAtBottom", "0", CVAR_ARCHIVE);
 	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", "0", CVAR_ARCHIVE);
+	cg_cameraRotateButton = Cvar_Get ("cg_cameraRotateButton", "1", CVAR_ARCHIVE);
 	cg_holdingUsableItem = Cvar_Get ("cg_holdingUsableItem", "0", 0);
 	cg_railgunAutoZoom = Cvar_Get ("cg_railgunAutoZoom", "1", CVAR_ARCHIVE);
 	in_swipeFreeCrosshairOffset = Cvar_Get ("in_swipeFreeCrosshairOffset", "1", CVAR_ARCHIVE);

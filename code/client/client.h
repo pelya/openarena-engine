@@ -436,6 +436,7 @@ extern	cvar_t	*in_swipeFreeCrosshairOffset;
 extern	cvar_t	*in_swipeFreeStickyEdges;
 extern	cvar_t	*cg_railgunAutoZoom;
 extern	cvar_t	*cg_touchscreenControls;
+extern	cvar_t	*cg_cameraRotateButton;
 extern	cvar_t	*in_swapGamepadSticks;
 // Some part of game state needed for touchscreen input handling
 extern	cvar_t	*cl_touchscreenVmCallbacks;

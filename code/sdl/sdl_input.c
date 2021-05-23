@@ -1205,8 +1205,7 @@ static void IN_ShowHideScreenButtons( void )
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect2);
 
-			if ( cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ||
-				 cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER )
+			if ( cg_cameraRotateButton->integer )
 			{
 				// Centerview
 				rect.y += rect.h;
@@ -1356,6 +1355,7 @@ void IN_Init( void )
 	in_joystickDebug = Cvar_Get( "in_joystickDebug", "0", CVAR_TEMP );
 	in_joystickThreshold = Cvar_Get( "joy_threshold", "0.15", CVAR_ARCHIVE );
 	cg_touchscreenControls = Cvar_Get ("cg_touchscreenControls", "0", CVAR_ARCHIVE);
+	cg_cameraRotateButton = Cvar_Get ("cg_cameraRotateButton", "1", CVAR_ARCHIVE);
 	in_gyroscope = Cvar_Get ("in_gyroscope", "1", CVAR_ARCHIVE);
 
 #ifdef MACOS_X_ACCELERATION_HACK

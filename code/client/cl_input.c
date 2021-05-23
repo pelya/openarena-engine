@@ -841,9 +841,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		}
 
 		angle = RAD2DEG( atan2( cl.joystickAxis[JOY_AXIS_SCREENJOY_X], cl.joystickAxis[JOY_AXIS_SCREENJOY_Y] ) );
-		if( !in_swipeActivated && (
-			cg_touchscreenControls->integer == TOUCHSCREEN_FLOATING_CROSSHAIR ||
-			cg_touchscreenControls->integer == TOUCHSCREEN_SHOOT_UNDER_FINGER ) ) {
+		if( !in_swipeActivated ) {
 			in_swipeAngleRotate = angle + 180.0f;
 			if ( in_swipeAngleRotate > 180.0f )
 				in_swipeAngleRotate -= 360.0f;
