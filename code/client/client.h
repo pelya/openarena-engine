@@ -91,6 +91,7 @@ typedef struct {
 
 extern int g_console_field_width;
 extern int g_console_text_input_toggled_ui;
+extern char g_console_text_input_buffer[MAX_STRING_CHARS - 16];
 
 typedef struct {
 	int			timeoutcount;		// it requres several frames in a timeout condition

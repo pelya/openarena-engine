@@ -1051,9 +1051,8 @@ static void IN_ProcessEvents( void )
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect);
-							// Do not hide text input, we don't have gamepad key to invoke it
-							rect.w = rect.h = cls.glconfig.vidHeight / 10;
-							rect.x = rect.y = 0;
+							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_6, &rect);
+							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_7, &rect);
 							SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
 							#endif
 						}
@@ -1164,10 +1163,11 @@ static void IN_ShowHideScreenButtons( void )
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_3, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
 			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect);
-			// TODO: implement automatic keyboard toggling from text fields - see MenuField_Key()
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_6, &rect);
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
 			rect.w = rect.h = cls.glconfig.vidHeight / 10;
 			rect.x = rect.y = 0;
-			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_7, &rect); // Console
 		}
 	}
 	else
@@ -1180,8 +1180,8 @@ static void IN_ShowHideScreenButtons( void )
 			rect.w = rect.h = cls.glconfig.vidHeight / 6;
 			rect2.w = rect2.h = rect.w / 2;
 			rect2.y += rect2.h/2;
-			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
-			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect2);
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_6, &rect);
+			SDL_ANDROID_SetScreenKeyboardButtonImagePos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_6, &rect2);
 			// Scoretable
 			rect.y += rect.h;
 			rect2.y += rect.h;
@@ -1242,6 +1242,12 @@ static void IN_ShowHideScreenButtons( void )
 				SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
 				SDL_ANDROID_SetScreenKeyboardButtonGenerateTouchEvents(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, 1);
 			}
+
+			// Hide console button
+			rect.x = rect.y = 0;
+			rect.w = rect.h = 0;
+			SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_7, &rect);
+
 			if( SDL_ANDROID_GetScreenKeyboardRedefinedByUser() )
 			{
 				for( i = 0; i < SDL_ANDROID_SCREENKEYBOARD_BUTTON_NUM; i++ )
@@ -1385,6 +1391,7 @@ void IN_Init( void )
 		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_4, &rect);
 		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_5, &rect);
 		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_TEXT, &rect);
+		SDL_ANDROID_SetScreenKeyboardButtonPos(SDL_ANDROID_SCREENKEYBOARD_BUTTON_6, &rect);
 	}
 	#endif
 	Com_DPrintf( "------------------------------------\n" );

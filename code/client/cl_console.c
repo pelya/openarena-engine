@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 int g_console_field_width = 39; //78;
 int g_console_text_input_toggled_ui = 0;
+extern char g_console_text_input_buffer[MAX_STRING_CHARS - 16] = "";
 
 #define	NUM_CON_TIMES 5
 
@@ -100,7 +101,8 @@ void Con_MessageMode_f (void) {
 
 #ifdef __ANDROID__
 	if ( !SDL_IsScreenKeyboardShown ( NULL ) ) {
-		SDL_ANDROID_ToggleScreenKeyboardTextInput( "" );
+		Q_strncpyz( g_console_text_input_buffer, "", sizeof(g_console_text_input_buffer) );
+		SDL_ANDROID_GetScreenKeyboardTextInputAsync( g_console_text_input_buffer, sizeof(g_console_text_input_buffer) );
 	}
 #endif
 }
@@ -119,7 +121,8 @@ void Con_MessageMode2_f (void) {
 
 #ifdef __ANDROID__
 	if ( !SDL_IsScreenKeyboardShown ( NULL ) ) {
-		SDL_ANDROID_ToggleScreenKeyboardTextInput( "" );
+		Q_strncpyz( g_console_text_input_buffer, "", sizeof(g_console_text_input_buffer) );
+		SDL_ANDROID_GetScreenKeyboardTextInputAsync( g_console_text_input_buffer, sizeof(g_console_text_input_buffer) );
 	}
 #endif
 }
@@ -142,7 +145,8 @@ void Con_MessageMode3_f (void) {
 
 #ifdef __ANDROID__
 	if ( !SDL_IsScreenKeyboardShown ( NULL ) ) {
-		SDL_ANDROID_ToggleScreenKeyboardTextInput( "" );
+		Q_strncpyz( g_console_text_input_buffer, "", sizeof(g_console_text_input_buffer) );
+		SDL_ANDROID_GetScreenKeyboardTextInputAsync( g_console_text_input_buffer, sizeof(g_console_text_input_buffer) );
 	}
 #endif
 }
@@ -165,7 +169,8 @@ void Con_MessageMode4_f (void) {
 
 #ifdef __ANDROID__
 	if ( !SDL_IsScreenKeyboardShown ( NULL ) ) {
-		SDL_ANDROID_ToggleScreenKeyboardTextInput( "" );
+		Q_strncpyz( g_console_text_input_buffer, "", sizeof(g_console_text_input_buffer) );
+		SDL_ANDROID_GetScreenKeyboardTextInputAsync( g_console_text_input_buffer, sizeof(g_console_text_input_buffer) );
 	}
 #endif
 }
@@ -878,40 +883,171 @@ void Con_RunConsole (void) {
 #ifdef __ANDROID__
 	// Process Android text input
 	//Com_Printf("clc.state %d CA_ACTIVE %d Key_GetCatcher %d &~ %d\n", clc.state, clc.state == CA_ACTIVE, Key_GetCatcher(), (Key_GetCatcher( ) & ~(KEYCATCH_CGAME | KEYCATCH_MESSAGE)) == 0);
-	if( clc.state == CA_ACTIVE && ( Key_GetCatcher( ) & ~(KEYCATCH_CGAME | KEYCATCH_MESSAGE) ) == 0 ) // Check if we're playing and not in UI
+	if ( SDL_IsScreenKeyboardShown ( NULL ) )
 	{
-		// If screen keyboard shown, but we're not in message mode and not showing console - toggle message mode
-		if ( SDL_IsScreenKeyboardShown ( NULL ) && ! ( Key_GetCatcher( ) & KEYCATCH_MESSAGE ) && ! ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) ) {
-			Con_MessageMode_f( );
-			//Con_AndroidTextInputShowLastMessages( );
-		}
-		// If screen keyboard hidden, but we're still in message mode - send Enter to message field
-		if ( ! SDL_IsScreenKeyboardShown ( NULL ) && ( Key_GetCatcher( ) & KEYCATCH_MESSAGE ) ) {
-			//Message_Key( K_ENTER );
-			CL_KeyEvent( K_ENTER, qtrue, 0 );
-			CL_KeyEvent( K_ENTER, qfalse, 0 );
-		}
-	} else {
-		static int needReturn = 0;
-		// If screen keyboard shown in UI - switch to console
-		if ( SDL_IsScreenKeyboardShown ( NULL ) && ! ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) ) {
-			if ( !g_console_text_input_toggled_ui ) {
-				Con_ToggleConsole_f( );
-				//Con_AndroidTextInputShowLastMessages( );
-				needReturn = 1;
+		if ( SDL_ANDROID_GetScreenKeyboardTextInputAsync( g_console_text_input_buffer, sizeof(g_console_text_input_buffer) ) == SDL_ANDROID_TEXTINPUT_ASYNC_FINISHED )
+		{
+			if ( g_console_text_input_buffer[0] != 0 && g_console_text_input_buffer[strlen(g_console_text_input_buffer) - 1] == '\n' )
+			{
+				g_console_text_input_buffer[strlen(g_console_text_input_buffer) - 1] = 0;
+			}
+			if ( Key_GetCatcher( ) & KEYCATCH_CONSOLE )
+			{
+				// leading slash is an explicit command
+				if ( g_console_text_input_buffer[0] == '\\' || g_console_text_input_buffer[0] == '/' )
+				{
+					Cbuf_AddText( g_console_text_input_buffer + 1 );	// valid command
+					Cbuf_AddText( "\n" );
+				}
+				else
+				{
+					Cbuf_AddText( g_console_text_input_buffer );	// valid command
+					Cbuf_AddText( "\n" );
+				}
+
+				g_console_text_input_buffer[0] = 0;
+				Con_Close();
+			}
+			else if (g_console_text_input_toggled_ui)
+			{
+				// Translate to key input events somehow
+				for (int i = 0; i < strlen(g_console_text_input_buffer); i++)
+				{
+					char key = g_console_text_input_buffer[i];
+					//CL_CharEvent(g_console_text_input_buffer[i]);
+					if ((key >= 'a' && key <= 'z') || (key >= '0' && key <= '9'))
+					{
+						CL_KeyEvent( key, qtrue, 0 );
+						CL_KeyEvent( key, qfalse, 0 );
+					}
+					if (key >= 'A' && key <= 'Z')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( key + 'a' - 'A', qtrue, 0 );
+						CL_KeyEvent( key + 'a' - 'A', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+					if (key == ' ' || key == '-' || key == '=' || key == '\\' ||
+						key == '[' || key == ']' || key == ';' || key == '\'' ||
+						key == ',' || key == '.' || key == '/')
+					{
+						CL_KeyEvent( key, qtrue, 0 );
+						CL_KeyEvent( key, qfalse, 0 );
+					}
+					// TODO: this is ugly!
+					if (key == '_')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( '-', qtrue, 0 );
+						CL_KeyEvent( '-', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+					if (key == '+')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( '=', qtrue, 0 );
+						CL_KeyEvent( '=', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+					if (key == '|')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( '\\', qtrue, 0 );
+						CL_KeyEvent( '\\', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+					if (key == '{')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( '[', qtrue, 0 );
+						CL_KeyEvent( '[', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+					if (key == '}')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( ']', qtrue, 0 );
+						CL_KeyEvent( ']', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+					if (key == ':')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( ';', qtrue, 0 );
+						CL_KeyEvent( ';', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+					if (key == '"')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( '\'', qtrue, 0 );
+						CL_KeyEvent( '\'', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+					if (key == '<')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( ',', qtrue, 0 );
+						CL_KeyEvent( ',', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+					if (key == '>')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( '.', qtrue, 0 );
+						CL_KeyEvent( '.', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+					if (key == '?')
+					{
+						CL_KeyEvent( K_SHIFT, qtrue, 0 );
+						CL_KeyEvent( '/', qtrue, 0 );
+						CL_KeyEvent( '/', qfalse, 0 );
+						CL_KeyEvent( K_SHIFT, qfalse, 0 );
+					}
+				}
+
+				g_console_text_input_toggled_ui = 0;
+			}
+			else
+			{
+				if ( g_console_text_input_buffer[0] == '/' || g_console_text_input_buffer[0] == '\\' )
+				{
+					// Console command
+					Cbuf_AddText( g_console_text_input_buffer + 1 );
+					Cbuf_AddText( "\n" );
+				}
+				else if ( g_console_text_input_buffer[0] && clc.state == CA_ACTIVE )
+				{
+					char buffer[MAX_STRING_CHARS];
+
+					if (chat_playerNum != -1 )
+						Com_sprintf( buffer, sizeof( buffer ), "tell %i \"%s\"\n", chat_playerNum, g_console_text_input_buffer );
+					else if (chat_team)
+						Com_sprintf( buffer, sizeof( buffer ), "say_team \"%s\"\n", g_console_text_input_buffer );
+					else
+						Com_sprintf( buffer, sizeof( buffer ), "say \"%s\"\n", g_console_text_input_buffer );
+
+					CL_AddReliableCommand(buffer, qfalse);
+				}
+				else if ( !g_console_text_input_buffer[0] && clc.state == CA_ACTIVE )
+				{
+					Cbuf_AddText( "gesture\n" );
+				}
+
+				Key_SetCatcher( Key_GetCatcher( ) & ~KEYCATCH_MESSAGE );
 			}
 		}
-		// If screen keyboard hidden, but we're still in message mode - send Enter to console
-		if ( ! SDL_IsScreenKeyboardShown ( NULL ) ) {
-			g_console_text_input_toggled_ui = 0;
-			if ( ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) && needReturn ) {
-				needReturn = 0;
-				//Console_Key( K_ENTER );
-				CL_KeyEvent( K_ENTER, qtrue, 0 );
-				CL_KeyEvent( K_ENTER, qfalse, 0 );
-				if( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) {
-					Con_ToggleConsole_f( );
-				}
+	}
+	else
+	{
+		// If screen keyboard shown in UI - switch to console
+		if ( Key_GetCatcher( ) & KEYCATCH_CONSOLE )
+		{
+			if ( !SDL_IsScreenKeyboardShown ( NULL ) )
+			{
+				g_console_text_input_buffer[0] = 0;
+				SDL_ANDROID_GetScreenKeyboardTextInputAsync( g_console_text_input_buffer, sizeof(g_console_text_input_buffer) );
 			}
 		}
 	}
