@@ -59,6 +59,7 @@ static qboolean in_railgunZoomActive;
 static qboolean in_deferShooting;
 static const float in_swipeSpeed = 0.2f;
 #define TOUCHSCREEN_TAP_AREA (cls.glconfig.vidHeight / 6)
+#define DEFAULT_CROSSHAIR_SIZE 30
 #ifdef USE_VOIP
 kbutton_t	in_voiprecord;
 #endif
@@ -298,7 +299,7 @@ void IN_Button0Down(void)
 							in_mouseY > in_tapMouseY - tapArea &&
 							in_mouseY < in_tapMouseY + tapArea ) { // TODO: make it octagon, not square
 						IN_KeyDown(&in_buttons[0]);
-						cg_crosshairSize->value = cg_crosshairSize->value * 1.7f;
+						cg_crosshairSize->value = DEFAULT_CROSSHAIR_SIZE * 1.7f;
 						Cvar_SetValue("cg_crosshairSize", cg_crosshairSize->value);
 					}
 					cl.touchscreenAttackButtonPos[4] = 0.0f;
@@ -782,7 +783,7 @@ static void CL_ProcessAccelerometer( void ) {
 }
 
 static void CL_ProcessTapToShootCrosshair( void ) {
-	float defSize = atof(cg_crosshairSize->resetString);
+	float defSize = DEFAULT_CROSSHAIR_SIZE; // atof(cg_crosshairSize->resetString);
 	if ( cg_crosshairSize->value > defSize )
 	{
 		cg_crosshairSize->value -= cls.unscaledFrametime / 20.0f;

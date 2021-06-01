@@ -12,7 +12,6 @@ Zooming is totally broken, camera jumps upwards all the time.
 Swipe-to-rotate is broken when camera rotate button is enabled and holding the joystick.
 Remapping and re-layouting screen buttons in SDL menu is broken.
 Add an option in settings for j_androidJoystickJumpTime.
-Crosshair gets enormous when spectating and tapping Shoot button.
 Bind "Stop following" to some existing key when spectating.
 
 Distant future:
