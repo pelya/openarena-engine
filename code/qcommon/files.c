@@ -3171,6 +3171,11 @@ static void FS_Startup( const char *gameName )
 		FS_AddGameDirectory( getenv("ANDROID_OBB_MOUNT_DIR"), gameName );
 	}
 
+	if (getenv("ANDROID_ASSET_PACK_DIR") != NULL && strlen(getenv("ANDROID_ASSET_PACK_DIR")) > 0) {
+		Com_Printf( "Game data asset pack installed to %s\n", getenv("ANDROID_ASSET_PACK_DIR") );
+		FS_AddGameDirectory( getenv("ANDROID_ASSET_PACK_DIR"), gameName );
+	}
+
 	// add search path elements in reverse priority order
 	if (fs_basepath->string[0]) {
 		FS_AddGameDirectory( fs_basepath->string, gameName );
