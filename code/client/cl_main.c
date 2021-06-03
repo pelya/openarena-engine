@@ -3820,6 +3820,9 @@ void CL_Init( void ) {
 	in_swapGamepadSticks = Cvar_Get ("in_swapGamepadSticks", "0", CVAR_ARCHIVE);
 	cg_thirdPerson = Cvar_Get ("cg_thirdPerson", "0", 0);
 	cg_crosshairSize = Cvar_Get ("cg_crosshairSize", "30", 0);
+	// Fix for the enormous crosshair bug in 0.8.8.40, can be removed later
+	cg_crosshairSize->value = 30;
+	Cvar_SetValue("cg_crosshairSize", cg_crosshairSize->value);
 
 	cl_serverlistGamename = Cvar_Get ("cl_serverlistGamename", GAMENAME_FOR_MASTER, CVAR_ARCHIVE);
 
